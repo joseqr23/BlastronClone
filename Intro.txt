@@ -1,0 +1,36 @@
+blastron_clone/
+│
+├── main.py                      # Punto de entrada
+├── settings.py                  # Configuraciones globales
+├── assets/                      # Imágenes, sonidos, música
+│   ├── robots/
+│   ├── weapons/
+│   ├── maps/
+│   └── ui/
+│
+├── core/                        # Núcleo del motor
+│   ├── game.py
+│   ├── events.py
+│   └── network.py               # (opcional) multijugador en el futuro
+│
+├── entities/                    # Jugadores, bots, proyectiles
+│   ├── robot.py
+│   ├── projectile.py
+│   └── weapon.py
+│
+├── levels/                      # Mapa, objetos del mundo
+│   ├── map_loader.py
+│   └── tile.py
+│
+├── systems/                     # Lógica de turnos, física, colisiones
+│   ├── turn_manager.py
+│   ├── collision.py
+│   └── physics.py
+│
+├── ui/                          # Menús, HUD
+│   ├── hud.py
+│   └── menu.py
+│
+└── utils/                       # Funciones de ayuda
+    ├── loader.py
+    └── math_utils.py

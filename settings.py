@@ -1,0 +1,15 @@
+# Tamaño de la ventana
+ANCHO = 1000
+ALTO = 494
+
+# Suelo
+ALTURA_SUELO = 70
+
+# Robot
+ROBOT_W = 60
+ROBOT_H = 90
+
+# Física
+VELOCIDAD_LATERAL = 2.5
+SALTO_POTENCIA = 15
+GRAVEDAD = 1
