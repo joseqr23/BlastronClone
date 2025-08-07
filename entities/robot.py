@@ -1,6 +1,7 @@
 import pygame
 from utils.loader import load_spritesheet
 import time
+import random
 
 class Robot:
     def __init__(self, x, y):
@@ -17,6 +18,10 @@ class Robot:
             "jump": load_spritesheet("assets/robots/jump.png", 1, self.width, self.height),
             "death": load_spritesheet("assets/robots/death.png", 6, self.width, self.height),
         }
+
+        self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
+        self.death_sound.set_volume(0.5)
+
 
     def reset(self):
         self.x = self.spawn_x
@@ -37,6 +42,19 @@ class Robot:
         self.frame_timer = 0
         self.image = None
 
+        ############ Este codigo sobre escribe a las variables ya declaradas - Reaparecer de manera random ############
+        min_x = 100
+        max_x = 800  # Ajusta esto según el tamaño de tu nivel
+        self.x = random.randint(min_x, max_x)
+        self.y = 0  # Empieza desde arriba y caerá hasta tocar plataforma
+
+        self.vel_x = 0
+        self.vel_y = 0
+        self.health = 200
+        self.is_dead = False
+        self.frame_index = 0
+        self.current_animation = "idle"
+
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
@@ -50,6 +68,7 @@ class Robot:
         self.is_dead = True
         self.frame_index = 0
         self.dead_timer = pygame.time.get_ticks()
+        self.death_sound.play()
 
     def update(self, keys):
         if self.is_dead:
@@ -117,3 +136,9 @@ class Robot:
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         # Vida actual
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
+
+    def draw_death_message(self, pantalla, fuente):
+        if self.is_dead:
+            texto = fuente.render("¡BOOM!", True, (255, 0, 0))
+            rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 100))
+            pantalla.blit(texto, rect)
