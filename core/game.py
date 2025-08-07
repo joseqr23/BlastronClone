@@ -28,11 +28,11 @@ class Game:
             self.robot.update(keys)
 
             # Probar que baje la vida
-            if keys[pygame.K_DOWN]:
-                self.robot.vida = max(0, self.robot.vida - 1)
+            # if keys[pygame.K_DOWN]:
+            #     self.robot.vida = max(0, self.robot.vida - 1)
 
-            # if keys[pygame.K_d]:
-            #     self.robot.take_damage(50)
+            if keys[pygame.K_d]:
+                self.robot.take_damage(50)
 
 
             check_collisions(self.robot, self.tiles)
