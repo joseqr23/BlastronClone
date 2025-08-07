@@ -15,7 +15,6 @@ class Robot:
         self.gravity = 1
         self.speed = 2.5
 
-        # Animaciones
         self.animations = {
             "idle": load_spritesheet("assets/robots/idle.png", 1, self.width, self.height),
             "run": load_spritesheet("assets/robots/run.png", 6, self.width, self.height),
@@ -26,14 +25,10 @@ class Robot:
         self.frame_timer = 0
         self.image = self.animations[self.current_animation][0]
 
-    def set_animation(self, name):
-        if self.current_animation != name:
-            self.current_animation = name
-            self.frame_index = 0
-            self.frame_timer = 0
+    def get_rect(self):
+        return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
-    def update(self, keys, suelo_y):
-        # Movimiento lateral
+    def update(self, keys):
         self.vel_x = 0
         if keys[pygame.K_LEFT]:
             self.vel_x = -self.speed
@@ -44,38 +39,26 @@ class Robot:
 
         self.x += self.vel_x
 
-        # Salto
         if keys[pygame.K_SPACE] and self.on_ground:
             self.vel_y = -self.jump_power
             self.on_ground = False
 
-        # Gravedad
-        self.y += self.vel_y
         self.vel_y += self.gravity
+        self.y += self.vel_y
 
-        # Suelo
-        if self.y >= suelo_y:
-            self.y = suelo_y
-            self.vel_y = 0
-            self.on_ground = True
-        else:
-            self.on_ground = False
-
-        # Animación según estado
+        # Animaciones
         if not self.on_ground:
-            self.set_animation("jump")
+            self.current_animation = "jump"
+            self.frame_index = 0
         elif self.vel_x != 0:
-            self.set_animation("run")
+            self.current_animation = "run"
             self.frame_timer += 1
             if self.frame_timer >= 5:
                 self.frame_timer = 0
                 self.frame_index = (self.frame_index + 1) % len(self.animations["run"])
         else:
-            self.set_animation("idle")
-
-        # Frame actual
-        if self.current_animation == "idle" or self.current_animation == "jump":
-            self.frame_index = 0  # esas solo tienen 1 frame
+            self.current_animation = "idle"
+            self.frame_index = 0
 
         self.image = self.animations[self.current_animation][self.frame_index]
         if not self.facing_right:
