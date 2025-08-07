@@ -24,12 +24,15 @@ platform_color = (0, 255, 0)
 current_platform = None
 drawing = False
 start_pos = None
+moving_mode = False
+selected_platform_index = None
+move_offset = (0, 0)
 
-def draw_text(text, x, y, color=(255, 255, 255)):
+def draw_text(text, x, y, color=(255, 0, 0)):
     rendered = font.render(text, True, color)
     pantalla.blit(rendered, (x, y))
 
-def save_platforms(filename="plataformas_generadas.py"):
+def save_platforms(filename="utils/platforms/plataformas_generadas.py"):
     with open(filename, "w") as f:
         f.write("# Lista de plataformas generadas desde el editor\n")
         f.write("PLATAFORMAS = [\n")
@@ -38,6 +41,11 @@ def save_platforms(filename="plataformas_generadas.py"):
             f.write(f"    ({x}, {y}, {w}, {h}),\n")
         f.write("]\n")
     print(f"✅ Plataformas guardadas en {filename}")
+
+def punto_en_rect(punto, rect):
+    x, y = punto
+    rx, ry, rw, rh = rect
+    return rx <= x <= rx + rw and ry <= y <= ry + rh
 
 # Bucle principal del editor
 corriendo = True
@@ -49,22 +57,47 @@ while corriendo:
             corriendo = False
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Clic izquierdo inicia rectángulo
-                start_pos = pygame.mouse.get_pos()
-                drawing = True
+            mouse_pos = pygame.mouse.get_pos()
+
+            if event.button == 1:  # Clic izquierdo
+                if moving_mode:
+                    for i, plat in enumerate(platforms):
+                        if punto_en_rect(mouse_pos, plat):
+                            selected_platform_index = i
+                            px, py, pw, ph = plat
+                            mx, my = mouse_pos
+                            move_offset = (mx - px, my - py)
+                            break
+                else:
+                    start_pos = mouse_pos
+                    drawing = True
+
+            elif event.button == 3:  # Clic derecho para eliminar plataforma
+                for i, plat in enumerate(platforms):
+                    if punto_en_rect(mouse_pos, plat):
+                        del platforms[i]
+                        print(f"🗑️ Plataforma eliminada")
+                        break
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1 and current_platform:
-                drawing = False
-                if current_platform.width > 5 and current_platform.height > 5:
-                    platforms.append((current_platform.x, current_platform.y, current_platform.width, current_platform.height))
-                    print(f"🟩 Plataforma añadida: ({current_platform.x}, {current_platform.y}, {current_platform.width}, {current_platform.height})")
-                current_platform = None
-                start_pos = None
+            if event.button == 1:
+                if drawing and current_platform:
+                    drawing = False
+                    if current_platform.width > 5 and current_platform.height > 5:
+                        platforms.append((current_platform.x, current_platform.y, current_platform.width, current_platform.height))
+                        print(f"🟩 Plataforma añadida: ({current_platform.x}, {current_platform.y}, {current_platform.width}, {current_platform.height})")
+                    current_platform = None
+                    start_pos = None
+
+                if moving_mode and selected_platform_index is not None:
+                    selected_platform_index = None
 
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:
                 save_platforms()
+            elif event.key == pygame.K_m:
+                moving_mode = not moving_mode
+                print("🧲 Modo mover activado" if moving_mode else "🔒 Modo mover desactivado")
 
     # Actualizar plataforma en dibujo (soporta arrastrar en cualquier dirección)
     if drawing and start_pos:
@@ -77,9 +110,17 @@ while corriendo:
         h = abs(y2 - y1)
         current_platform = pygame.Rect(x, y, w, h)
 
+    # Mover plataforma si está seleccionada
+    if moving_mode and selected_platform_index is not None:
+        mx, my = pygame.mouse.get_pos()
+        dx, dy = move_offset
+        plat = platforms[selected_platform_index]
+        platforms[selected_platform_index] = (mx - dx, my - dy, plat[2], plat[3])
+
     # Dibujar plataformas existentes
-    for plat in platforms:
-        pygame.draw.rect(pantalla, platform_color, pygame.Rect(*plat), 2)
+    for i, plat in enumerate(platforms):
+        color = (0, 200, 0) if i == selected_platform_index else platform_color
+        pygame.draw.rect(pantalla, color, pygame.Rect(*plat), 2)
 
     # Dibujar plataforma en edición
     if current_platform:
@@ -94,6 +135,8 @@ while corriendo:
     # Instrucciones
     draw_text("🖱️ Clic y arrastra para crear plataformas", 10, 10)
     draw_text("💾 Presiona 'S' para guardar", 10, 30)
+    draw_text("🧲 Presiona 'M' para activar modo mover", 10, 50)
+    draw_text("🗑️ Haz clic derecho sobre una plataforma para eliminarla", 10, 70)
 
     pygame.display.flip()
     clock.tick(60)
