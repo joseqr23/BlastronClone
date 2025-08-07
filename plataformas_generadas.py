@@ -1,6 +1,4 @@
-from levels.tile import Tile
-
-# Lista de plataformas: (x, y, ancho, alto)
+# Lista de plataformas generadas desde el editor
 PLATAFORMAS = [
     (0, 408, 325, 18),
     (330, 406, 18, 12),
@@ -24,16 +22,4 @@ PLATAFORMAS = [
     (609, 206, 129, 6),
     (708, 311, 86, 7),
     (93, 294, 62, 6),
-    #(0, 494 - 70, 1000, 70),  # suelo base  # Suelo base
-
-    # Añade más plataformas aquí...
 ]
-
-#COLOR_POR_DEFECTO = (150, 150, 150)
-COLOR_POR_DEFECTO = None
-
-def load_static_map():
-    tiles = []
-    for x, y, w, h in PLATAFORMAS:
-        tiles.append(Tile(x, y, w, h, color= COLOR_POR_DEFECTO))
-    return tiles
