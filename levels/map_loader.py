@@ -30,20 +30,20 @@ PLATAFORMAS = [
     (-18, -12, 27, 423), # Linea vertical izquierda   
     (609, 206, 129, 33), # Trozo tierra 1 derecha
     (708, 311, 86, 33), # Trozo tierra 2 derecha
-    (86, 336, 65, 18), # Piedra
-    (93, 294, 62, 18), # Arbol 1 izquierda
-    (195, 204, 90, 18), #Arbol 2 izquierda
-    (117, 235, 117, 18), # Arbol 3 izquierda
+    (100, 336, 55, 18), # Piedra
+    (107, 294, 62, 18), # Arbol 1 izquierda
+    (205, 204, 60, 18), # Arbol 2 izquierda
+    (140, 235, 80, 18), # Arbol 3 izquierda
     (236, 261, 71, 18), # Arbol 4 izquierda
-    (221, 352, 48, 18), # Arbol 5 izquierda
+    (221, 352, 28, 18), # Arbol 5 izquierda tallo
 
 
     #(0, 494 - 70, 1000, 70),  # suelo base  # Suelo base
     # Añade más plataformas aquí...
 ]
 
-#COLOR_POR_DEFECTO = (150, 150, 150)
-COLOR_POR_DEFECTO = None
+COLOR_POR_DEFECTO = (150, 150, 150)
+#COLOR_POR_DEFECTO = None
 
 def load_static_map():
     tiles = []

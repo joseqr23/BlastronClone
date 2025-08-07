@@ -16,7 +16,7 @@ class Game:
 
         self.fondo = pygame.image.load("assets/maps/fondo.png").convert()
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
-
+       
     def run(self):
         while True:
             for evento in pygame.event.get():
@@ -26,6 +26,15 @@ class Game:
 
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
+
+            # Probar que baje la vida
+            if keys[pygame.K_DOWN]:
+                self.robot.vida = max(0, self.robot.vida - 1)
+
+            # if keys[pygame.K_d]:
+            #     self.robot.take_damage(50)
+
+
             check_collisions(self.robot, self.tiles)
 
             self.pantalla.blit(self.fondo, (0, 0))

@@ -15,6 +15,10 @@ class Robot:
         self.gravity = 1
         self.speed = 2.5
 
+        # Vida
+        self.vida = 200
+        self.vida_maxima = 200
+
         self.animations = {
             "idle": load_spritesheet("assets/robots/idle.png", 1, self.width, self.height),
             "run": load_spritesheet("assets/robots/run.png", 6, self.width, self.height),
@@ -66,3 +70,20 @@ class Robot:
 
     def draw(self, pantalla):
         pantalla.blit(self.image, (self.x, self.y))
+        self.dibujar_barra_vida(pantalla)
+
+    def dibujar_barra_vida(self, pantalla):
+        barra_ancho = 60
+        barra_alto = 8
+        x_barra = self.x + self.width // 2 - barra_ancho // 2
+        y_barra = self.y - 15
+
+        vida_ratio = self.vida / self.vida_maxima
+        ancho_vida = int(barra_ancho * vida_ratio)
+
+        # Fondo gris
+        pygame.draw.rect(pantalla, (100, 100, 100), (x_barra, y_barra, barra_ancho, barra_alto))
+        # Vida verde
+        pygame.draw.rect(pantalla, (0, 255, 0), (x_barra, y_barra, ancho_vida, barra_alto))
+        # Borde negro
+        pygame.draw.rect(pantalla, (0, 0, 0), (x_barra, y_barra, barra_ancho, barra_alto), 1)
