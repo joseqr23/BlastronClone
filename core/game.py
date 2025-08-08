@@ -1,9 +1,12 @@
+# game.py
 import pygame
+import math
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.robot import Robot
 from levels.map_loader import load_static_map
 from systems.collision import check_collisions
 from entities.granada import Granada
+from systems.aim_indicator import AimIndicator  # NUEVO
 
 class Game:
     def __init__(self):
@@ -14,13 +17,14 @@ class Game:
 
         self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO)
         self.tiles = load_static_map()
+        self.granadas = []
 
-        self.granadas = [] # Granadas
-
+        self.mouse_click_sostenido = False
         self.fondo = pygame.image.load("assets/maps/fondo.png").convert()
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
-        
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
+
+        self.aim = AimIndicator(self.robot.get_centro())  # NUEVO
 
     def run(self):
         while True:
@@ -29,36 +33,51 @@ class Game:
                     pygame.quit()
                     return
 
+                if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                    if not self.mouse_click_sostenido:
+                        mouse_x, mouse_y = pygame.mouse.get_pos()
+                        granada = Granada(self.robot.x + self.robot.width // 2, self.robot.y, mouse_x, mouse_y)
+                        self.granadas.append(granada)
+                        self.mouse_click_sostenido = True
+
+                if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
+                    self.mouse_click_sostenido = False
+
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
-
-            # Probar que baje la vida
-            # if keys[pygame.K_DOWN]:
-            #     self.robot.vida = max(0, self.robot.vida - 1)
-
-            if pygame.mouse.get_pressed()[0]:  # Botón izquierdo
-                mouse_x, mouse_y = pygame.mouse.get_pos()
-                granada = Granada(self.robot.x + self.robot.width // 2, self.robot.y, mouse_x, mouse_y)
-                self.granadas.append(granada)
-
-
             if keys[pygame.K_d]:
                 self.robot.take_damage(50)
-
 
             check_collisions(self.robot, self.tiles)
 
             self.pantalla.blit(self.fondo, (0, 0))
-
             for tile in self.tiles:
                 tile.draw(self.pantalla)
 
             self.robot.draw(self.pantalla)
 
+            for granada in self.granadas[:]:
+                granada.update()
+                if not granada.explotado:
+                    granada.rebote_con_tiles(self.tiles)
+
+                if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+                    if granada.get_rect().colliderect(self.robot.get_rect()):
+                        self.robot.take_damage(50)
+                        granada.ya_hizo_dano = True
+
+                if granada.estado == "done":
+                    self.granadas.remove(granada)
+
             for granada in self.granadas:
-              granada.update()
-              granada.draw(self.pantalla)
-                
+                granada.draw(self.pantalla)
+
+            # DIBUJAR INDICADOR
+            mouse_pos = pygame.mouse.get_pos()
+            self.aim.origen = self.robot.get_centro()
+            self.aim.update(mouse_pos)
+            self.aim.draw(self.pantalla)
+
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
 
             pygame.display.flip()

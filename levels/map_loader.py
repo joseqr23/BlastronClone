@@ -42,8 +42,8 @@ PLATAFORMAS = [
     # Añade más plataformas aquí...
 ]
 
-#COLOR_POR_DEFECTO = (150, 150, 150)
-COLOR_POR_DEFECTO = None
+COLOR_POR_DEFECTO = (150, 150, 150)
+#COLOR_POR_DEFECTO = None
 
 def load_static_map():
     tiles = []

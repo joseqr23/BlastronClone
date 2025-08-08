@@ -142,3 +142,6 @@ class Robot:
             texto = fuente.render("¡BOOM!", True, (255, 0, 0))
             rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 100))
             pantalla.blit(texto, rect)
+
+    def get_centro(self):
+        return (self.x + self.width // 2, self.y + self.height // 2)

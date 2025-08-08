@@ -9,45 +9,58 @@ class Granada:
         self.width = 40
         self.height = 40
 
+        # Tiempos
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000
+        self.tiempo_post_explosion = 500
+        self.tiempo_eliminar = None
+
         # Cargar sprites
         self.frames = load_spritesheet("assets/weapons/grenade.png", 3, self.width, self.height)
-        self.estado = "idle"  # puede ser idle, warning, explode
+        self.estado = "idle"
         self.frame_index = 0
         self.timer = 0
-        self.explotar_en = 180  # frames antes de explotar (3 segundos a 60fps)
         self.explotado = False
+        self.muerta = False
 
         # Física
         self.vel_x, self.vel_y = self.calcular_velocidad(objetivo_x, objetivo_y)
         self.gravity = 0.5
 
+        self.ya_hizo_dano = False
+
     def calcular_velocidad(self, objetivo_x, objetivo_y):
-        # Calcula velocidad inicial para lanzar hacia objetivo
         dx = objetivo_x - self.x
         dy = objetivo_y - self.y
         distancia = math.hypot(dx, dy)
         if distancia == 0:
             return 0, 0
-        fuerza = 10  # ajustable
+        fuerza = 10
         return (dx / distancia) * fuerza, (dy / distancia) * fuerza
 
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
     def update(self):
-        if self.explotado:
-            return
+        ahora = pygame.time.get_ticks()
 
-        self.vel_y += self.gravity
-        self.x += self.vel_x
-        self.y += self.vel_y
-
-        self.timer += 1
-        if self.timer > self.explotar_en:
+        if not self.explotado and ahora >= self.tiempo_explosion:
             self.estado = "explode"
             self.explotado = True
-        elif self.timer > self.explotar_en - 30:
+            self.tiempo_eliminar = ahora + self.tiempo_post_explosion
+
+        elif not self.explotado and self.tiempo_explosion - ahora <= 500:
             self.estado = "warning"
+        elif not self.explotado:
+            self.estado = "idle"
+
+        if not self.explotado:
+            self.vel_y += self.gravity
+            self.x += self.vel_x
+            self.y += self.vel_y
+
+        if self.explotado and ahora >= self.tiempo_eliminar:
+            self.estado = "done"
+            self.muerta = True
 
     def draw(self, pantalla):
         if self.estado == "idle":
@@ -56,5 +69,32 @@ class Granada:
             imagen = self.frames[1]
         elif self.estado == "explode":
             imagen = self.frames[2]
-
+        else:
+            return
         pantalla.blit(imagen, (int(self.x), int(self.y)))
+
+    def rebote_con_tiles(self, tiles):
+        rect = self.get_rect()
+        for tile in tiles:
+            if rect.colliderect(tile.rect):
+                # Rebote horizontal
+                if abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
+                    self.x = tile.rect.left - self.width
+                    self.vel_x *= -0.7
+                elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
+                    self.x = tile.rect.right
+                    self.vel_x *= -0.7
+
+                # Rebote vertical
+                if abs(rect.bottom - tile.rect.top) < 10 and self.vel_y > 0:
+                    self.y = tile.rect.top - self.height
+                    self.vel_y *= -0.7
+                elif abs(rect.top - tile.rect.bottom) < 10 and self.vel_y < 0:
+                    self.y = tile.rect.bottom
+                    self.vel_y *= -0.7
+
+                # Reducir velocidad si es baja
+                if abs(self.vel_x) < 0.5:
+                    self.vel_x = 0
+                if abs(self.vel_y) < 0.5:
+                    self.vel_y = 0
