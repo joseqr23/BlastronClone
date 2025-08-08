@@ -1,4 +1,3 @@
-# game.py
 import pygame
 import math
 from settings import ANCHO, ALTO, ALTURA_SUELO
@@ -6,7 +5,7 @@ from entities.robot import Robot
 from levels.map_loader import load_static_map
 from systems.collision import check_collisions
 from entities.granada import Granada
-from systems.aim_indicator import AimIndicator  # NUEVO
+from systems.aim_indicator import AimIndicator
 
 class Game:
     def __init__(self):
@@ -24,7 +23,8 @@ class Game:
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
 
-        self.aim = AimIndicator(self.robot.get_centro())  # NUEVO
+        # Indicador de puntería desde el centro del robot
+        self.aim = AimIndicator(self.robot.get_centro())
 
     def run(self):
         while True:
@@ -35,8 +35,9 @@ class Game:
 
                 if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                     if not self.mouse_click_sostenido:
-                        mouse_x, mouse_y = pygame.mouse.get_pos()
-                        granada = Granada(self.robot.x + self.robot.width // 2, self.robot.y, mouse_x, mouse_y)
+                        # Usar PUNTA del indicador como origen del disparo
+                        origen, vel_x, vel_y = self.aim.get_datos_disparo()
+                        granada = Granada(origen[0], origen[1], vel_x, vel_y)
                         self.granadas.append(granada)
                         self.mouse_click_sostenido = True
 
@@ -56,6 +57,7 @@ class Game:
 
             self.robot.draw(self.pantalla)
 
+            # Actualizar granadas
             for granada in self.granadas[:]:
                 granada.update()
                 if not granada.explotado:
@@ -72,7 +74,7 @@ class Game:
             for granada in self.granadas:
                 granada.draw(self.pantalla)
 
-            # DIBUJAR INDICADOR
+            # Indicador siempre visible apuntando desde el centro del jugador
             mouse_pos = pygame.mouse.get_pos()
             self.aim.origen = self.robot.get_centro()
             self.aim.update(mouse_pos)

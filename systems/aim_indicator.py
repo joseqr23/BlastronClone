@@ -1,4 +1,3 @@
-# systems/aim_indicator.py
 import pygame
 import math
 
@@ -20,15 +19,40 @@ class AimIndicator:
 
         self.direccion = (dx, dy)
 
-    def draw(self, pantalla):
-        punta = (self.origen[0] + self.direccion[0], self.origen[1] + self.direccion[1])
-        distancia = math.hypot(*self.direccion)
+    def get_fuerza(self):
+        return math.hypot(*self.direccion)
 
-        # Color de rojo (baja fuerza) a verde (alta fuerza)
+    def get_angulo(self):
+        return math.atan2(self.direccion[1], self.direccion[0])
+
+    def get_punta(self):
+        """Devuelve la punta de la flecha"""
+        return (self.origen[0] + self.direccion[0], self.origen[1] + self.direccion[1])
+
+    def get_datos_disparo(self):
+        """
+        Devuelve:
+        - posición inicial (punta de la flecha)
+        - velocidad en X
+        - velocidad en Y
+        """
+        punta = self.get_punta()
+        angulo = self.get_angulo()
+        # Escala de velocidad para que coincida visualmente con la flecha
+        velocidad = self.get_fuerza() / 10
+        vel_x = math.cos(angulo) * velocidad
+        vel_y = math.sin(angulo) * velocidad
+        return punta, vel_x, vel_y
+
+    def draw(self, pantalla):
+        punta = self.get_punta()
+        distancia = self.get_fuerza()
+
+        # Color invertido: rojo = poca fuerza, verde = mucha fuerza
         porcentaje = distancia / self.max_fuerza
         color = (
-            int(255 * (1 - porcentaje)),  # Rojo más fuerte si fuerza es baja
-            int(255 * porcentaje),        # Verde más fuerte si fuerza es alta
+            int(255 * (1 - porcentaje)),  # Rojo fuerte si fuerza baja
+            int(255 * porcentaje),        # Verde fuerte si fuerza alta
             0
         )
 
@@ -36,7 +60,7 @@ class AimIndicator:
         pygame.draw.line(pantalla, color, self.origen, punta, 6)
 
         # Punta de flecha
-        angulo = math.atan2(self.direccion[1], self.direccion[0])
+        angulo = self.get_angulo()
         tamaño_punta = 12
         izquierda = (
             punta[0] - tamaño_punta * math.cos(angulo - math.pi / 6),

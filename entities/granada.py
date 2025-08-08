@@ -3,7 +3,7 @@ import math
 from utils.loader import load_spritesheet
 
 class Granada:
-    def __init__(self, x, y, objetivo_x, objetivo_y):
+    def __init__(self, x, y, vel_x, vel_y):
         self.x = x
         self.y = y
         self.width = 40
@@ -22,20 +22,12 @@ class Granada:
         self.explotado = False
         self.muerta = False
 
-        # Física
-        self.vel_x, self.vel_y = self.calcular_velocidad(objetivo_x, objetivo_y)
+        # Física (ahora recibida directamente)
+        self.vel_x = vel_x
+        self.vel_y = vel_y
         self.gravity = 0.5
 
         self.ya_hizo_dano = False
-
-    def calcular_velocidad(self, objetivo_x, objetivo_y):
-        dx = objetivo_x - self.x
-        dy = objetivo_y - self.y
-        distancia = math.hypot(dx, dy)
-        if distancia == 0:
-            return 0, 0
-        fuerza = 10
-        return (dx / distancia) * fuerza, (dy / distancia) * fuerza
 
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
@@ -77,23 +69,18 @@ class Granada:
         rect = self.get_rect()
         for tile in tiles:
             if rect.colliderect(tile.rect):
-                # Rebote horizontal
                 if abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
                     self.x = tile.rect.left - self.width
                     self.vel_x *= -0.7
                 elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
                     self.x = tile.rect.right
                     self.vel_x *= -0.7
-
-                # Rebote vertical
                 if abs(rect.bottom - tile.rect.top) < 10 and self.vel_y > 0:
                     self.y = tile.rect.top - self.height
                     self.vel_y *= -0.7
                 elif abs(rect.top - tile.rect.bottom) < 10 and self.vel_y < 0:
                     self.y = tile.rect.bottom
                     self.vel_y *= -0.7
-
-                # Reducir velocidad si es baja
                 if abs(self.vel_x) < 0.5:
                     self.vel_x = 0
                 if abs(self.vel_y) < 0.5:
