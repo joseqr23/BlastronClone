@@ -2,7 +2,7 @@ import pygame
 import math
 
 class AimIndicator:
-    def __init__(self, origen, max_fuerza=150):
+    def __init__(self, origen, max_fuerza=120):
         self.origen = origen
         self.max_fuerza = max_fuerza
         self.direccion = (0, 0)
@@ -32,17 +32,16 @@ class AimIndicator:
     def get_datos_disparo(self):
         """
         Devuelve:
-        - posición inicial (punta de la flecha)
+        - posición inicial (origen del indicador)
         - velocidad en X
         - velocidad en Y
         """
-        punta = self.get_punta()
         angulo = self.get_angulo()
-        # Escala de velocidad para que coincida visualmente con la flecha
-        velocidad = self.get_fuerza() / 10
+        # La velocidad escala directamente con la longitud de la flecha
+        velocidad = self.get_fuerza() / self.max_fuerza * 18
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
-        return punta, vel_x, vel_y
+        return self.origen, vel_x, vel_y
 
     def draw(self, pantalla):
         punta = self.get_punta()

@@ -1,5 +1,4 @@
 import pygame
-import math
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.robot import Robot
 from levels.map_loader import load_static_map
@@ -23,7 +22,7 @@ class Game:
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
 
-        # Indicador de puntería desde el centro del robot
+        # Indicador de puntería
         self.aim = AimIndicator(self.robot.get_centro())
 
     def run(self):
@@ -35,7 +34,7 @@ class Game:
 
                 if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                     if not self.mouse_click_sostenido:
-                        # Usar PUNTA del indicador como origen del disparo
+                        # Disparar desde el origen del indicador
                         origen, vel_x, vel_y = self.aim.get_datos_disparo()
                         granada = Granada(origen[0], origen[1], vel_x, vel_y)
                         self.granadas.append(granada)
@@ -74,7 +73,7 @@ class Game:
             for granada in self.granadas:
                 granada.draw(self.pantalla)
 
-            # Indicador siempre visible apuntando desde el centro del jugador
+            # Indicador siempre visible desde el centro del robot
             mouse_pos = pygame.mouse.get_pos()
             self.aim.origen = self.robot.get_centro()
             self.aim.update(mouse_pos)
