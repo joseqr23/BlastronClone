@@ -22,6 +22,7 @@ class Robot:
         self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
         self.death_sound.set_volume(0.5)
 
+        self.arma_equipada = None  # 'granada', 'misil', o None
 
     def reset(self):
         self.x = self.spawn_x
@@ -158,3 +159,5 @@ class Robot:
         nuevo_ancho = 20
         nuevo_x = rect.x + (rect.width - nuevo_ancho) // 2
         return pygame.Rect(nuevo_x, rect.y, nuevo_ancho, rect.height)
+    
+
