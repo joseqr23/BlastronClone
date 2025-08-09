@@ -1,9 +1,9 @@
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
-from entities.robot import Robot
+from entities.players.robot import Robot
 from levels.map_loader import load_static_map, load_static_map_laterales
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
-from entities.granada import Granada
+from entities.weapons.granada import Granada
 from systems.aim_indicator import AimIndicator
 
 class Game:
