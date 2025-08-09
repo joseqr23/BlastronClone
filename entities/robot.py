@@ -101,6 +101,9 @@ class Robot:
         if keys[pygame.K_SPACE] and self.on_ground:
             self.vel_y = -self.jump_power
             self.on_ground = False
+        elif keys[pygame.K_UP] and self.on_ground:
+            self.vel_y = -self.jump_power
+            self.on_ground = False
 
         self.vel_y += self.gravity
         self.y += self.vel_y
