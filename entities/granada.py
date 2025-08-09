@@ -30,7 +30,7 @@ class Granada:
         self.friccion_rebote = 0.6
 
         self.ya_hizo_dano = False
-
+        self.tiempo_creacion = pygame.time.get_ticks()
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
@@ -117,4 +117,52 @@ class Granada:
                     self.vel_y = 0
                 elif abs(self.vel_y) < 0.5:
                     self.vel_y *= 0.5
+
+    def rebote_con_robot(self, robot):
+        rect = self.get_rect()
+        robot_rect = robot.get_rect()
+
+        if rect.colliderect(robot_rect):
+            umbral_suave = 1.0
+            velocidad_actual = max(abs(self.vel_x), abs(self.vel_y))
+            if velocidad_actual < umbral_suave:
+                factor_rebote = self.friccion_rebote * 0.3  # rebote suave
+            else:
+                factor_rebote = self.friccion_rebote      # rebote normal
+
+            # Si el robot está en el aire (saltando o cayendo), aumentamos rebote
+            if robot.vel_y != 0:
+                factor_rebote *= 1.5  # +50% de rebote cuando robot está en el aire
+
+            # Rebote lateral derecha
+            if abs(rect.right - robot_rect.left) < 10 and self.vel_x > 0:
+                self.x = robot_rect.left - self.width
+                self.vel_x *= -factor_rebote
+
+            # Rebote lateral izquierda
+            elif abs(rect.left - robot_rect.right) < 10 and self.vel_x < 0:
+                self.x = robot_rect.right
+                self.vel_x *= -factor_rebote
+
+            # Rebote desde abajo (granada subiendo)
+            elif self.vel_y < 0 and rect.top <= robot_rect.bottom and abs(rect.top - robot_rect.bottom) < 10:
+                self.y = robot_rect.bottom
+                self.vel_y *= -factor_rebote
+
+            # Rebote desde arriba (granada cayendo sobre robot)
+            elif self.vel_y >= 0 and rect.bottom >= robot_rect.top and abs(rect.bottom - robot_rect.top) < 10:
+                self.y = robot_rect.top - self.height
+                self.vel_y *= -factor_rebote
+
+            # Evitar micro rebotes infinitos
+            if abs(self.vel_x) < 0.1:
+                self.vel_x = 0
+            elif abs(self.vel_x) < 0.5:
+                self.vel_x *= 0.5
+
+            if abs(self.vel_y) < 0.1:
+                self.vel_y = 0
+            elif abs(self.vel_y) < 0.5:
+                self.vel_y *= 0.5
+
 
