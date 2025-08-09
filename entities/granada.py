@@ -26,8 +26,8 @@ class Granada:
         self.vel_x = vel_x
         self.vel_y = vel_y
         self.gravity = 0.5
-        self.friccion_aire = 0.99      # Pierde un poco de fuerza en el aire
-        self.friccion_rebote = 0.6     # Pierde bastante fuerza al rebotar
+        self.friccion_aire = 0.99
+        self.friccion_rebote = 0.6
 
         self.ya_hizo_dano = False
 
@@ -53,7 +53,6 @@ class Granada:
             self.x += self.vel_x
             self.y += self.vel_y
 
-            # Pierde un poquito de fuerza en el aire
             self.vel_x *= self.friccion_aire
 
         # Eliminar después de explotar
@@ -76,21 +75,28 @@ class Granada:
         rect = self.get_rect()
         for tile in tiles:
             if rect.colliderect(tile.rect):
-                if abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
-                    self.x = tile.rect.left - self.width
-                    self.vel_x *= -self.friccion_rebote
-                elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
-                    self.x = tile.rect.right
-                    self.vel_x *= -self.friccion_rebote
-                if abs(rect.bottom - tile.rect.top) < 10 and self.vel_y > 0:
+                # Rebote en el piso
+                if self.vel_y >= 0 and rect.bottom <= tile.rect.bottom:
                     self.y = tile.rect.top - self.height
                     self.vel_y *= -self.friccion_rebote
-                elif abs(rect.top - tile.rect.bottom) < 10 and self.vel_y < 0:
+
+                # Rebote en el techo
+                elif self.vel_y < 0 and rect.top >= tile.rect.bottom:
                     self.y = tile.rect.bottom
                     self.vel_y *= -self.friccion_rebote
 
+                # Rebote lateral derecha
+                elif abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
+                    self.x = tile.rect.left - self.width
+                    self.vel_x *= -self.friccion_rebote
+
+                # Rebote lateral izquierda
+                elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
+                    self.x = tile.rect.right
+                    self.vel_x *= -self.friccion_rebote
+
                 # Evitar micro rebotes infinitos
-                if abs(self.vel_x) < 0.2:
+                if abs(self.vel_x) < 0.1:
                     self.vel_x = 0
-                if abs(self.vel_y) < 0.2:
+                if abs(self.vel_y) < 0.1:
                     self.vel_y = 0

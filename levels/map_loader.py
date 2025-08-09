@@ -37,13 +37,13 @@ PLATAFORMAS = [
     (236, 261, 71, 18), # Arbol 4 izquierda
     (221, 352, 28, 18), # Arbol 5 izquierda tallo
 
-    # (370, 420, 150, 50), # Arbol 5 izquierda tallo
 
     # (0, 410, 325, 100), # Piso parque izquierda
     # (760, 410, 290, 100), # Piso parque derecha
-
     # (0, 413, 325, 100), # Piso parque izquierda
     # (760, 413, 290, 100), # Piso parque derecha
+
+
 ]
 
 COLOR_POR_DEFECTO = (150, 150, 150)
