@@ -64,13 +64,13 @@ class Game:
 
             # Actualizar granadas
             for granada in self.granadas[:]:
-                granada.update()
+                granada.update(self.tiles, self.robot)
                 if not granada.explotado:
-                    granada.rebote_con_tiles(self.tiles) # Colisión con plataformas (rebotes)
-                    granada.rebote_con_robot(self.robot)#granada.interactuar_con_robot(self.robot) # Colisión con robots (rebotes)
+                    granada.rebote_con_tiles(self.tiles)  # Rebote con plataformas
+                    granada.rebote_con_robot(self.robot)  # Rebote con robot
 
                 if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
-                    if granada.get_rect().colliderect(self.robot.get_rect()):
+                    if granada.get_hitbox().colliderect(self.robot.get_rect()):
                         self.robot.take_damage(50)
                         granada.ya_hizo_dano = True
 

@@ -34,7 +34,7 @@ class Granada:
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
-    def update(self):
+    def update(self, tiles, robot):
         ahora = pygame.time.get_ticks()
 
         # Cambiar estado según tiempo
@@ -50,8 +50,17 @@ class Granada:
         # Física
         if not self.explotado:
             self.vel_y += self.gravity
-            self.x += self.vel_x
-            self.y += self.vel_y
+
+            # Dividir el movimiento en pasos para evitar tunneling
+            pasos = int(max(abs(self.vel_x), abs(self.vel_y)) // 5) + 1
+            dx = self.vel_x / pasos
+            dy = self.vel_y / pasos
+
+            for _ in range(pasos):
+                self.x += dx
+                self.y += dy
+                self.rebote_con_tiles(tiles)
+                self.rebote_con_robot(robot)
 
             self.vel_x *= self.friccion_aire
 
@@ -63,13 +72,34 @@ class Granada:
     def draw(self, pantalla):
         if self.estado == "idle":
             imagen = self.frames[0]
+            pantalla.blit(imagen, (int(self.x), int(self.y)))
         elif self.estado == "warning":
             imagen = self.frames[1]
+            pantalla.blit(imagen, (int(self.x), int(self.y)))
         elif self.estado == "explode":
-            imagen = self.frames[2]
-        else:
-            return
-        pantalla.blit(imagen, (int(self.x), int(self.y)))
+            escala_factor = 2  # Duplicar tamaño, ajusta a tu gusto
+            imagen_explode = pygame.transform.scale(
+                self.frames[2],
+                (self.width * escala_factor, self.height * escala_factor)
+            )
+            # Centrar la explosión respecto a la posición original
+            x_centrado = int(self.x - (self.width * (escala_factor - 1) / 2))
+            y_centrado = int(self.y - (self.height * (escala_factor - 1) / 2))
+            pantalla.blit(imagen_explode, (x_centrado, y_centrado))
+
+    def get_hitbox(self):
+        # Extiende el rect original en ancho y alto para zona de daño
+        padding_x = 15
+        padding_y = 10
+        rect = self.get_rect()
+        hitbox = pygame.Rect(
+            rect.left - padding_x,
+            rect.top - padding_y,
+            rect.width + 2 * padding_x,
+            rect.height + 2 * padding_y
+        )
+        return hitbox
+
 
     def rebote_con_tiles(self, tiles):
         rect = self.get_rect()
