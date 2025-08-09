@@ -1,8 +1,8 @@
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.robot import Robot
-from levels.map_loader import load_static_map
-from systems.collision import check_collisions
+from levels.map_loader import load_static_map, load_static_map_laterales
+from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from entities.granada import Granada
 from systems.aim_indicator import AimIndicator
 
@@ -15,6 +15,7 @@ class Game:
 
         self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO)
         self.tiles = load_static_map()
+        self.tiles_laterales = load_static_map_laterales()
         self.granadas = []
 
         self.mouse_click_sostenido = False
@@ -48,11 +49,16 @@ class Game:
             if keys[pygame.K_BACKSPACE]:
                 self.robot.take_damage(50)
 
-            check_collisions(self.robot, self.tiles)
+            # Llamar a collisions
+            check_collisions(self.robot, self.tiles) # Tu función original, para piso y techo
+            check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)  # Solo para esquinas lateralmente
+
 
             self.pantalla.blit(self.fondo, (0, 0))
             for tile in self.tiles:
                 tile.draw(self.pantalla)
+            for tile in self.tiles_laterales:
+                tile.draw(self.pantalla)    
 
             self.robot.draw(self.pantalla)
 
