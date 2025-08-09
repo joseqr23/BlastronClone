@@ -151,3 +151,10 @@ class Robot:
 
     def get_centro(self):
         return (self.x + self.width // 2, self.y + self.height // 2)
+
+    def get_hitbox_lateral(self): # Esto hace que la granada al rebotar con el robot detecte que el robot tiene el ancho definido
+        # Centrado horizontalmente dentro del rect normal, con ancho 20 por defecto (60) 
+        rect = self.get_rect()
+        nuevo_ancho = 20
+        nuevo_x = rect.x + (rect.width - nuevo_ancho) // 2
+        return pygame.Rect(nuevo_x, rect.y, nuevo_ancho, rect.height)

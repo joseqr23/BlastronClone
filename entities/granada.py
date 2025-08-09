@@ -89,8 +89,8 @@ class Granada:
 
     def get_hitbox(self):
         # Extiende el rect original en ancho y alto para zona de daño
-        padding_x = 15
-        padding_y = 10
+        padding_x = 4 # definir ancho de explosion
+        padding_y = 8
         rect = self.get_rect()
         hitbox = pygame.Rect(
             rect.left - padding_x,
@@ -150,7 +150,8 @@ class Granada:
 
     def rebote_con_robot(self, robot):
         rect = self.get_rect()
-        robot_rect = robot.get_rect()
+        #robot_rect = robot.get_rect()
+        robot_rect = robot.get_hitbox_lateral()
 
         if rect.colliderect(robot_rect):
             umbral_suave = 1.0
