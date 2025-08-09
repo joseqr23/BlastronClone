@@ -89,10 +89,10 @@ class Robot:
 
         # Movimiento
         self.vel_x = 0
-        if keys[pygame.K_LEFT]:
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.vel_x = -self.speed
             self.facing_right = False
-        elif keys[pygame.K_RIGHT]:
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.vel_x = self.speed
             self.facing_right = True
 
@@ -102,6 +102,9 @@ class Robot:
             self.vel_y = -self.jump_power
             self.on_ground = False
         elif keys[pygame.K_UP] and self.on_ground:
+            self.vel_y = -self.jump_power
+            self.on_ground = False
+        elif keys[pygame.K_w] and self.on_ground:
             self.vel_y = -self.jump_power
             self.on_ground = False
 

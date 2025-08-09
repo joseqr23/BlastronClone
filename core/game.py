@@ -45,7 +45,7 @@ class Game:
 
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
-            if keys[pygame.K_d]:
+            if keys[pygame.K_BACKSPACE]:
                 self.robot.take_damage(50)
 
             check_collisions(self.robot, self.tiles)

@@ -2,7 +2,7 @@ import pygame
 import math
 
 class AimIndicator:
-    def __init__(self, origen, max_fuerza=120):
+    def __init__(self, origen, max_fuerza=120): # CAMBIAR LONGITUD DE FLECHA
         self.origen = origen
         self.max_fuerza = max_fuerza
         self.direccion = (0, 0)
@@ -38,7 +38,7 @@ class AimIndicator:
         """
         angulo = self.get_angulo()
         # La velocidad escala directamente con la longitud de la flecha
-        velocidad = self.get_fuerza() / self.max_fuerza * 18
+        velocidad = self.get_fuerza() / self.max_fuerza * 18  # CAMBIAR FUERZA
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
         return self.origen, vel_x, vel_y

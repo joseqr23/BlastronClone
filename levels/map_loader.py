@@ -38,8 +38,6 @@ PLATAFORMAS = [
     (221, 352, 28, 18), # Arbol 5 izquierda tallo
 
 
-    #(0, 494 - 70, 1000, 70),  # suelo base  # Suelo base
-    # Añade más plataformas aquí...
 ]
 
 COLOR_POR_DEFECTO = (150, 150, 150)
