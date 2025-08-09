@@ -71,17 +71,47 @@ class Granada:
             return
         pantalla.blit(imagen, (int(self.x), int(self.y)))
 
+    # def rebote_con_tiles(self, tiles):
+    #     rect = self.get_rect()
+    #     for tile in tiles:
+    #         if rect.colliderect(tile.rect):
+    #             # Rebote en el piso
+    #             if self.vel_y >= 0 and rect.bottom <= tile.rect.bottom:
+    #                 self.y = tile.rect.top - self.height
+    #                 self.vel_y *= -self.friccion_rebote
+
+    #             # Rebote en el techo
+    #             elif self.vel_y < 0 and rect.top >= tile.rect.bottom:
+    #                 self.y = tile.rect.bottom
+    #                 self.vel_y *= -self.friccion_rebote
+
+    #             # Rebote lateral derecha
+    #             elif abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
+    #                 self.x = tile.rect.left - self.width
+    #                 self.vel_x *= -self.friccion_rebote
+
+    #             # Rebote lateral izquierda
+    #             elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
+    #                 self.x = tile.rect.right
+    #                 self.vel_x *= -self.friccion_rebote
+
+    #             # Evitar micro rebotes infinitos
+    #             if abs(self.vel_x) < 0.1:
+    #                 self.vel_x = 0
+    #             if abs(self.vel_y) < 0.1:
+    #                 self.vel_y = 0
+
     def rebote_con_tiles(self, tiles):
         rect = self.get_rect()
         for tile in tiles:
             if rect.colliderect(tile.rect):
-                # Rebote en el piso
+                # Rebote en el piso (granada cayendo)
                 if self.vel_y >= 0 and rect.bottom <= tile.rect.bottom:
                     self.y = tile.rect.top - self.height
                     self.vel_y *= -self.friccion_rebote
 
-                # Rebote en el techo
-                elif self.vel_y < 0 and rect.top >= tile.rect.bottom:
+                # Rebote en el techo (granada subiendo)
+                elif self.vel_y < 0 and rect.top <= tile.rect.bottom and rect.top >= tile.rect.bottom - 10:
                     self.y = tile.rect.bottom
                     self.vel_y *= -self.friccion_rebote
 
