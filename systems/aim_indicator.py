@@ -38,7 +38,7 @@ class AimIndicator:
         """
         angulo = self.get_angulo()
         # La velocidad escala directamente con la longitud de la flecha
-        velocidad = self.get_fuerza() / self.max_fuerza * 18  # CAMBIAR FUERZA
+        velocidad = self.get_fuerza() / self.max_fuerza * 25  # CAMBIAR FUERZA (18) > (23)
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
         return self.origen, vel_x, vel_y

@@ -53,11 +53,11 @@ def load_static_map():
 ####################### PARA LATERALES #######################
 
 LATERALES = [
-    (992, -15, 6, 432), # Linea vertical derecha
-    (-18, -12, 27, 423), # Linea vertical izquierda   
+    (1020, -15, 6, 432), # Linea vertical derecha
+    (-55, -12, 27, 423), # Linea vertical izquierda   
 ]
-#COLOR_POR_DEFECTO_LATERALES = (255, 0, 0)
-COLOR_POR_DEFECTO_LATERALES = None
+COLOR_POR_DEFECTO_LATERALES = (255, 0, 0)
+#COLOR_POR_DEFECTO_LATERALES = None
 
 def load_static_map_laterales():
     tiles_laterales = []
