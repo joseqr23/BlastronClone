@@ -4,9 +4,11 @@ import time
 import random
 
 class Robot:
-    def __init__(self, x, y):
+    def __init__(self, x, y, nombre="Netali Pollon"):
         self.spawn_x = x
         self.spawn_y = y
+        self.nombre = nombre
+        self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
         self.reset()
 
         self.width = 60
@@ -144,10 +146,17 @@ class Robot:
         # Vida actual
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
+        # Nombre encima de la barra de vida
+        texto_nombre = self.font_nombre.render(self.nombre, True, (255, 255, 255))
+        texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
+        pantalla.blit(texto_nombre, texto_rect)
+
     def draw_death_message(self, pantalla, fuente):
         if self.is_dead:
-            texto = fuente.render("¡BOOM!", True, (255, 0, 0))
-            rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 100))
+            # Fuente más grande para el mensaje de muerte
+            fuente_grande = pygame.font.SysFont(None, 40)
+            texto = fuente_grande.render(f"¡{self.nombre} ha sido detonado!", True, (255, 0, 0))
+            rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 200))
             pantalla.blit(texto, rect)
 
     def get_centro(self):

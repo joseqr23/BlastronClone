@@ -3,10 +3,17 @@ blastron_clone/
 ├── main.py                      # Punto de entrada
 ├── settings.py                  # Configuraciones globales
 ├── assets/                      # Imágenes, sonidos, música
+│   ├── hud/granada.png; misil.png; nada.png
+│   ├── maps/fondo.png
 │   ├── robots/
-│   ├── weapons/
-│   ├── maps/
-│   └── ui/
+│       ├── netali_sprites/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── robot_sprites/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── death.png; idle.png; jump.png; robot.png; run.png
+│   ├── robots_boss/
+│       ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
+│   ├── sfx/death.mp3; explosion.mp3
+│   ├── ui/
+│   └── weapons/granada_sprite.png; misil_sprite.png
 │
 ├── core/                        # Núcleo del motor
 │   ├── game.py
@@ -14,7 +21,10 @@ blastron_clone/
 │   └── network.py               # (opcional) multijugador en el futuro
 │
 ├── entities/                    # Jugadores, bots, proyectiles
-│   ├── robot.py
+│   ├── robots/
+│       ├── boss/boss.py
+│       ├── players/robot.py
+│       ├── weapons/granada.py;misil.py
 │   ├── projectile.py
 │   └── weapon.py
 │
@@ -23,14 +33,17 @@ blastron_clone/
 │   └── tile.py
 │
 ├── systems/                     # Lógica de turnos, física, colisiones
-│   ├── turn_manager.py
+│   ├── aim_indicator.py
 │   ├── collision.py
-│   └── physics.py
+│   ├── physics.py
+│   └── turn_manager.py
 │
 ├── ui/                          # Menús, HUD
 │   ├── hud.py
 │   └── menu.py
 │
 └── utils/                       # Funciones de ayuda
+    ├── editor.py
     ├── loader.py
-    └── math_utils.py
+    ├── math_utils.py
+    └── paths.py
