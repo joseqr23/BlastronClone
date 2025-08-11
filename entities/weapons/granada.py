@@ -15,7 +15,7 @@ class Granada:
         self.tiempo_eliminar = None
 
         # Cargar sprites
-        self.frames = load_spritesheet("assets/weapons/grenade.png", 3, self.width, self.height)
+        self.frames = load_spritesheet("assets/weapons/granada_sprite.png", 3, self.width, self.height)
         self.estado = "idle"
         self.frame_index = 0
         self.timer = 0

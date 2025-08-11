@@ -4,6 +4,7 @@ from entities.players.robot import Robot
 from levels.map_loader import load_static_map, load_static_map_laterales
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from entities.weapons.granada import Granada
+from entities.weapons.misil import Misil
 from systems.aim_indicator import AimIndicator
 from ui.hud import HUDArmas
 
@@ -18,6 +19,7 @@ class Game:
         self.tiles = load_static_map()
         self.tiles_laterales = load_static_map_laterales()
         self.granadas = []
+        self.misiles = []  # Lista para misiles
 
         self.mouse_click_sostenido = False
         self.fondo = pygame.image.load("assets/maps/fondo.png").convert()
@@ -28,7 +30,7 @@ class Game:
         self.aim = AimIndicator(self.robot.get_centro())
 
         # Hud armas
-        self.hud_armas = HUDArmas(['granada', 'misil'], posicion=(10,10))
+        self.hud_armas = HUDArmas(['granada', 'misil'], posicion=(10, 10))
         self.font = pygame.font.SysFont('Arial', 20)
 
     def run(self):
@@ -61,8 +63,8 @@ class Game:
                                 granada = Granada(origen[0], origen[1], vel_x, vel_y)
                                 self.granadas.append(granada)
                             elif self.robot.arma_equipada == 'misil':
-                                # Crear misil aquí cuando esté listo
-                                pass
+                                misil = Misil(origen[0], origen[1], vel_x, vel_y)
+                                self.misiles.append(misil)
 
                             self.mouse_click_sostenido = True
 
@@ -97,7 +99,7 @@ class Game:
 
                 if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
                     if granada.get_hitbox().colliderect(self.robot.get_rect()):
-                        self.robot.take_damage(50)
+                        self.robot.take_damage(70)
                         granada.ya_hizo_dano = True
 
                 if granada.estado == "done":
@@ -106,11 +108,22 @@ class Game:
             for granada in self.granadas:
                 granada.draw(self.pantalla)
 
-            # Aquí actualizar y dibujar misiles si los tienes
-            # for misil in self.misiles[:]:
-            #     misil.update(...)
-            #     misil.draw(self.pantalla)
-            #     ... gestión de daño y eliminación
+            # Actualizar y dibujar misiles
+            for misil in self.misiles[:]:
+                misil.update(self.tiles, self.robot)
+
+                # Daño al robot
+                if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+                    if misil.get_hitbox().colliderect(self.robot.get_rect()):
+                        self.robot.take_damage(50)
+                        misil.ya_hizo_dano = True
+
+                # Eliminar cuando termine animación
+                if misil.estado == "done":
+                    self.misiles.remove(misil)
+
+            for misil in self.misiles:
+                misil.draw(self.pantalla)
 
             # Mostrar indicador de puntería solo si arma equipada no es None ni 'nada'
             if self.robot.arma_equipada not in [None, 'nada']:
