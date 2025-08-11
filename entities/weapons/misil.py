@@ -1,5 +1,5 @@
-import math
 import pygame
+import math
 from utils.loader import load_spritesheet
 
 class Misil:
@@ -9,116 +9,127 @@ class Misil:
         self.width = 40
         self.height = 40
 
-        # Estado y animación
+        # Tiempos
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000
+        self.tiempo_post_explosion = 300
+        self.tiempo_eliminar = None
+        self.tiempo_armado = 300  # milisegundos antes de que pueda explotar
+
+        # Cargar sprites
         self.frames = load_spritesheet("assets/weapons/misil_sprite.png", 3, self.width, self.height)
-        self.estado = "fly"  # fly -> explode -> done
+        self.estado = "idle"
         self.frame_index = 0
         self.timer = 0
-        self.vel_anim = 100  # ms por frame
+        self.explotado = False
+        self.muerta = False
 
         # Física
         self.vel_x = vel_x
         self.vel_y = vel_y
-        self.gravity = 0.3
+        self.gravity = 0.5
         self.friccion_aire = 0.99
 
-        # Tiempos
-        self.tiempo_post_explosion = 300
-        self.tiempo_eliminar = None
-        self.spawn_time = pygame.time.get_ticks()
-        self.min_arming_time = 200
-
-        # Flags
-        self.muerto = False
         self.ya_hizo_dano = False
-        self.explotado = False
+        self.tiempo_creacion = pygame.time.get_ticks()
 
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
-    def get_hitbox(self):
-        padding_x = 4
-        padding_y = 8
-        rect = self.get_rect()
-        return pygame.Rect(
-            rect.left - padding_x,
-            rect.top - padding_y,
-            rect.width + 2 * padding_x,
-            rect.height + 2 * padding_y
-        )
-
     def update(self, tiles, robot):
         ahora = pygame.time.get_ticks()
 
-        if self.estado == "fly":
+        # Cambiar estado según tiempo
+        if not self.explotado and ahora >= self.tiempo_explosion:
+            self.estado = "explode"
+            self.explotado = True
+            self.tiempo_eliminar = ahora + self.tiempo_post_explosion
+        elif not self.explotado and self.tiempo_explosion - ahora <= 500:
+            self.estado = "warning"
+        elif not self.explotado:
+            self.estado = "idle"
+
+        # Física
+        if not self.explotado:
             self.vel_y += self.gravity
-            velocidad_max = max(abs(self.vel_x), abs(self.vel_y))
-            pasos = int(velocidad_max // 4) + 1
+
+            # Dividir el movimiento en pasos para evitar tunneling
+            pasos = int(max(abs(self.vel_x), abs(self.vel_y)) // 5) + 1
             dx = self.vel_x / pasos
             dy = self.vel_y / pasos
 
             for _ in range(pasos):
                 self.x += dx
                 self.y += dy
-                if ahora - self.spawn_time >= self.min_arming_time:
-                    if self.colisiona_con_tiles(tiles) or self.colisiona_con_robot(robot):
-                        self.explotar()
-                        break
+                self.colisiona_con_tiles(tiles)
+                self.colisiona_con_robot(robot)
 
             self.vel_x *= self.friccion_aire
 
-            if ahora - self.timer > self.vel_anim:
-                self.timer = ahora
-                self.frame_index = (self.frame_index + 1) % 2
-
-        elif self.estado == "explode":
-            if ahora >= self.tiempo_eliminar:
-                self.estado = "done"
-                self.muerto = True
-
-    def explotar(self):
-        if self.estado != "explode":
-            self.estado = "explode"
-            self.explotado = True
-            self.frame_index = 2
-            self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
-            self.vel_x = 0
-            self.vel_y = 0
+        # Eliminar después de explotar
+        if self.explotado and ahora >= self.tiempo_eliminar:
+            self.estado = "done"
+            self.muerta = True
 
     def draw(self, pantalla):
-        if self.estado == "fly":
-            # Calcular ángulo según dirección del misil
+        if self.estado in ("idle", "warning"):
+            # Elegir frame según estado
+            frame = self.frames[0] if self.estado == "idle" else self.frames[1]
+
+            # Calcular ángulo de rotación (atan2 usa Y negativo porque en pygame la Y crece hacia abajo)
             angulo = math.degrees(math.atan2(-self.vel_y, self.vel_x))
-            
-            # Rotar el frame actual
-            imagen_rotada = pygame.transform.rotozoom(self.frames[self.frame_index], angulo, 1)
+
+            # Rotar manteniendo tamaño original
+            imagen_rotada = pygame.transform.rotozoom(frame, angulo, 1)
+
+            # Centrar rotación en el medio del misil
             rect_centrado = imagen_rotada.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
             pantalla.blit(imagen_rotada, rect_centrado.topleft)
 
         elif self.estado == "explode":
-            escala_factor = 1.5
+            escala_factor = 2  # Duplicar tamaño
             imagen_explode = pygame.transform.scale(
-                self.frames[self.frame_index],
-                (int(self.width * escala_factor), int(self.height * escala_factor))
+                self.frames[2],
+                (self.width * escala_factor, self.height * escala_factor)
             )
             x_centrado = int(self.x - (self.width * (escala_factor - 1) / 2))
             y_centrado = int(self.y - (self.height * (escala_factor - 1) / 2))
             pantalla.blit(imagen_explode, (x_centrado, y_centrado))
 
-
+    def get_hitbox(self):
+        # Extiende el rect original en ancho y alto para zona de daño
+        padding_x = 4 # definir ancho de explosion
+        padding_y = 8
+        rect = self.get_rect()
+        hitbox = pygame.Rect(
+            rect.left - padding_x,
+            rect.top - padding_y,
+            rect.width + 2 * padding_x,
+            rect.height + 2 * padding_y
+        )
+        return hitbox
 
 
     def colisiona_con_tiles(self, tiles):
         rect = self.get_rect()
+
         for tile in tiles:
             if rect.colliderect(tile.rect):
-                return True
-        return False
+                # Forzar explosión inmediata
+                if not self.explotado:
+                    self.estado = "explode"
+                    self.explotado = True
+                    self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
+                return  # No seguir revisando, ya explotó
+
 
     def colisiona_con_robot(self, robot):
-        rect = self.get_rect()
-        if rect.colliderect(robot.get_hitbox_lateral()):
-            return True
-        return False
+        if pygame.time.get_ticks() - self.tiempo_creacion < self.tiempo_armado:
+            return  # Aún no está armado
 
-    
+        rect = self.get_rect()
+        robot_rect = robot.get_hitbox_lateral()
+        if rect.colliderect(robot_rect):
+            if not self.explotado:
+                self.estado = "explode"
+                self.explotado = True
+                self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion

@@ -18,7 +18,9 @@ class Game:
         self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO)
         self.tiles = load_static_map()
         self.tiles_laterales = load_static_map_laterales()
-        self.granadas = []
+        
+        # Armas
+        self.granadas = []  # Lista para granadas
         self.misiles = []  # Lista para misiles
 
         self.mouse_click_sostenido = False
@@ -111,19 +113,38 @@ class Game:
             # Actualizar y dibujar misiles
             for misil in self.misiles[:]:
                 misil.update(self.tiles, self.robot)
+                if not misil.explotado:
+                    misil.colisiona_con_tiles(self.tiles)
+                    misil.colisiona_con_robot(self.robot)
 
-                # Daño al robot
                 if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
                     if misil.get_hitbox().colliderect(self.robot.get_rect()):
                         self.robot.take_damage(50)
                         misil.ya_hizo_dano = True
 
-                # Eliminar cuando termine animación
                 if misil.estado == "done":
                     self.misiles.remove(misil)
 
             for misil in self.misiles:
                 misil.draw(self.pantalla)
+
+
+            # Actualizar y dibujar misiles
+            # for misil in self.misiles[:]:
+            #     misil.update(self.tiles, self.robot)
+
+            #     # Daño al robot
+            #     if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+            #         if misil.get_hitbox().colliderect(self.robot.get_rect()):
+            #             self.robot.take_damage(50)
+            #             misil.ya_hizo_dano = True
+
+            #     # Eliminar cuando termine animación
+            #     if misil.estado == "done":
+            #         self.misiles.remove(misil)
+
+            # for misil in self.misiles:
+            #     misil.draw(self.pantalla)
 
             # Mostrar indicador de puntería solo si arma equipada no es None ni 'nada'
             if self.robot.arma_equipada not in [None, 'nada']:
