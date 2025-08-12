@@ -10,11 +10,12 @@ class Granada:
         self.height = 40
 
         # Tiempos
-        self.tiempo_explosion = pygame.time.get_ticks() + 3000
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion
+        self.tiempo_explosion_otros = pygame.time.get_ticks() # inmediato para otras entidades
         self.tiempo_post_explosion = 500
         self.tiempo_eliminar = None
 
-        # Cargar sprites
+        # Cargar Sprites
         self.frames = load_spritesheet("assets/weapons/granada_sprite.png", 3, self.width, self.height)
         self.estado = "idle"
         self.frame_index = 0
@@ -90,7 +91,7 @@ class Granada:
     def get_hitbox(self):
         # Extiende el rect original en ancho y alto para zona de daño
         padding_x = 4 # definir ancho de explosion
-        padding_y = 8
+        padding_y = 8 # alto de explosion
         rect = self.get_rect()
         hitbox = pygame.Rect(
             rect.left - padding_x,
@@ -150,7 +151,6 @@ class Granada:
 
     def rebote_con_robot(self, robot):
         rect = self.get_rect()
-        #robot_rect = robot.get_rect()
         robot_rect = robot.get_hitbox_lateral()
 
         if rect.colliderect(robot_rect):

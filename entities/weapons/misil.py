@@ -15,7 +15,7 @@ class Misil:
         self.tiempo_post_explosion = 300 # milisegundos antes de que pueda explotar
         self.tiempo_eliminar = None
 
-        # Cargar sprites
+        # Cargar Sprites
         self.frames = load_spritesheet("assets/weapons/misil_sprite.png", 3, self.width, self.height)
         self.estado = "idle"
         self.frame_index = 0
@@ -98,7 +98,7 @@ class Misil:
     def get_hitbox(self):
         # Extiende el rect original en ancho y alto para zona de daño
         padding_x = 4 # definir ancho de explosion
-        padding_y = 8
+        padding_y = 8 # alto de explosion
         rect = self.get_rect()
         hitbox = pygame.Rect(
             rect.left - padding_x,
@@ -121,18 +121,6 @@ class Misil:
                     self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
                 return  # No seguir revisando, ya explotó
 
-
-    # def colisiona_con_robot(self, robot):
-    #     if pygame.time.get_ticks() - self.tiempo_creacion < self.tiempo_post_explosion:
-    #         return  # Aún no está armado
-
-    #     rect = self.get_rect()
-    #     robot_rect = robot.get_hitbox_lateral()
-    #     if rect.colliderect(robot_rect):
-    #         if not self.explotado:
-    #             self.estado = "explode"
-    #             self.explotado = True
-    #             self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
     def colisiona_con_robot(self, robot):
         ahora = pygame.time.get_ticks()
 
