@@ -1,6 +1,7 @@
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
+from entities.players.robot_estatico import RobotEstatico
 from levels.map_loader import load_static_map, load_static_map_laterales
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from entities.weapons.granada import Granada
@@ -36,6 +37,8 @@ class Game:
         self.font = pygame.font.SysFont('Arial', 20)
 
     def run(self):
+        self.robots_estaticos = []  # Lista para robots estáticos
+
         while True:
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
@@ -45,12 +48,16 @@ class Game:
                 # Manejar selección de arma desde HUD
                 arma_seleccionada = self.hud_armas.manejar_evento(evento)
                 if arma_seleccionada is not None:
-                    self.robot.arma_equipada = arma_seleccionada
+                    if arma_seleccionada == "spawn_robot":
+                        # Crear robot estático en el centro de la pantalla
+                        nuevo_robot = RobotEstatico(400, 300)
+                        self.robots_estaticos.append(nuevo_robot)
+                    else:
+                        self.robot.arma_equipada = arma_seleccionada
 
                 if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                     if not self.mouse_click_sostenido:
-
-                        # Verificar si el click fue dentro de algún botón del HUD armas
+                        # Verificar si el click fue dentro de algún botón del HUD
                         clic_sobre_hud = False
                         pos_click = evento.pos
                         for _, rect in self.hud_armas.botones:
@@ -78,9 +85,13 @@ class Game:
             if keys[pygame.K_BACKSPACE]:
                 self.robot.take_damage(50)
 
-            # Colisiones
-            check_collisions(self.robot, self.tiles)  # Piso y techo
-            check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)  # Laterales
+            # Actualizar robots estáticos (solo gravedad/colisiones)
+            for robot_estatico in self.robots_estaticos:
+                robot_estatico.update(self.tiles)
+
+            # Colisiones jugador
+            check_collisions(self.robot, self.tiles)
+            check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)
 
             # Dibujar fondo y plataformas
             self.pantalla.blit(self.fondo, (0, 0))
@@ -89,17 +100,25 @@ class Game:
             for tile in self.tiles_laterales:
                 tile.draw(self.pantalla)
 
-            # Dibujar robot
+            # Dibujar robots
             self.robot.draw(self.pantalla)
+            for robot_estatico in self.robots_estaticos:
+                robot_estatico.draw(self.pantalla)
 
             # Actualizar y dibujar granadas
             for granada in self.granadas[:]:
                 granada.update(self.tiles, self.robot)
+                for robot_estatico in self.robots_estaticos:
+                    granada.rebote_con_robot(robot_estatico)
+                    if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+                        if granada.get_hitbox().colliderect(robot_estatico.get_rect()):
+                            robot_estatico.take_damage(70)
+                            granada.ya_hizo_dano = True
+
                 if not granada.explotado:
                     granada.rebote_con_tiles(self.tiles)
                     granada.rebote_con_robot(self.robot)
-
-                if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+                elif granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
                     if granada.get_hitbox().colliderect(self.robot.get_rect()):
                         self.robot.take_damage(70)
                         granada.ya_hizo_dano = True
@@ -113,11 +132,17 @@ class Game:
             # Actualizar y dibujar misiles
             for misil in self.misiles[:]:
                 misil.update(self.tiles, self.robot)
+                for robot_estatico in self.robots_estaticos:
+                    misil.colisiona_con_robot(robot_estatico)
+                    if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+                        if misil.get_hitbox().colliderect(robot_estatico.get_rect()):
+                            robot_estatico.take_damage(50)
+                            misil.ya_hizo_dano = True
+
                 if not misil.explotado:
                     misil.colisiona_con_tiles(self.tiles)
                     misil.colisiona_con_robot(self.robot)
-
-                if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+                elif misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
                     if misil.get_hitbox().colliderect(self.robot.get_rect()):
                         self.robot.take_damage(50)
                         misil.ya_hizo_dano = True
@@ -128,36 +153,20 @@ class Game:
             for misil in self.misiles:
                 misil.draw(self.pantalla)
 
-
-            # Actualizar y dibujar misiles
-            # for misil in self.misiles[:]:
-            #     misil.update(self.tiles, self.robot)
-
-            #     # Daño al robot
-            #     if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
-            #         if misil.get_hitbox().colliderect(self.robot.get_rect()):
-            #             self.robot.take_damage(50)
-            #             misil.ya_hizo_dano = True
-
-            #     # Eliminar cuando termine animación
-            #     if misil.estado == "done":
-            #         self.misiles.remove(misil)
-
-            # for misil in self.misiles:
-            #     misil.draw(self.pantalla)
-
-            # Mostrar indicador de puntería solo si arma equipada no es None ni 'nada'
+            # Mostrar puntería si arma equipada
             if self.robot.arma_equipada not in [None, 'nada']:
                 mouse_pos = pygame.mouse.get_pos()
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 self.aim.draw(self.pantalla)
 
-            # Dibujar HUD de armas
+            # HUD
             self.hud_armas.draw(self.pantalla, self.font)
 
-            # Mensaje de muerte del robot
+            # Mensajes de muerte
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
+            for robot_estatico in self.robots_estaticos:
+                robot_estatico.draw_death_message(self.pantalla, self.fuente_muerte)
 
             pygame.display.flip()
             self.reloj.tick(60)

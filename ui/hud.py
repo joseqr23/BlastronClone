@@ -2,7 +2,7 @@ import pygame
 
 class HUDArmas:
     def __init__(self, armas_disponibles, posicion=(10, 10)):
-        self.armas = ['nada'] + armas_disponibles  # Insertamos "nada" al inicio
+        self.armas = ['nada'] + armas_disponibles + ['spawn_robot']  # Insertamos "nada" al inicio / robot al final para spawnear al robot
         self.pos = posicion
         self.seleccion = 'nada'  # Por defecto sin arma equipada
         self.botones = []

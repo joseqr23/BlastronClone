@@ -45,9 +45,9 @@ class Robot:
         self.frame_timer = 0
         self.image = None
 
-        ############ Este codigo sobre escribe a las variables ya declaradas - Reaparecer de manera random ############
+        # Reaparecer en posición aleatoria
         min_x = 100
-        max_x = 800  # Ajusta esto según el tamaño de tu nivel
+        max_x = 800
         self.x = random.randint(min_x, max_x)
         self.y = 0  # Empieza desde arriba y caerá hasta tocar plataforma
 
@@ -73,24 +73,7 @@ class Robot:
         self.dead_timer = pygame.time.get_ticks()
         self.death_sound.play()
 
-    def update(self, keys):
-        if self.is_dead:
-            self.current_animation = "death"
-            self.frame_timer += 1
-            if self.frame_timer >= 10:
-                self.frame_timer = 0
-                if self.frame_index < len(self.animations["death"]) - 1:
-                    self.frame_index += 1
-
-            # Reinicia tras 2 segundos muerto
-            if pygame.time.get_ticks() - self.dead_timer > 2000:
-                self.reset()
-            self.image = self.animations["death"][self.frame_index]
-            if not self.facing_right:
-                self.image = pygame.transform.flip(self.image, True, False)
-            return
-
-        # Movimiento
+    def manejar_controles(self, keys):
         self.vel_x = 0
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.vel_x = -self.speed
@@ -99,22 +82,16 @@ class Robot:
             self.vel_x = self.speed
             self.facing_right = True
 
+        if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
+            self.vel_y = -self.jump_power
+            self.on_ground = False
+
+    def aplicar_fisica(self):
         self.x += self.vel_x
-
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.vel_y = -self.jump_power
-            self.on_ground = False
-        elif keys[pygame.K_UP] and self.on_ground:
-            self.vel_y = -self.jump_power
-            self.on_ground = False
-        elif keys[pygame.K_w] and self.on_ground:
-            self.vel_y = -self.jump_power
-            self.on_ground = False
-
         self.vel_y += self.gravity
         self.y += self.vel_y
 
-        # Animaciones
+    def actualizar_animacion(self):
         if not self.on_ground:
             self.current_animation = "jump"
             self.frame_index = 0
@@ -132,28 +109,46 @@ class Robot:
         if not self.facing_right:
             self.image = pygame.transform.flip(self.image, True, False)
 
+    def update(self, keys):
+        if self.is_dead:
+            self.current_animation = "death"
+            self.frame_timer += 1
+            if self.frame_timer >= 10:
+                self.frame_timer = 0
+                if self.frame_index < len(self.animations["death"]) - 1:
+                    self.frame_index += 1
+
+            # Reinicia tras 2 segundos muerto
+            if pygame.time.get_ticks() - self.dead_timer > 2000:
+                self.reset()
+            self.image = self.animations["death"][self.frame_index]
+            if not self.facing_right:
+                self.image = pygame.transform.flip(self.image, True, False)
+            return
+
+        self.manejar_controles(keys)
+        self.aplicar_fisica()
+        self.actualizar_animacion()
+
     def draw(self, pantalla):
         pantalla.blit(self.image, (self.x, self.y))
 
-        # Dibujar barra de vida encima del robot
+        # Barra de vida
         bar_width = 60
         bar_height = 10
         health_ratio = max(self.health / 200, 0)
         health_color = (200, 0, 0) if self.health < 60 else (0, 200, 0)
 
-        # Fondo de la barra
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
-        # Vida actual
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
-        # Nombre encima de la barra de vida
+        # Nombre encima
         texto_nombre = self.font_nombre.render(self.nombre, True, (255, 255, 255))
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 
     def draw_death_message(self, pantalla, fuente):
         if self.is_dead:
-            # Fuente más grande para el mensaje de muerte
             fuente_grande = pygame.font.SysFont(None, 40)
             texto = fuente_grande.render(f"¡{self.nombre} ha sido detonado!", True, (255, 0, 0))
             rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 200))
@@ -162,11 +157,8 @@ class Robot:
     def get_centro(self):
         return (self.x + self.width // 2, self.y + self.height // 2)
 
-    def get_hitbox_lateral(self): # Esto hace que la granada al rebotar con el robot detecte que el robot tiene el ancho definido
-        # Centrado horizontalmente dentro del rect normal, con ancho 20 por defecto (60) 
+    def get_hitbox_lateral(self):
         rect = self.get_rect()
         nuevo_ancho = 20
         nuevo_x = rect.x + (rect.width - nuevo_ancho) // 2
         return pygame.Rect(nuevo_x, rect.y, nuevo_ancho, rect.height)
-    
-
