@@ -10,10 +10,10 @@ class Misil:
         self.height = 40
 
         # Tiempos
-        self.tiempo_explosion = pygame.time.get_ticks() + 3000
-        self.tiempo_post_explosion = 300
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion
+        self.tiempo_explosion_otros = pygame.time.get_ticks() # inmediato para otras entidades
+        self.tiempo_post_explosion = 300 # milisegundos antes de que pueda explotar
         self.tiempo_eliminar = None
-        self.tiempo_armado = 300  # milisegundos antes de que pueda explotar
 
         # Cargar sprites
         self.frames = load_spritesheet("assets/weapons/misil_sprite.png", 3, self.width, self.height)
@@ -122,9 +122,27 @@ class Misil:
                 return  # No seguir revisando, ya explotó
 
 
+    # def colisiona_con_robot(self, robot):
+    #     if pygame.time.get_ticks() - self.tiempo_creacion < self.tiempo_post_explosion:
+    #         return  # Aún no está armado
+
+    #     rect = self.get_rect()
+    #     robot_rect = robot.get_hitbox_lateral()
+    #     if rect.colliderect(robot_rect):
+    #         if not self.explotado:
+    #             self.estado = "explode"
+    #             self.explotado = True
+    #             self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
     def colisiona_con_robot(self, robot):
-        if pygame.time.get_ticks() - self.tiempo_creacion < self.tiempo_armado:
-            return  # Aún no está armado
+        ahora = pygame.time.get_ticks()
+
+        # Si el robot es el jugador, esperar hasta tiempo_explosion
+        if getattr(robot, "es_jugador", False):
+            if ahora < self.tiempo_explosion:
+                return
+        else:  # Otras entidades: usar tiempo_explosion_otros
+            if ahora < self.tiempo_explosion_otros:
+                return
 
         rect = self.get_rect()
         robot_rect = robot.get_hitbox_lateral()
@@ -132,4 +150,4 @@ class Misil:
             if not self.explotado:
                 self.estado = "explode"
                 self.explotado = True
-                self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
+                self.tiempo_eliminar = ahora + self.tiempo_post_explosion

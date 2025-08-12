@@ -4,7 +4,8 @@ from systems.collision import check_collisions
 class RobotEstatico(Robot):
     def __init__(self, x, y, nombre="Alfonso"):
         super().__init__(x, y, nombre)
-
+        self.es_jugador = False
+        
     def update(self, tiles, armas=None, keys=None):
         if self.is_dead:
             super().update(keys)  # Mantener animación de muerte

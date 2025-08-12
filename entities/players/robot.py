@@ -25,7 +25,8 @@ class Robot:
         self.death_sound.set_volume(0.5)
 
         self.arma_equipada = None  # 'granada', 'misil', o None
-
+        self.es_jugador = True
+        
     def reset(self):
         self.x = self.spawn_x
         self.y = self.spawn_y
