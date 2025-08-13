@@ -7,7 +7,7 @@ from systems.collision import check_collisions, check_collisions_laterales_esqui
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
 from systems.aim_indicator import AimIndicator
-from ui.hud import HUDArmas
+from ui.hud import HUDArmas, HUDPuntajes
 
 class Game:
     def __init__(self):
@@ -35,6 +35,12 @@ class Game:
         # Hud armas
         self.hud_armas = HUDArmas(['granada', 'misil'], posicion=(10, 10))
         self.font = pygame.font.SysFont('Arial', 20)
+
+        # Puntajes
+        self.puntajes = {}
+        self.puntajes[self.robot] = 0  # Jugador principal
+        self.hud_puntajes = HUDPuntajes(self)
+    
 
     def run(self):
         self.robots_estaticos = []  # Lista para robots estáticos
@@ -116,15 +122,23 @@ class Game:
                 for robot_estatico in self.robots_estaticos:
                     granada.rebote_con_robot(robot_estatico)
 
-                    # if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
-                    #     if granada.get_hitbox().colliderect(robot_estatico.get_rect()):
+                    # if granada.explotado and granada.estado == "explode":
+                    #     if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
                     #         robot_estatico.take_damage(70)
-                    #         granada.ya_hizo_dano = True
+                    #         granada.danados.add(robot_estatico)
+           
                     if granada.explotado and granada.estado == "explode":
                         if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
                             robot_estatico.take_damage(70)
+                            
+                            # Sistema de puntaje
+                            puntos = 70
+                            if robot_estatico.health <= 0:  # Si murió con este golpe
+                                puntos *= 2
+                            self.puntajes[self.robot] += puntos
+
                             granada.danados.add(robot_estatico)
-           
+
 
                 if not granada.explotado:
                     granada.rebote_con_tiles(self.tiles)
@@ -146,13 +160,21 @@ class Game:
                 for robot_estatico in self.robots_estaticos:
                     misil.colisiona_con_robot(robot_estatico)
 
-                    # if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
-                    #     if misil.get_hitbox().colliderect(robot_estatico.get_rect()):
+                    # if misil.explotado and misil.estado == "explode":
+                    #     if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
                     #         robot_estatico.take_damage(50)
-                    #         misil.ya_hizo_dano = True
+                    #         misil.danados.add(robot_estatico)
+
                     if misil.explotado and misil.estado == "explode":
                         if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
                             robot_estatico.take_damage(50)
+                            
+                            # Sistema de puntaje
+                            puntos = 50
+                            if robot_estatico.health <= 0:  # Si murió con este golpe
+                                puntos *= 2
+                            self.puntajes[self.robot] += puntos
+
                             misil.danados.add(robot_estatico)
 
                 if not misil.explotado:
@@ -178,6 +200,7 @@ class Game:
 
             # HUD
             self.hud_armas.draw(self.pantalla, self.font)
+            self.hud_puntajes.draw(self.pantalla)
 
             # Mensajes de muerte
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)

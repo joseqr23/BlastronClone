@@ -4,7 +4,7 @@ import time
 import random
 
 class Robot:
-    def __init__(self, x, y, nombre="Netali Pollon"):
+    def __init__(self, x, y, nombre="xd"):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre = nombre
@@ -144,7 +144,7 @@ class Robot:
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
         # Nombre encima
-        texto_nombre = self.font_nombre.render(self.nombre, True, (255, 255, 255))
+        texto_nombre = self.font_nombre.render(self.nombre, True, (0, 0, 255))
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 

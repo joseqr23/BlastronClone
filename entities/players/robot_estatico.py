@@ -1,11 +1,19 @@
 from entities.players.robot import Robot
 from systems.collision import check_collisions
+from utils.loader import load_spritesheet
 
 class RobotEstatico(Robot):
     def __init__(self, x, y, nombre="Alfonso"):
         super().__init__(x, y, nombre)
         self.es_jugador = False
         
+        self.animations = {
+            "idle": load_spritesheet("assets/robots_boss/alfonso/idle.png", 1, self.width, self.height),
+            "run": load_spritesheet("assets/robots_boss/alfonso/run.png", 6, self.width, self.height),
+            "jump": load_spritesheet("assets/robots_boss/alfonso/jump.png", 1, self.width, self.height),
+            "death": load_spritesheet("assets/robots_boss/alfonso/death.png", 6, self.width, self.height),
+        }
+
     def update(self, tiles, armas=None, keys=None):
         if self.is_dead:
             super().update(keys)  # Mantener animación de muerte

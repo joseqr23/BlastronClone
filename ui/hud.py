@@ -56,3 +56,35 @@ class HUDArmas:
                 text = font.render(texto_mostrar, True, (0, 0, 0))
                 text_rect = text.get_rect(center=rect.center)
                 pantalla.blit(text, text_rect)
+
+
+class HUDPuntajes:
+    def __init__(self, game, posicion=(820, 10)):
+        """
+        game: referencia a la instancia de Game
+        posicion: esquina superior derecha donde se dibuja la tabla
+        """
+        self.game = game
+        self.pos = posicion
+        self.font = pygame.font.SysFont("Arial", 18, bold=True)
+
+    def draw(self, pantalla):
+        x, y = self.pos
+        color_texto = (0, 143, 57)
+
+        # Título
+        titulo = self.font.render("Puntajes", True, (0, 0, 0))
+        pantalla.blit(titulo, (x, y))
+        y += 25
+
+        # Jugador principal
+        jugador_texto = self.font.render(f"{self.game.robot.nombre}: {self.game.puntajes.get(self.game.robot, 0)}", True, color_texto)
+        pantalla.blit(jugador_texto, (x, y))
+        y += 20
+
+        # Robots enemigos
+        for robot in self.game.robots_estaticos:
+            if not robot.is_dead:
+                texto = self.font.render(f"{robot.nombre}: {self.game.puntajes.get(robot, 0)}", True, color_texto)
+                pantalla.blit(texto, (x, y))
+                y += 20
