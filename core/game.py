@@ -69,9 +69,14 @@ class Game:
                         if not clic_sobre_hud and self.robot.arma_equipada not in [None, 'nada']:
                             origen, vel_x, vel_y = self.aim.get_datos_disparo()
                             if self.robot.arma_equipada == 'granada':
+                                ancho, alto = Granada.ANCHO, Granada.ALTO
+                                origen, vel_x, vel_y = self.aim.get_datos_disparo(ancho, alto)
                                 granada = Granada(origen[0], origen[1], vel_x, vel_y)
                                 self.granadas.append(granada)
+
                             elif self.robot.arma_equipada == 'misil':
+                                ancho, alto = Misil.ANCHO, Misil.ALTO
+                                origen, vel_x, vel_y = self.aim.get_datos_disparo(ancho, alto)
                                 misil = Misil(origen[0], origen[1], vel_x, vel_y)
                                 self.misiles.append(misil)
 

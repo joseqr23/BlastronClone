@@ -3,11 +3,13 @@ import math
 from utils.loader import load_spritesheet
 
 class Granada:
+    ANCHO = 40
+    ALTO = 40
     def __init__(self, x, y, vel_x, vel_y):
         self.x = x
         self.y = y
-        self.width = 40
-        self.height = 40
+        self.width = Granada.ANCHO
+        self.height = Granada.ALTO
 
         # Tiempos
         self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion

@@ -29,20 +29,26 @@ class AimIndicator:
         """Devuelve la punta de la flecha"""
         return (self.origen[0] + self.direccion[0], self.origen[1] + self.direccion[1])
 
-    def get_datos_disparo(self):
+    def get_datos_disparo(self, ancho_proyectil=0, alto_proyectil=0):
         """
         Devuelve:
-        - posición inicial (origen del indicador)
+        - posición inicial (ajustada para que el centro del proyectil coincida con el origen)
         - velocidad en X
         - velocidad en Y
         """
         angulo = self.get_angulo()
-        # La velocidad escala directamente con la longitud de la flecha
-        velocidad = self.get_fuerza() / self.max_fuerza * 25  # CAMBIAR FUERZA (18) > (23)
+        velocidad = self.get_fuerza() / self.max_fuerza * 25
+
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
-        return self.origen, vel_x, vel_y
 
+        # Ajuste para que el proyectil esté centrado visualmente
+        origen_ajustado = (
+            self.origen[0] - ancho_proyectil / 2,
+            self.origen[1] - alto_proyectil / 2
+        )
+
+        return origen_ajustado, vel_x, vel_y
     def draw(self, pantalla):
         punta = self.get_punta()
         distancia = self.get_fuerza()
