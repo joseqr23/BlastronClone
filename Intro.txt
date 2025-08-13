@@ -16,7 +16,11 @@ blastron_clone/
 │   └── weapons/granada_sprite.png; misil_sprite.png
 │
 ├── core/                        # Núcleo del motor
-│   ├── game.py
+│   ├── game_modes/
+│       ├── base_game.py
+│       ├── free_game.py
+│       ├── multi_game.py
+│       ├── solo_game.py
 │   ├── events.py
 │   └── network.py               # (opcional) multijugador en el futuro
 │
@@ -40,7 +44,8 @@ blastron_clone/
 │
 ├── ui/                          # Menús, HUD
 │   ├── hud.py
-│   └── menu.py
+│   ├── menu.py
+│   └── text_input.py
 │
 └── utils/                       # Funciones de ayuda
     ├── editor.py
