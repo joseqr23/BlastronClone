@@ -12,13 +12,13 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre="xd"):
+    def __init__(self, x, y, nombre_jugador):
         self.spawn_x = x
         self.spawn_y = y
-        self.nombre = nombre
+        self.nombre = nombre_jugador
         
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
-        self.color_nombre = self.COLORES_NOMBRES[hash(nombre) % len(self.COLORES_NOMBRES)] # Asignar color único según el nombre
+        self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Asignar color único según el nombre
         
         self.reset()
         self.width = 60
