@@ -1,4 +1,5 @@
 import pygame
+from entities.players.robot import Robot
 
 class HUDArmas:
     def __init__(self, armas_disponibles, posicion=(10, 10)):
@@ -70,21 +71,40 @@ class HUDPuntajes:
 
     def draw(self, pantalla):
         x, y = self.pos
-        color_texto = (0, 143, 57)
-
+        
+       
         # Título
         titulo = self.font.render("Puntajes", True, (0, 0, 0))
         pantalla.blit(titulo, (x, y))
         y += 25
 
-        # Jugador principal
-        jugador_texto = self.font.render(f"{self.game.robot.nombre}: {self.game.puntajes.get(self.game.robot, 0)}", True, color_texto)
+        #  color_texto = (0, 143, 57)
+
+        # # Jugador principal
+        # jugador_texto = self.font.render(f"{self.game.robot.nombre}: {self.game.puntajes.get(self.game.robot, 0)}", True, color_texto)
+        # pantalla.blit(jugador_texto, (x, y))
+        # y += 20
+
+        # Jugador principal (color del robot)
+        jugador_color = getattr(self.game.robot, "color_nombre", (0, 0, 0))
+        jugador_texto = self.font.render(
+            f"{self.game.robot.nombre}: {self.game.puntajes.get(self.game.robot, 0)}",
+            True,
+            jugador_color
+        )
         pantalla.blit(jugador_texto, (x, y))
         y += 20
+
+
 
         # Robots enemigos
         for robot in self.game.robots_estaticos:
             if not robot.is_dead:
-                texto = self.font.render(f"{robot.nombre}: {self.game.puntajes.get(robot, 0)}", True, color_texto)
+                color_robot = getattr(robot, "color_nombre", (0, 0, 0))
+                texto = self.font.render(
+                    f"{robot.nombre}: {self.game.puntajes.get(robot, 0)}",
+                    True,
+                    color_robot
+                )
                 pantalla.blit(texto, (x, y))
                 y += 20

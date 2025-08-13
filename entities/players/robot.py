@@ -4,13 +4,23 @@ import time
 import random
 
 class Robot:
+    COLORES_NOMBRES = [
+        (0, 0, 255),     # Azul
+        (0, 200, 0),     # Verde
+        (200, 0, 0),     # Rojo
+        (255, 140, 0),   # Naranja
+        (128, 0, 128),   # Morado
+    ]
+
     def __init__(self, x, y, nombre="xd"):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre = nombre
+        
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
+        self.color_nombre = self.COLORES_NOMBRES[hash(nombre) % len(self.COLORES_NOMBRES)] # Asignar color único según el nombre
+        
         self.reset()
-
         self.width = 60
         self.height = 90
 
@@ -143,8 +153,7 @@ class Robot:
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
-        # Nombre encima
-        texto_nombre = self.font_nombre.render(self.nombre, True, (0, 0, 255))
+        texto_nombre = self.font_nombre.render(self.nombre, True, self.color_nombre) # Nombre encima (color único por jugador)
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 

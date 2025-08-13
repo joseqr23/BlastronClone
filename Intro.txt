@@ -23,7 +23,7 @@ blastron_clone/
 ├── entities/                    # Jugadores, bots, proyectiles
 │   ├── robots/
 │       ├── boss/boss.py
-│       ├── players/robot.py
+│       ├── players/robot.py;robot_estatico.py
 │       ├── weapons/granada.py;misil.py
 │   ├── projectile.py
 │   └── weapon.py
