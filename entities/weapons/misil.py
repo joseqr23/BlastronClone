@@ -11,6 +11,8 @@ class Misil:
         self.width = Misil.ANCHO
         self.height = Misil.ALTO
 
+        self.danados = set()  # Robots que ya recibieron daño de esta explosión
+        
         # Tiempos
         self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion
         self.tiempo_explosion_otros = pygame.time.get_ticks() # inmediato para otras entidades

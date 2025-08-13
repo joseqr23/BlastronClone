@@ -115,10 +115,16 @@ class Game:
                 granada.update(self.tiles, self.robot)
                 for robot_estatico in self.robots_estaticos:
                     granada.rebote_con_robot(robot_estatico)
-                    if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
-                        if granada.get_hitbox().colliderect(robot_estatico.get_rect()):
+
+                    # if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+                    #     if granada.get_hitbox().colliderect(robot_estatico.get_rect()):
+                    #         robot_estatico.take_damage(70)
+                    #         granada.ya_hizo_dano = True
+                    if granada.explotado and granada.estado == "explode":
+                        if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
                             robot_estatico.take_damage(70)
-                            granada.ya_hizo_dano = True
+                            granada.danados.add(robot_estatico)
+           
 
                 if not granada.explotado:
                     granada.rebote_con_tiles(self.tiles)
@@ -139,10 +145,15 @@ class Game:
                 misil.update(self.tiles, self.robot)
                 for robot_estatico in self.robots_estaticos:
                     misil.colisiona_con_robot(robot_estatico)
-                    if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
-                        if misil.get_hitbox().colliderect(robot_estatico.get_rect()):
+
+                    # if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+                    #     if misil.get_hitbox().colliderect(robot_estatico.get_rect()):
+                    #         robot_estatico.take_damage(50)
+                    #         misil.ya_hizo_dano = True
+                    if misil.explotado and misil.estado == "explode":
+                        if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
                             robot_estatico.take_damage(50)
-                            misil.ya_hizo_dano = True
+                            misil.danados.add(robot_estatico)
 
                 if not misil.explotado:
                     misil.colisiona_con_tiles(self.tiles)
