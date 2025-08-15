@@ -6,9 +6,10 @@ blastron_clone/
 │   ├── hud/granada.png; misil.png; nada.png
 │   ├── maps/fondo.png
 │   ├── robots/
-│       ├── netali_sprites/death.png; idle.png; jump.png; robot.png; run.png
-│       ├── robot_sprites/death.png; idle.png; jump.png; robot.png; run.png
-│       ├── death.png; idle.png; jump.png; robot.png; run.png
+│       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── netali/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── robot/death.png; idle.png; jump.png; robot.png; run.png
 │   ├── robots_boss/
 │       ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
 │   ├── sfx/death.mp3; explosion.mp3

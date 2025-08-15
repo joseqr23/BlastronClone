@@ -13,7 +13,7 @@ from utils.paths import resource_path  # Para rutas seguras
 class FreeGame(BaseGame):
     def __init__(self, nombre_jugador, personaje):
         super().__init__()
-        self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO, nombre_jugador=nombre_jugador)
+        self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO, nombre_jugador=nombre_jugador, nombre_robot=personaje)
         self.robots_estaticos = []
         self.aim = AimIndicator(self.robot.get_centro())
         self.puntajes[self.robot] = 0

@@ -12,10 +12,11 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre_jugador):
+    def __init__(self, x, y, nombre_jugador, nombre_robot):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre = nombre_jugador
+        self.nombre_robot = nombre_robot  # <--- nuevo parámetro
         
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
         self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Asignar color único según el nombre
@@ -24,12 +25,22 @@ class Robot:
         self.width = 60
         self.height = 90
 
+
+        # Animaciones dinámicas según robot_name
+        base_path = f"assets/robots/{self.nombre_robot}"
         self.animations = {
-            "idle": load_spritesheet("assets/robots/idle.png", 1, self.width, self.height),
-            "run": load_spritesheet("assets/robots/run.png", 6, self.width, self.height),
-            "jump": load_spritesheet("assets/robots/jump.png", 1, self.width, self.height),
-            "death": load_spritesheet("assets/robots/death.png", 6, self.width, self.height),
+            "idle": load_spritesheet(f"{base_path}/idle.png", 1, self.width, self.height),
+            "run": load_spritesheet(f"{base_path}/run.png", 6, self.width, self.height),
+            "jump": load_spritesheet(f"{base_path}/jump.png", 1, self.width, self.height),
+            "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
         }
+
+        # self.animations = {
+        #     "idle": load_spritesheet("assets/robots/idle.png", 1, self.width, self.height),
+        #     "run": load_spritesheet("assets/robots/run.png", 6, self.width, self.height),
+        #     "jump": load_spritesheet("assets/robots/jump.png", 1, self.width, self.height),
+        #     "death": load_spritesheet("assets/robots/death.png", 6, self.width, self.height),
+        # }
 
         self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
         self.death_sound.set_volume(0.5)
