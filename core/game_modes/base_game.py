@@ -2,8 +2,10 @@ import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from levels.map_loader import load_static_map, load_static_map_laterales
 from ui.hud import HUDArmas, HUDPuntajes
+from ui.chat import Chat  # Nuevo: importar chat
 from systems.aim_indicator import AimIndicator
 from utils.paths import resource_path  # Importar para rutas seguras
+
 
 class BaseGame:
     def __init__(self, nombre_jugador=None, personaje=None):
@@ -34,9 +36,12 @@ class BaseGame:
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
 
         # HUD
-        self.hud_armas = HUDArmas(['granada', 'misil'], posicion=(10, 10))
+        self.hud_armas = HUDArmas(['granada', 'misil'])
         self.font = pygame.font.SysFont('Arial', 20)
         self.puntajes = {}
+
+        # Chat
+        self.chat = Chat(nombre_jugador=self.nombre_jugador)
 
     def run(self):
         """Bucle principal del juego. Debe ser implementado o extendido por subclases."""
@@ -49,3 +54,12 @@ class BaseGame:
             tile.draw(self.pantalla)
         for tile in self.tiles_laterales:
             tile.draw(self.pantalla)
+
+    def handle_events(self, event):
+        """Maneja eventos generales y del chat"""
+        self.chat.handle_event(event)
+
+    def draw_ui(self):
+        """Dibuja HUD y chat"""
+        self.hud_armas.draw(self.pantalla)
+        self.chat.draw(self.pantalla)

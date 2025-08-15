@@ -12,8 +12,13 @@ from utils.paths import resource_path  # Para rutas seguras
 
 class FreeGame(BaseGame):
     def __init__(self, nombre_jugador, personaje):
-        super().__init__()
-        self.robot = Robot(x=ANCHO // 2 - 30, y=ALTO - 90 - ALTURA_SUELO, nombre_jugador=nombre_jugador, nombre_robot=personaje)
+        super().__init__(nombre_jugador=nombre_jugador)
+        self.robot = Robot(
+            x=ANCHO // 2 - 30,
+            y=ALTO - 90 - ALTURA_SUELO,
+            nombre_jugador=nombre_jugador,
+            nombre_robot=personaje
+        )
         self.robots_estaticos = []
         self.aim = AimIndicator(self.robot.get_centro())
         self.puntajes[self.robot] = 0
@@ -25,6 +30,9 @@ class FreeGame(BaseGame):
                 if evento.type == pygame.QUIT:
                     pygame.quit()
                     return
+
+                # Pasar eventos al chat
+                self.chat.handle_event(evento)
 
                 arma_seleccionada = self.hud_armas.manejar_evento(evento)
                 if arma_seleccionada is not None:
@@ -48,8 +56,8 @@ class FreeGame(BaseGame):
 
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
-            if keys[pygame.K_BACKSPACE]:
-                self.robot.take_damage(50)
+            # if keys[pygame.K_BACKSPACE]:
+            #     self.robot.take_damage(50)
 
             for robot_estatico in self.robots_estaticos:
                 robot_estatico.update(self.tiles)
@@ -59,25 +67,33 @@ class FreeGame(BaseGame):
 
             self.draw_scene()
 
+            # Dibujar personajes
             self.robot.draw(self.pantalla)
             for robot_estatico in self.robots_estaticos:
                 robot_estatico.draw(self.pantalla)
 
+            # Armas
             self.actualizar_y_dibujar_granadas()
             self.actualizar_y_dibujar_misiles()
 
+            # Indicador de mira
             if self.robot.arma_equipada not in [None, 'nada']:
                 mouse_pos = pygame.mouse.get_pos()
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 self.aim.draw(self.pantalla)
 
+            # HUDs
             self.hud_armas.draw(self.pantalla, self.font)
             self.hud_puntajes.draw(self.pantalla)
 
+            # Mensajes de muerte
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
             for robot_estatico in self.robots_estaticos:
                 robot_estatico.draw_death_message(self.pantalla, self.fuente_muerte)
+
+            # Chat
+            self.chat.draw(self.pantalla)
 
             pygame.display.flip()
             self.reloj.tick(60)
