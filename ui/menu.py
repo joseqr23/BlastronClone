@@ -1,6 +1,7 @@
 import os
 import pygame
 from ui.text_input import TextInput
+from ui.multiplayer_menu import MultiplayerMenu
 
 class Menu:
     def __init__(self, pantalla):
@@ -90,10 +91,12 @@ class Menu:
         personaje = self.personajes[self.personaje_idx]
 
         if modo == "Modo Multijugador":
-            resultado = self.multiplayer_menu(nombre, personaje)
+            # Llamamos al menú modular de multijugador
+            multiplayer_menu = MultiplayerMenu(self.pantalla, self.font_titulo, self.font_opcion, self.font_input)
+            resultado = multiplayer_menu.show(nombre, personaje)
+            # Puede devolver None si el jugador hizo "Volver"
             if resultado is None:
-                # Volver al menú principal
-                return None
+                return self.run()  # vuelve al menú principal
             return resultado
         else:
             return {
@@ -101,7 +104,7 @@ class Menu:
                 "nombre": nombre,
                 "personaje": personaje,
             }
-
+        
     def multiplayer_menu(self, nombre, personaje):
         opciones_multiplayer = ["Servidor", "Cliente", "Volver"]
         seleccion = 0
