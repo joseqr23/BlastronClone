@@ -1,5 +1,6 @@
 # core/ui/chat.py
 import pygame
+import time
 
 class Chat:
     COLORES_NOMBRES = [
@@ -15,31 +16,32 @@ class Chat:
         self.posicion = posicion
         self.ancho = ancho
         self.alto = alto
-        self.mensajes = []  # ahora guardamos todos los mensajes
+        self.mensajes = []
         self.font = pygame.font.SysFont("Arial", 16)
-        self.color_fondo = (0, 0, 0, 150)  # Negro semi-transparente
+        self.color_fondo = (0, 0, 0, 150)
         self.color_texto = (255, 255, 255)
         self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)]
         self.input_text = ""
         self.activo = False
-        self.scroll_offset = 0  # para movernos en el historial
+        self.scroll_offset = 0
+        self.cursor_visible = True
+        self.last_cursor_toggle = pygame.time.get_ticks()
+        self.cursor_interval = 500  # milisegundos
 
     def agregar_mensaje(self, texto):
-        """Agrega un mensaje al historial."""
         self.mensajes.append(texto)
-        self.scroll_offset = 0  # volver al final cuando hay mensaje nuevo
+        self.scroll_offset = 0
 
     def lineas_visibles(self):
-        """Cantidad de líneas que caben en el chat."""
         return (self.alto - 25) // 18
 
     def draw(self, pantalla):
-        """Dibuja el chat y la caja de entrada."""
+        # Fondo
         surface = pygame.Surface((self.ancho, self.alto), pygame.SRCALPHA)
         surface.fill(self.color_fondo)
         pantalla.blit(surface, self.posicion)
 
-        # Calcular mensajes visibles según el scroll
+        # Mensajes visibles según scroll
         max_lineas = self.lineas_visibles()
         inicio = max(0, len(self.mensajes) - max_lineas - self.scroll_offset)
         fin = inicio + max_lineas
@@ -60,12 +62,39 @@ class Chat:
                 pantalla.blit(render, (self.posicion[0] + 5, self.posicion[1] + y_offset))
             y_offset += 18
 
+        # Barra de scroll
+        total_mensajes = len(self.mensajes)
+        if total_mensajes > max_lineas:
+            barra_altura = int((max_lineas / total_mensajes) * (self.alto - 25))
+            barra_altura = max(10, barra_altura)
+            max_offset = total_mensajes - max_lineas
+            posicion_barra = int((self.scroll_offset / max_offset) * (self.alto - 25 - barra_altura)) if max_offset > 0 else 0
+
+            pygame.draw.rect(
+                pantalla,
+                (150, 150, 150),
+                (
+                    self.posicion[0] + self.ancho - 6,
+                    self.posicion[1] + 5 + posicion_barra,
+                    4,
+                    barra_altura
+                )
+            )
+
+        # Línea de entrada con cursor parpadeante
         if self.activo:
-            input_render = self.font.render("Decir: " + self.input_text, True, self.color_texto)
+            ahora = pygame.time.get_ticks()
+            if ahora - self.last_cursor_toggle >= self.cursor_interval:
+                self.cursor_visible = not self.cursor_visible
+                self.last_cursor_toggle = ahora
+
+            texto_mostrar = "Decir: " + self.input_text
+            if self.cursor_visible:
+                texto_mostrar += "|"
+            input_render = self.font.render(texto_mostrar, True, self.color_texto)
             pantalla.blit(input_render, (self.posicion[0] + 5, self.posicion[1] + self.alto - 20))
 
     def handle_event(self, evento):
-        """Maneja eventos de teclado y scroll."""
         if evento.type == pygame.KEYDOWN:
             if evento.key == pygame.K_RETURN:
                 if self.activo:
@@ -76,7 +105,6 @@ class Chat:
                     self.activo = False
                 else:
                     self.activo = True
-
             elif self.activo:
                 if evento.key == pygame.K_BACKSPACE:
                     self.input_text = self.input_text[:-1]
@@ -84,14 +112,13 @@ class Chat:
                     if evento.unicode.isprintable():
                         self.input_text += evento.unicode
             else:
-                # Scroll con teclado
                 if evento.key == pygame.K_PAGEUP:
                     self.scroll_offset = min(self.scroll_offset + 1, max(0, len(self.mensajes) - self.lineas_visibles()))
                 elif evento.key == pygame.K_PAGEDOWN:
                     self.scroll_offset = max(self.scroll_offset - 1, 0)
 
         elif evento.type == pygame.MOUSEBUTTONDOWN and not self.activo:
-            if evento.button == 4:  # Rueda hacia arriba
+            if evento.button == 4:
                 self.scroll_offset = min(self.scroll_offset + 1, max(0, len(self.mensajes) - self.lineas_visibles()))
-            elif evento.button == 5:  # Rueda hacia abajo
+            elif evento.button == 5:
                 self.scroll_offset = max(self.scroll_offset - 1, 0)

@@ -56,8 +56,8 @@ class FreeGame(BaseGame):
 
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
-            # if keys[pygame.K_BACKSPACE]:
-            #     self.robot.take_damage(50)
+            if keys[pygame.K_DELETE]:
+                self.robot.take_damage(50)
 
             for robot_estatico in self.robots_estaticos:
                 robot_estatico.update(self.tiles)
