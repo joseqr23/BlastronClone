@@ -39,6 +39,11 @@ class Menu:
         clock = pygame.time.Clock()
         pygame.key.set_repeat(400, 40)
 
+        # Variables adicionales para multijugador
+        modo_multijugador_opcion = 0  # 0 = host, 1 = cliente
+        input_ip = TextInput((400, 270, 190, 30), self.font_input, max_length=15)
+        mostrar_ip = False
+
         while True:
             self.pantalla.fill((200, 200, 200))
             mouse_pos = pygame.mouse.get_pos()
@@ -50,9 +55,10 @@ class Menu:
                     exit()
 
                 self.text_input.handle_event(event)
+                input_ip.handle_event(event)
 
                 # Manejo con teclado
-                if event.type == pygame.KEYDOWN and not self.text_input.active:
+                if event.type == pygame.KEYDOWN and not self.text_input.active and not input_ip.active:
                     if event.key == pygame.K_UP:
                         self.opcion_seleccionada = (self.opcion_seleccionada - 1) % len(self.opciones)
                     elif event.key == pygame.K_DOWN:
@@ -62,11 +68,16 @@ class Menu:
                     elif event.key == pygame.K_RIGHT:
                         self.personaje_idx = (self.personaje_idx + 1) % len(self.personajes)
                     elif event.key == pygame.K_RETURN:
-                        return {
+                        # Construir dict de selección final
+                        seleccion = {
                             "modo": self.opciones[self.opcion_seleccionada],
                             "nombre": self.text_input.get_text() or "Jugador",
                             "personaje": self.personajes[self.personaje_idx],
                         }
+                        if self.opciones[self.opcion_seleccionada] == "Modo Multijugador":
+                            seleccion["host"] = (modo_multijugador_opcion == 0)
+                            seleccion["server_ip"] = input_ip.get_text() if modo_multijugador_opcion == 1 else "127.0.0.1"
+                        return seleccion
 
                 # Manejo con mouse
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Click izquierdo
@@ -78,13 +89,16 @@ class Menu:
                     for i, rect in enumerate(self.rect_opciones):
                         if rect.collidepoint(mouse_pos):
                             self.opcion_seleccionada = i
-                            return {
-                                "modo": self.opciones[self.opcion_seleccionada],
-                                "nombre": self.text_input.get_text() or "Jugador",
-                                "personaje": self.personajes[self.personaje_idx],
-                            }
+
+                    # Click host/cliente
+                    if self.opciones[self.opcion_seleccionada] == "Modo Multijugador":
+                        if pygame.Rect(200, 250, 80, 30).collidepoint(mouse_pos):
+                            modo_multijugador_opcion = 0
+                        elif pygame.Rect(300, 250, 80, 30).collidepoint(mouse_pos):
+                            modo_multijugador_opcion = 1
 
             self.text_input.update()
+            input_ip.update()
 
             # 🔹 Título
             titulo = self.font_titulo.render("Menú Principal", True, (0, 0, 0))
@@ -103,33 +117,27 @@ class Menu:
             portrait_rect = portrait.get_rect()
             portrait_rect.center = (400, 220)
 
-            # Flecha izquierda
+            # Flechas
             flecha_izq = self.font_input.render("←", True, (0, 0, 0))
             self.rect_flecha_izq = flecha_izq.get_rect(
                 topleft=(portrait_rect.left - 30,
                          portrait_rect.centery - flecha_izq.get_height() // 2))
             self.pantalla.blit(flecha_izq, self.rect_flecha_izq)
-
             if self.rect_flecha_izq.collidepoint(mouse_pos):
                 cursor_hover = True
 
-            # Portrait
             self.pantalla.blit(portrait, portrait_rect)
 
-            # Nombre del personaje
             nombre_personaje = self.personajes[self.personaje_idx].title()
             texto_nombre = self.font_input.render(nombre_personaje, True, (0, 0, 0))
             texto_nombre_rect = texto_nombre.get_rect(midleft=(portrait_rect.right + 50, portrait_rect.centery))
-            
             self.pantalla.blit(texto_nombre, texto_nombre_rect)
 
-            # Flecha derecha
             flecha_der = self.font_input.render("→", True, (0, 0, 0))
             self.rect_flecha_der = flecha_der.get_rect(
                 topleft=(portrait_rect.right + 10,
                          portrait_rect.centery - flecha_der.get_height() // 2))
             self.pantalla.blit(flecha_der, self.rect_flecha_der)
-
             if self.rect_flecha_der.collidepoint(mouse_pos):
                 cursor_hover = True
 
@@ -150,6 +158,18 @@ class Menu:
                 self.rect_opciones.append(rect_op)
                 self.pantalla.blit(texto, rect_op)
                 y += 40
+
+            # 🔹 Opciones host/cliente solo para multijugador
+            if self.opciones[self.opcion_seleccionada] == "Modo Multijugador":
+                host_text = self.font_input.render("Host", True, (0, 0, 0))
+                client_text = self.font_input.render("Cliente", True, (0, 0, 0))
+                self.pantalla.blit(host_text, (200, 250))
+                self.pantalla.blit(client_text, (300, 250))
+
+                if modo_multijugador_opcion == 1:
+                    etiqueta_ip = self.font_input.render("IP servidor:", True, (0, 0, 0))
+                    self.pantalla.blit(etiqueta_ip, (200, 270))
+                    input_ip.draw(self.pantalla)
 
             # 🔹 Cambiar cursor solo si es necesario
             if cursor_hover and self.cursor_actual != "HAND":

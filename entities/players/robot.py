@@ -17,14 +17,12 @@ class Robot:
         self.spawn_y = y
         self.nombre = nombre_jugador
         self.nombre_robot = nombre_robot  # <--- nuevo parámetro
-        
-        self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
-        self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Asignar color único según el nombre
-        
-        self.reset()
+
         self.width = 60
         self.height = 90
 
+        self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
+        self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Color único por nombre
 
         # Animaciones dinámicas según robot_name
         base_path = f"assets/robots/{self.nombre_robot}"
@@ -35,11 +33,20 @@ class Robot:
             "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
         }
 
+        # Inicializa la imagen para que nunca sea None
+        self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))
+        if self.image is None:
+            self.image = pygame.Surface((self.width, self.height))
+            self.image.fill((255, 0, 255))  # Color de emergencia si no carga el spritesheet
+
         self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
         self.death_sound.set_volume(0.5)
 
         self.arma_equipada = None  # 'granada', 'misil', o None
         self.es_jugador = True
+
+        # Configuración inicial del robot
+        self.reset()
         
     def reset(self):
         self.x = self.spawn_x
@@ -58,19 +65,19 @@ class Robot:
         self.current_animation = "idle"
         self.frame_index = 0
         self.frame_timer = 0
-        self.image = None
 
         # Reaparecer en posición aleatoria
         min_x = 100
         max_x = 800
         self.x = random.randint(min_x, max_x)
-        self.y = 0  # Empieza desde arriba y caerá hasta tocar plataforma
+        self.y = 0  # empieza desde arriba y caerá
 
-        self.vel_x = 0
-        self.vel_y = 0
-        self.health = 200
-        self.frame_index = 0
-        self.current_animation = "idle"
+        # Asegura que la imagen esté inicializada
+        if hasattr(self, "animations") and "idle" in self.animations:
+            self.image = self.animations["idle"][0]
+        else:
+            self.image = pygame.Surface((self.width, self.height))
+            self.image.fill((255, 0, 255))
 
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
@@ -123,7 +130,7 @@ class Robot:
         if not self.facing_right:
             self.image = pygame.transform.flip(self.image, True, False)
 
-    def update(self, keys):
+    def update(self, keys=None):
         if self.is_dead:
             self.current_animation = "death"
             self.frame_timer += 1
@@ -140,7 +147,8 @@ class Robot:
                 self.image = pygame.transform.flip(self.image, True, False)
             return
 
-        self.manejar_controles(keys)
+        if keys:  # Solo maneja controles si keys es proporcionado
+            self.manejar_controles(keys)
         self.aplicar_fisica()
         self.actualizar_animacion()
 
@@ -156,7 +164,7 @@ class Robot:
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
-        texto_nombre = self.font_nombre.render(self.nombre, True, self.color_nombre) # Nombre encima (color único por jugador)
+        texto_nombre = self.font_nombre.render(self.nombre, True, self.color_nombre)  # Nombre encima
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 

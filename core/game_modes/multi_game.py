@@ -24,7 +24,7 @@ class MultiplayerGame(BaseGame):
     Nota: Esta es una versión simple para pruebas en LAN/localhost.
     """
 
-    def __init__(self, nombre_jugador, personaje, host=False, server_ip="192.168.1.236", port=5000):
+    def __init__(self, nombre_jugador, personaje, host=True, server_ip="192.168.1.236", port=5000):
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje)
 
         # Estado de juego muy similar a FreeGame
@@ -97,13 +97,40 @@ class MultiplayerGame(BaseGame):
                     if addr not in self.known_clients:
                         self.known_clients.add(addr)
                         print(f"[Multiplayer - host] Cliente conectado: {addr}")
-                    # reenviar a todos los clientes (incluido el que envió?) -> NO reenviamos al emisor
+
+                        # Enviar estado de todos los jugadores existentes al nuevo cliente
+                        for jugador, robot in self.robots_remotos.items():
+                            data_robot = {
+                                "tipo": "update",
+                                "jugador": jugador,
+                                "personaje": robot.nombre_robot,
+                                "x": robot.x,
+                                "y": robot.y
+                            }
+                            try:
+                                self.sock.sendto(pickle.dumps(data_robot), addr)
+                            except Exception:
+                                pass
+
+                        # También enviar estado del host al nuevo cliente
+                        data_host = {
+                            "tipo": "update",
+                            "jugador": self.nombre_jugador,
+                            "personaje": self.personaje,
+                            "x": self.robot.x,
+                            "y": self.robot.y
+                        }
+                        try:
+                            self.sock.sendto(pickle.dumps(data_host), addr)
+                        except Exception:
+                            pass
+
+                    # reenviar a todos los clientes (excepto el que envió el mensaje)
                     for client in list(self.known_clients):
                         if client != addr:
                             try:
                                 self.sock.sendto(data, client)
                             except Exception:
-                                # ignora errores individuales de envio
                                 pass
 
                 # Procesar mensaje localmente (tanto host como cliente deben actualizar estado)
@@ -121,12 +148,12 @@ class MultiplayerGame(BaseGame):
                         else:
                             self.robots_remotos[jugador].x = x
                             self.robots_remotos[jugador].y = y
+
                 elif tipo == "shoot":
                     # Reproducir proyectil remoto (granada/misil)
                     jugador = msg.get("jugador")
                     if jugador == self.nombre_jugador:
-                        # si el host reenvía también puede llegar el propio mensaje; lo ignoramos
-                        continue
+                        continue  # ignorar mensajes propios reenviados por el host
                     arma = msg.get("arma")
                     ox = msg.get("origen_x")
                     oy = msg.get("origen_y")
@@ -140,18 +167,12 @@ class MultiplayerGame(BaseGame):
                         self.misiles.append(m)
 
             except BlockingIOError:
-                # No hay datos ahora
                 time.sleep(0.005)
-            except OSError as e:
-                # Errores de socket (ej. cerrados) — loguear y continuar o romper según convenga
-                # Evitamos parar el hilo por completo
-                # Si es recurrente, podrías romper el loop
-                # print("[Multiplayer] OSError en listen:", e)
+            except OSError:
                 time.sleep(0.05)
-            except Exception as e:
-                # Captura general para evitar que el hilo muera por excepción inesperada
-                # print("[Multiplayer] Excepción en listen:", e)
+            except Exception:
                 time.sleep(0.05)
+
 
     def enviar_estado(self):
         """Envia posición/estado básico al servidor (o lo pone en el socket local si soy host)."""
