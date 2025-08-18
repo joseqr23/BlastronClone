@@ -18,12 +18,12 @@ blastron_clone/
 │
 ├── core/                        # Núcleo del motor
 │   ├── game_modes/
-│       ├── base_game.py
-│       ├── free_game.py
-│       ├── multi_game.py
-│       ├── solo_game.py
+│       ├── base_game.py # Base que heredaran el resto de modos
+│       ├── free_game.py # Ya configurado
+│       ├── multi_game.py # pendiente
+│       ├── solo_game.py # pendiente
 │   ├── events.py
-│   └── network.py               # (opcional) multijugador en el futuro
+│   └── network.py      
 │
 ├── entities/                    # Jugadores, bots, proyectiles
 │   ├── robots/
@@ -44,8 +44,10 @@ blastron_clone/
 │   └── turn_manager.py
 │
 ├── ui/                          # Menús, HUD
+│   ├── chat.py
 │   ├── hud.py
 │   ├── menu.py
+│   ├── portrait.py
 │   └── text_input.py
 │
 └── utils/                       # Funciones de ayuda
