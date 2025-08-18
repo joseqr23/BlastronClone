@@ -61,6 +61,8 @@ class FreeGame(BaseGame):
 
             for robot_estatico in self.robots_estaticos:
                 robot_estatico.update(self.tiles)
+            # Eliminar robots estáticos muertos
+            self.robots_estaticos = [r for r in self.robots_estaticos if not r.debe_eliminarse()]
 
             check_collisions(self.robot, self.tiles)
             check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)

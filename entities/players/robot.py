@@ -35,13 +35,6 @@ class Robot:
             "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
         }
 
-        # self.animations = {
-        #     "idle": load_spritesheet("assets/robots/idle.png", 1, self.width, self.height),
-        #     "run": load_spritesheet("assets/robots/run.png", 6, self.width, self.height),
-        #     "jump": load_spritesheet("assets/robots/jump.png", 1, self.width, self.height),
-        #     "death": load_spritesheet("assets/robots/death.png", 6, self.width, self.height),
-        # }
-
         self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
         self.death_sound.set_volume(0.5)
 
@@ -76,7 +69,6 @@ class Robot:
         self.vel_x = 0
         self.vel_y = 0
         self.health = 200
-        self.is_dead = False
         self.frame_index = 0
         self.current_animation = "idle"
 
