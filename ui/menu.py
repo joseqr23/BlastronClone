@@ -1,6 +1,7 @@
 import os
 import pygame
 from ui.text_input import TextInput
+from utils.paths import resource_path  # Asegúrate de importar esto
 
 class Menu:
     def __init__(self, pantalla):
@@ -17,7 +18,7 @@ class Menu:
         # 🔹 Cargar automáticamente todos los robots que tengan portrait.png
         self.personajes = []
         self.portraits = {}
-        robots_path = "assets/robots"
+        robots_path = resource_path("assets/robots")
 
         for carpeta in os.listdir(robots_path):
             portrait_path = os.path.join(robots_path, carpeta, "portrait.png")
