@@ -5,9 +5,11 @@ from utils.loader import load_spritesheet
 class Granada:
     ANCHO = 40
     ALTO = 40
-    def __init__(self, x, y, vel_x, vel_y):
+    def __init__(self, x, y, vel_x, vel_y, owner=None):
         self.x = x
         self.y = y
+        self.owner = owner  # nombre del jugador que disparó
+        
         self.width = Granada.ANCHO
         self.height = Granada.ALTO
 

@@ -13,7 +13,7 @@ from entities.weapons.misil import Misil
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from systems.aim_indicator import AimIndicator
 from core.game_modes.base_game import BaseGame
-from ui.hud import HUDPuntajes
+from ui.hud import HUDPuntajesMultiplayer
 
 class MultiplayerGame(BaseGame):
     """
@@ -36,8 +36,8 @@ class MultiplayerGame(BaseGame):
         )
         self.robots_estaticos = []
         self.aim = AimIndicator(self.robot.get_centro())
-        self.puntajes[self.robot] = 0
-        self.hud_puntajes = HUDPuntajes(self)
+        self.puntajes[self.nombre_jugador] = 0
+        self.hud_puntajes = HUDPuntajesMultiplayer(self)
 
         # Proyectiles
         self.granadas = []
@@ -141,10 +141,14 @@ class MultiplayerGame(BaseGame):
                     personaje = msg.get("personaje", "default")
                     if jugador and jugador != self.nombre_jugador:
                         if jugador not in self.robots_remotos:
-                            # crear robot remoto
                             self.robots_remotos[jugador] = Robot(x=x, y=y, nombre_jugador=jugador, nombre_robot=personaje)
-                            # opcional: inicializar puntaje
-                            self.puntajes[self.robots_remotos[jugador]] = 0
+                            self.puntajes[jugador] = 0
+
+                        # if jugador not in self.robots_remotos:
+                        #     # crear robot remoto
+                        #     self.robots_remotos[jugador] = Robot(x=x, y=y, nombre_jugador=jugador, nombre_robot=personaje)
+                        #     # opcional: inicializar puntaje
+                        #     self.puntajes[self.robots_remotos[jugador]] = 0
                         else:
                             self.robots_remotos[jugador].x = x
                             self.robots_remotos[jugador].y = y
@@ -160,11 +164,23 @@ class MultiplayerGame(BaseGame):
                     vx = msg.get("vel_x")
                     vy = msg.get("vel_y")
                     if arma == "granada":
-                        g = Granada(ox, oy, vx, vy)
+                        g = Granada(ox, oy, vx, vy, owner=jugador)
                         self.granadas.append(g)
                     elif arma == "misil":
-                        m = Misil(ox, oy, vx, vy)
+                        m = Misil(ox, oy, vx, vy, owner=jugador)
                         self.misiles.append(m)
+
+                elif tipo == "puntaje":
+                    jugador = msg.get("jugador")
+                    puntos = msg.get("puntos", 0)
+                    if jugador in self.puntajes:
+                        self.puntajes[jugador] += puntos
+
+                elif tipo == "damage":
+                    victima = msg.get("jugador")
+                    dano = msg.get("dano", 0)
+                    if victima == self.nombre_jugador:
+                        self.robot.take_damage(dano)
 
             except BlockingIOError:
                 time.sleep(0.005)
@@ -215,19 +231,19 @@ class MultiplayerGame(BaseGame):
         if self.robot.arma_equipada == 'granada':
             ancho, alto = Granada.ANCHO, Granada.ALTO
             origen, vel_x, vel_y = self.aim.get_datos_disparo(ancho, alto)
-            self.granadas.append(Granada(origen[0], origen[1], vel_x, vel_y))
+            self.granadas.append(Granada(origen[0], origen[1], vel_x, vel_y, owner=self.nombre_jugador))
             # avisar a remotos
             self.enviar_shoot("granada", origen, vel_x, vel_y)
         elif self.robot.arma_equipada == 'misil':
             ancho, alto = Misil.ANCHO, Misil.ALTO
             origen, vel_x, vel_y = self.aim.get_datos_disparo(ancho, alto)
-            self.misiles.append(Misil(origen[0], origen[1], vel_x, vel_y))
+            self.misiles.append(Misil(origen[0], origen[1], vel_x, vel_y, owner=self.nombre_jugador))
             self.enviar_shoot("misil", origen, vel_x, vel_y)
 
     def actualizar_y_dibujar_granadas(self):
-        # Copiado y adaptado de FreeGame
         for granada in self.granadas[:]:
             granada.update(self.tiles, self.robot)
+            
             # daño a robots estáticos
             for robot_estatico in self.robots_estaticos:
                 granada.rebote_con_robot(robot_estatico)
@@ -237,8 +253,24 @@ class MultiplayerGame(BaseGame):
                         puntos = 70
                         if robot_estatico.health <= 0:
                             puntos *= 2
-                        self.puntajes[self.robot] += puntos
+                        self.puntajes[self.nombre_jugador] += puntos
                         granada.danados.add(robot_estatico)
+
+            # daño a robots remotos
+            for jugador, robot_remoto in self.robots_remotos.items():
+                granada.rebote_con_robot(robot_remoto)
+                if granada.explotado and granada.estado == "explode":
+                    if robot_remoto not in granada.danados and granada.get_hitbox().colliderect(robot_remoto.get_rect()):
+                        if granada.owner == self.nombre_jugador:
+                            robot_remoto.take_damage(70)
+                            puntos = 70
+                            if robot_remoto.health <= 0:
+                                puntos *= 2
+                            self.puntajes[granada.owner] += puntos
+                            self.enviar_puntaje(granada.owner, puntos)
+                            self.enviar_dano(jugador, 70, granada.owner)
+                        granada.danados.add(robot_remoto)
+                        
             # rebotes y daño al jugador local
             if not granada.explotado:
                 granada.rebote_con_tiles(self.tiles)
@@ -247,17 +279,22 @@ class MultiplayerGame(BaseGame):
                 if granada.get_hitbox().colliderect(self.robot.get_rect()):
                     self.robot.take_damage(70)
                     granada.ya_hizo_dano = True
+
             if granada.estado == "done":
                 try:
                     self.granadas.remove(granada)
                 except ValueError:
                     pass
+
         for granada in self.granadas:
             granada.draw(self.pantalla)
+
 
     def actualizar_y_dibujar_misiles(self):
         for misil in self.misiles[:]:
             misil.update(self.tiles, self.robot)
+
+            # daño a robots estáticos
             for robot_estatico in self.robots_estaticos:
                 misil.colisiona_con_robot(robot_estatico)
                 if misil.explotado and misil.estado == "explode":
@@ -266,8 +303,26 @@ class MultiplayerGame(BaseGame):
                         puntos = 50
                         if robot_estatico.health <= 0:
                             puntos *= 2
-                        self.puntajes[self.robot] += puntos
+                        self.puntajes[self.nombre_jugador] += puntos
                         misil.danados.add(robot_estatico)
+            
+            # daño a robots remotos
+            for jugador, robot_remoto in self.robots_remotos.items():
+                misil.colisiona_con_robot(robot_remoto)
+                if misil.explotado and misil.estado == "explode":
+                    if robot_remoto not in misil.danados and misil.get_hitbox().colliderect(robot_remoto.get_rect()):
+                        if misil.owner == self.nombre_jugador:
+                            # Solo el propietario aplica daño y puntaje
+                            robot_remoto.take_damage(50)
+                            puntos = 50
+                            if robot_remoto.health <= 0:
+                                puntos *= 2
+                            self.puntajes[misil.owner] += puntos
+                            self.enviar_puntaje(misil.owner, puntos)
+                            self.enviar_dano(jugador, 50, misil.owner)
+                        # Marcar que ya aplicamos daño
+                        misil.danados.add(robot_remoto)
+
             if not misil.explotado:
                 misil.colisiona_con_tiles(self.tiles)
                 misil.colisiona_con_robot(self.robot)
@@ -275,13 +330,16 @@ class MultiplayerGame(BaseGame):
                 if misil.get_hitbox().colliderect(self.robot.get_rect()):
                     self.robot.take_damage(50)
                     misil.ya_hizo_dano = True
+
             if misil.estado == "done":
                 try:
                     self.misiles.remove(misil)
                 except ValueError:
                     pass
+
         for misil in self.misiles:
             misil.draw(self.pantalla)
+
 
     def run(self):
         """Loop principal: muy similar a FreeGame pero con envío/recepción de red."""
@@ -374,3 +432,28 @@ class MultiplayerGame(BaseGame):
 
             pygame.display.flip()
             self.reloj.tick(60)
+
+    def enviar_puntaje(self, jugador, puntos):
+        data = {
+            "tipo": "puntaje",
+            "jugador": jugador,
+            "puntos": puntos
+        }
+        payload = pickle.dumps(data)
+        try:
+            self.sock.sendto(payload, (self.server_ip, self.port))
+        except Exception:
+            pass
+
+    def enviar_dano(self, victima, dano, atacante=None):
+        data = {
+            "tipo": "damage",
+            "jugador": victima,
+            "dano": dano,
+            "atacante": atacante
+        }
+        payload = pickle.dumps(data)
+        try:
+            self.sock.sendto(payload, (self.server_ip, self.port))
+        except Exception:
+            pass

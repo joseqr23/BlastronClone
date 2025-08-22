@@ -99,3 +99,31 @@ class HUDPuntajes:
                 )
                 pantalla.blit(texto, (x, y))
                 y += 20
+
+class HUDPuntajesMultiplayer:
+    def __init__(self, game, posicion=(10, 10)):
+        self.game = game
+        self.pos = posicion
+        self.font = pygame.font.SysFont("Arial", 17, bold=True)
+        self.font_title = pygame.font.SysFont("Arial", 20, bold=True)
+
+    def draw(self, pantalla):
+        x, y = self.pos
+
+        # Título
+        titulo = self.font_title.render("Puntuación", True, (0, 0, 0))
+        pantalla.blit(titulo, (x, y))
+        y += 25
+
+        # Recorremos los puntajes
+        for jugador, score in self.game.puntajes.items():
+            # Buscar robot correspondiente (local o remoto)
+            if self.game.robot and self.game.robot.nombre == jugador:
+                robot = self.game.robot
+            else:
+                robot = self.game.robots_remotos.get(jugador)
+
+            color = getattr(robot, "color_nombre", (0, 0, 0)) if robot else (0, 0, 0)
+            texto = self.font.render(f"{jugador}: {score}", True, color)
+            pantalla.blit(texto, (x, y))
+            y += 20
