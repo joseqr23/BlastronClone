@@ -457,3 +457,4 @@ class MultiplayerGame(BaseGame):
             self.sock.sendto(payload, (self.server_ip, self.port))
         except Exception:
             pass
+

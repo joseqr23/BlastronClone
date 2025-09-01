@@ -21,9 +21,8 @@ blastron_clone/
 │       ├── base_game.py # Base que heredaran el resto de modos
 │       ├── free_game.py # Ya configurado
 │       ├── multi_game.py # pendiente
-│       ├── solo_game.py # pendiente
-│   ├── events.py
-│   └── network.py      
+│       └── solo_game.py # pendiente
+│   └── robot_selector.py 
 │
 ├── entities/                    # Jugadores, bots, proyectiles
 │   ├── robots/
@@ -40,8 +39,12 @@ blastron_clone/
 ├── systems/                     # Lógica de turnos, física, colisiones
 │   ├── aim_indicator.py
 │   ├── collision.py
+│   ├── event_handler.py
+│   ├── hud_manager.py
 │   ├── physics.py
-│   └── turn_manager.py
+│   ├── turn_manager.py
+│   └── weapon_manager.py
+
 │
 ├── ui/                          # Menús, HUD
 │   ├── chat.py
