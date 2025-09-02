@@ -110,6 +110,20 @@ class MultiplayerGame(BaseGame):
                 elif tipo == "disparo":
                     self.weapon_manager.recibir_disparo_remoto(msg)
 
+
+                elif tipo == "damage":
+                    jugador = msg["jugador"]
+                    cantidad = msg["cantidad"]
+                    quien_disparo = msg.get("quien", None)
+
+                    # Solo aplicar el daño si el mensaje NO proviene de mí
+                    if jugador == self.nombre_jugador and quien_disparo != self.nombre_jugador:
+                        self.robot.take_damage(cantidad)
+                    elif jugador in self.robots_remotos:
+                        self.robots_remotos[jugador].health -= cantidad
+                        if self.robots_remotos[jugador].health < 0:
+                            self.robots_remotos[jugador].health = 0
+
             except BlockingIOError:
                 time.sleep(0.01)
             except Exception:
@@ -204,3 +218,16 @@ class MultiplayerGame(BaseGame):
 
             pygame.display.flip()
             self.reloj.tick(60)
+
+
+    def enviar_dano(self, jugador_objetivo, cantidad):
+        data = {
+            "tipo": "damage",
+            "jugador": jugador_objetivo,
+            "cantidad": cantidad,
+            "quien": self.nombre_jugador
+        }
+        try:
+            self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+        except Exception:
+            pass

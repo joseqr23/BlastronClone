@@ -15,7 +15,7 @@ class Robot:
     def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto = False):
         self.spawn_x = x
         self.spawn_y = y
-        self.nombre = nombre_jugador
+        self.nombre_jugador = nombre_jugador
         self.nombre_robot = nombre_robot
         self.es_remoto = es_remoto
 
@@ -176,14 +176,14 @@ class Robot:
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
 
-        texto_nombre = self.font_nombre.render(self.nombre, True, self.color_nombre)  # Nombre encima
+        texto_nombre = self.font_nombre.render(self.nombre_jugador, True, self.color_nombre)  # Nombre encima
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 
     def draw_death_message(self, pantalla, fuente):
         if self.is_dead:
             fuente_grande = pygame.font.SysFont(None, 40)
-            texto = fuente_grande.render(f"¡{self.nombre} ha sido detonado!", True, (255, 0, 0))
+            texto = fuente_grande.render(f"¡{self.nombre_jugador} ha sido detonado!", True, (255, 0, 0))
             rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 200))
             pantalla.blit(texto, rect)
 

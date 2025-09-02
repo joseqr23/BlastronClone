@@ -81,7 +81,7 @@ class HUDPuntajes:
         # Jugador principal (color del robot)
         jugador_color = getattr(self.game.robot, "color_nombre", (0, 0, 0))
         jugador_texto = self.font.render(
-            f"{self.game.robot.nombre}: {self.game.puntajes.get(self.game.robot, 0)}",
+            f"{self.game.robot.nombre_jugador}: {self.game.puntajes.get(self.game.robot, 0)}",
             True,
             jugador_color
         )
@@ -93,7 +93,7 @@ class HUDPuntajes:
             if not robot.is_dead:
                 color_robot = getattr(robot, "color_nombre", (0, 0, 0))
                 texto = self.font.render(
-                    f"{robot.nombre}: {self.game.puntajes.get(robot, 0)}",
+                    f"{robot.nombre_jugador}: {self.game.puntajes.get(robot, 0)}",
                     True,
                     color_robot
                 )
@@ -118,7 +118,7 @@ class HUDPuntajesMultiplayer:
         # Recorremos los puntajes
         for jugador, score in self.game.puntajes.items():
             # Buscar robot correspondiente (local o remoto)
-            if self.game.robot and self.game.robot.nombre == jugador:
+            if self.game.robot and self.game.robot.nombre_jugador == jugador:
                 robot = self.game.robot
             else:
                 robot = self.game.robots_remotos.get(jugador)

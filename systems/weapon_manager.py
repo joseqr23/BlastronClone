@@ -35,7 +35,7 @@ class WeaponManager:
                 granada.rebote_con_robot(robot_estatico)
                 if granada.explotado and granada.estado == "explode":
                     if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
-                        robot_estatico.take_damage(70)
+                        self.aplicar_dano(robot_estatico, 70) #robot_estatico.take_damage(70)
                         puntos = 70
                         if robot_estatico.health <= 0:
                             puntos *= 2
@@ -61,7 +61,7 @@ class WeaponManager:
                 misil.colisiona_con_robot(robot_estatico)
                 if misil.explotado and misil.estado == "explode":
                     if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
-                        robot_estatico.take_damage(50)
+                        self.aplicar_dano(robot_estatico, 50) #robot_estatico.take_damage(50)
                         puntos = 50
                         if robot_estatico.health <= 0:
                             puntos *= 2
@@ -78,3 +78,11 @@ class WeaponManager:
 
             if misil.estado == "done":
                 self.game.misiles.remove(misil)
+
+    def aplicar_dano(self, robot, cantidad):
+        if robot.es_remoto:
+            # No restamos vida localmente, solo enviamos al host
+            self.game.enviar_dano(robot.nombre_jugador, cantidad)
+        else:
+            # Robot local: restar vida y que se sincronice al otro
+            robot.take_damage(cantidad)
