@@ -1,14 +1,14 @@
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
-from entities.players.robot import Robot
-from systems.collision import check_collisions, check_collisions_laterales_esquinas
-from systems.aim_indicator import AimIndicator
-from core.game_modes.base_game import BaseGame
-from ui.hud import HUDPuntajes
+from entities.players.robot import Robot # Robots
+from systems.collision import check_collisions, check_collisions_laterales_esquinas # Colisiones
+from systems.aim_indicator import AimIndicator # Mira de armas
+from core.game_modes.base_game import BaseGame # Base de juego
+from ui.hud import HUDPuntajes # Hud
 
-from systems.event_handler import EventHandler
-from systems.weapon_manager import WeaponManager
-from systems.hud_manager import HUDManager
+from systems.event_handler import EventHandler # Manejador de eventos 
+from systems.weapon_manager import WeaponManager # Manejador de armas
+from systems.hud_manager import HUDManager # Manejador de HUD
 
 
 class FreeGame(BaseGame):
