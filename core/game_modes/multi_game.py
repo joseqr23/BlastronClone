@@ -8,13 +8,15 @@ import time
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
 from core.game_modes.base_game import BaseGame
+from systems.collision import check_collisions, check_collisions_laterales_esquinas  # ✅
+
 
 class MultiplayerGame(BaseGame):
     """
-    MultiplayerGame simplificado:
+    MultiplayerGame mejorado:
     - Host: actúa como servidor, recibe updates de clientes y los reenvía.
     - Cliente: envía su posición y recibe la de los demás.
-    - Solo sincroniza movimiento (sin daño, armas, puntajes).
+    - Sincroniza movimiento + animaciones.
     """
 
     def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000):
@@ -76,11 +78,16 @@ class MultiplayerGame(BaseGame):
                             self.robots_remotos[jugador] = Robot(
                                 x=msg["x"], y=msg["y"],
                                 nombre_jugador=jugador,
-                                nombre_robot=msg.get("personaje", "default")
+                                nombre_robot=msg.get("personaje", "default"),
+                                es_remoto=True   # 👈 importante
                             )
                         else:
-                            self.robots_remotos[jugador].x = msg["x"]
-                            self.robots_remotos[jugador].y = msg["y"]
+                            r = self.robots_remotos[jugador]
+                            r.x = msg["x"]
+                            r.y = msg["y"]
+                            r.frame_index = msg.get("frame", 0)
+                            r.current_animation = msg.get("estado", "idle")   # 🔧
+                            r.facing_right = (msg.get("direccion", 1) == 1)   # 🔧
 
             except BlockingIOError:
                 time.sleep(0.01)
@@ -88,13 +95,16 @@ class MultiplayerGame(BaseGame):
                 time.sleep(0.05)
 
     def enviar_estado(self):
-        """Envia la posición local al servidor/host."""
+        """Envia la posición y animación local al servidor/host."""
         data = {
             "tipo": "update",
             "jugador": self.nombre_jugador,
             "personaje": self.personaje,
             "x": float(self.robot.x),
             "y": float(self.robot.y),
+            "frame": self.robot.frame_index,
+            "estado": self.robot.current_animation,  # 🔧
+            "direccion": 1 if self.robot.facing_right else -1,  # 🔧
         }
         try:
             self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
@@ -102,7 +112,7 @@ class MultiplayerGame(BaseGame):
             pass
 
     def run(self):
-        """Loop principal: solo mueve y sincroniza robots."""
+        """Loop principal: mueve, sincroniza robots y aplica colisiones."""
         while True:
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
@@ -111,16 +121,24 @@ class MultiplayerGame(BaseGame):
                     pygame.quit()
                     return
 
-            # Input
+            # --- Input ---
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
 
-            # Enviar posición al servidor
+            # --- Colisiones como en FreeGame ---
+            check_collisions(self.robot, self.tiles)
+            check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)
+
+            # --- Enviar posición + animación ---
             self.enviar_estado()
 
-            # Dibujar escena
+            # --- Render ---
             self.draw_scene()
+
+            # Dibujar local
             self.robot.draw(self.pantalla)
+
+            # Dibujar remotos
             for r in self.robots_remotos.values():
                 r.draw(self.pantalla)
 

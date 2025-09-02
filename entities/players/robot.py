@@ -12,11 +12,12 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre_jugador, nombre_robot):
+    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto = False):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre = nombre_jugador
-        self.nombre_robot = nombre_robot  # <--- nuevo parámetro
+        self.nombre_robot = nombre_robot
+        self.es_remoto = es_remoto
 
         self.width = 60
         self.height = 90
@@ -131,6 +132,9 @@ class Robot:
             self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self, keys=None):
+        if self.es_remoto:
+            return  # 🔥 no recalcular nada, solo usar valores recibidos
+        
         if self.is_dead:
             self.current_animation = "death"
             self.frame_timer += 1
@@ -153,6 +157,14 @@ class Robot:
         self.actualizar_animacion()
 
     def draw(self, pantalla):
+        if self.es_remoto:
+            # 🔧 Forzar a usar el frame recibido por red
+            anim = self.animations.get(self.current_animation, self.animations["idle"])
+            idx = int(self.frame_index) % len(anim)
+            self.image = anim[idx]
+            if not self.facing_right:
+                self.image = pygame.transform.flip(self.image, True, False)
+
         pantalla.blit(self.image, (self.x, self.y))
 
         # Barra de vida
