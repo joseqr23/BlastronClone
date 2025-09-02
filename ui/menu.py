@@ -43,6 +43,7 @@ class Menu:
         # Variables adicionales para multijugador
         modo_multijugador_opcion = 0  # 0 = host, 1 = cliente
         input_ip = TextInput((400, 270, 190, 30), self.font_input, max_length=15)
+        input_ip.text = "192.168.1.236"
         mostrar_ip = False
 
         while True:
