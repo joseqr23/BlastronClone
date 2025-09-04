@@ -11,8 +11,9 @@ class Chat:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, nombre_jugador, posicion=(10, 410), ancho=300, alto=80):
+    def __init__(self, nombre_jugador, game=None, posicion=(10, 410), ancho=300, alto=80):
         self.nombre_jugador = nombre_jugador
+        self.game = game 
         self.posicion = posicion
         self.ancho = ancho
         self.alto = alto
@@ -101,6 +102,9 @@ class Chat:
                     if self.input_text.strip():
                         mensaje_formateado = f"{self.nombre_jugador}: {self.input_text.strip()}"
                         self.agregar_mensaje(mensaje_formateado)
+                        # 🔥 enviar al resto
+                        if hasattr(self, "game"):
+                            self.game.enviar_chat(mensaje_formateado)
                     self.input_text = ""
                     self.activo = False
                 else:

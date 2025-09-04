@@ -46,7 +46,7 @@ class MultiplayerGame(BaseGame):
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
         self.hud_armas = HUDArmas(['granada', 'misil'])  # corregido
         self.hud_manager = HUDManager(self)
-        self.chat = Chat(nombre_jugador)
+        self.chat = Chat(nombre_jugador, game=self)
         self.event_handler = EventHandler(self)
         self.mouse_click_sostenido = False
         self.font = pygame.font.SysFont("Arial", 16)
@@ -170,7 +170,11 @@ class MultiplayerGame(BaseGame):
                     # Mostrar mensaje en pantalla si murió
                     if victima_dead:
                         self.chat.add_message(f"💥 {victima} fue detonado por {atacante}!")
-
+                
+                elif tipo == "chat":
+                    mensaje = msg["mensaje"]
+                    # mostrarlo en el chat local
+                    self.chat.agregar_mensaje(mensaje)
 
 
             except BlockingIOError:
@@ -280,6 +284,17 @@ class MultiplayerGame(BaseGame):
         }
         try:
             print(f"[DEBUG] enviando paquete DAMAGE desde {self.nombre_jugador} para {jugador_objetivo} amt={cantidad}")
+            self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+        except Exception:
+            pass
+
+    def enviar_chat(self, mensaje):
+        data = {
+            "tipo": "chat",
+            "jugador": self.nombre_jugador,
+            "mensaje": mensaje
+        }
+        try:
             self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
         except Exception:
             pass
