@@ -8,14 +8,21 @@ class WeaponManager:
 
     def disparar(self):
         origen, vel_x, vel_y = self.game.aim.get_datos_disparo()
+        shooter = self.game.nombre_jugador  # dueño local
+
         if self.game.robot.arma_equipada == 'granada':
             ancho, alto = Granada.ANCHO, Granada.ALTO
             origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            self.game.granadas.append(Granada(origen[0], origen[1], vel_x, vel_y))
+            g = Granada(origen[0], origen[1], vel_x, vel_y)
+            g.owner = shooter
+            self.game.granadas.append(g)
+
         elif self.game.robot.arma_equipada == 'misil':
             ancho, alto = Misil.ANCHO, Misil.ALTO
             origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            self.game.misiles.append(Misil(origen[0], origen[1], vel_x, vel_y))
+            m = Misil(origen[0], origen[1], vel_x, vel_y)
+            m.owner = shooter
+            self.game.misiles.append(m)
 
     def update(self):
         self._update_granadas()
@@ -46,9 +53,11 @@ class WeaponManager:
                 granada.rebote_con_tiles(self.game.tiles)
                 granada.rebote_con_robot(self.game.robot)
             elif granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
-                if granada.get_hitbox().colliderect(self.game.robot.get_rect()):
-                    self.game.robot.take_damage(70)
-                    granada.ya_hizo_dano = True
+                # SOLO me pego daño local si YO soy el dueño del proyectil
+                if getattr(granada, "owner", self.game.nombre_jugador) == self.game.nombre_jugador:
+                    if granada.get_hitbox().colliderect(self.game.robot.get_rect()):
+                        self.game.robot.take_damage(70)
+                        granada.ya_hizo_dano = True
 
             if granada.estado == "done":
                 self.game.granadas.remove(granada)
@@ -72,17 +81,37 @@ class WeaponManager:
                 misil.colisiona_con_tiles(self.game.tiles)
                 misil.colisiona_con_robot(self.game.robot)
             elif misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
-                if misil.get_hitbox().colliderect(self.game.robot.get_rect()):
-                    self.game.robot.take_damage(50)
-                    misil.ya_hizo_dano = True
+                # SOLO me pego daño local si YO soy el dueño del proyectil
+                if getattr(misil, "owner", self.game.nombre_jugador) == self.game.nombre_jugador:
+                    if misil.get_hitbox().colliderect(self.game.robot.get_rect()):
+                        self.game.robot.take_damage(50)
+                        misil.ya_hizo_dano = True
 
             if misil.estado == "done":
                 self.game.misiles.remove(misil)
 
     def aplicar_dano(self, robot, cantidad):
         if robot.es_remoto:
-            # No restamos vida localmente, solo enviamos al host
+            # Debug: quien está enviando el damage y a quién
+            print(f"[DEBUG] enviar_dano: desde {self.game.nombre_jugador} -> {robot.nombre_jugador} amt={cantidad}")
             self.game.enviar_dano(robot.nombre_jugador, cantidad)
         else:
-            # Robot local: restar vida y que se sincronice al otro
+            print(f"[DEBUG] daño_local: {self.game.nombre_jugador} recibe {cantidad}")
             robot.take_damage(cantidad)
+
+    def recibir_disparo_remoto(self, msg):
+        """Crea un proyectil que disparó otro jugador y lo marca con su owner."""
+        arma = msg.get("arma")
+        x, y = msg.get("x"), msg.get("y")
+        dx, dy = msg.get("dir_x"), msg.get("dir_y")
+        owner = msg.get("owner") or msg.get("jugador")
+
+        if arma == 'granada':
+            g = Granada(x, y, dx, dy)
+            g.owner = owner
+            self.game.granadas.append(g)
+
+        elif arma == 'misil':
+            m = Misil(x, y, dx, dy)
+            m.owner = owner
+            self.game.misiles.append(m)
