@@ -1,6 +1,6 @@
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
-
+import pickle
 
 class WeaponManager:
     def __init__(self, game):
@@ -46,7 +46,8 @@ class WeaponManager:
                         puntos = 70
                         if robot_estatico.health <= 0:
                             puntos *= 2
-                        self.game.puntajes[self.game.robot] += puntos
+                        #self.game.puntajes[self.game.robot] += puntos
+                        self.enviar_evento_puntaje(self.game.robot.nombre_jugador, puntos, robot_estatico)
                         granada.danados.add(robot_estatico)
 
             if not granada.explotado:
@@ -74,7 +75,8 @@ class WeaponManager:
                         puntos = 50
                         if robot_estatico.health <= 0:
                             puntos *= 2
-                        self.game.puntajes[self.game.robot] += puntos
+                        #self.game.puntajes[self.game.robot] += puntos
+                        self.enviar_evento_puntaje(self.game.robot.nombre_jugador, puntos, robot_estatico)
                         misil.danados.add(robot_estatico)
 
             if not misil.explotado:
@@ -115,3 +117,20 @@ class WeaponManager:
             m = Misil(x, y, dx, dy)
             m.owner = owner
             self.game.misiles.append(m)
+
+    def enviar_evento_puntaje(self, atacante, puntos, victima):
+        # ❌ Quitar esto (duplicaba en el host)
+        # self.game.puntajes[atacante] = self.game.puntajes.get(atacante, 0) + puntos
+
+        # Armar mensaje para todos
+        msg = {
+            "tipo": "score",
+            "atacante": atacante,
+            "puntos": puntos,
+            "victima": victima.nombre_jugador,
+            "victima_dead": victima.health <= 0
+        }
+        try:
+            self.game.sock.sendto(pickle.dumps(msg), (self.game.server_ip, self.game.port))
+        except Exception:
+            pass

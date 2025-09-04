@@ -12,7 +12,7 @@ from systems.collision import check_collisions, check_collisions_laterales_esqui
 from systems.aim_indicator import AimIndicator
 from systems.weapon_manager import WeaponManager
 from systems.hud_manager import HUDManager
-from ui.hud import HUDPuntajes, HUDArmas
+from ui.hud import HUDPuntajesMultiplayer, HUDArmas
 from systems.event_handler import EventHandler
 from ui.chat import Chat
 
@@ -42,8 +42,8 @@ class MultiplayerGame(BaseGame):
         # --- HUD, armas y chat ---
         self.aim = AimIndicator(self.robot.get_centro())
         self.weapon_manager = WeaponManager(self)
-        self.puntajes[self.robot] = 0
-        self.hud_puntajes = HUDPuntajes(self)
+        self.puntajes[self.nombre_jugador] = 0
+        self.hud_puntajes = HUDPuntajesMultiplayer(self)
         self.hud_armas = HUDArmas(['granada', 'misil'])  # corregido
         self.hud_manager = HUDManager(self)
         self.chat = Chat(nombre_jugador)
@@ -118,6 +118,9 @@ class MultiplayerGame(BaseGame):
                             nombre_robot=msg.get("personaje", "default"),
                             es_remoto=True
                         )
+                        # 🔥 Inicializar puntaje del nuevo jugador
+                        if jugador not in self.puntajes:
+                            self.puntajes[jugador] = 0
                     else:
                         r = self.robots_remotos[jugador]
                         r.x = msg["x"]
@@ -129,7 +132,7 @@ class MultiplayerGame(BaseGame):
                     # 🔥 sincronizar vida si viene en el mensaje
                     if "health" in msg:
                         self.robots_remotos[jugador].health = msg["health"]
-
+                    
 
                 elif tipo == "disparo":
                     self.weapon_manager.recibir_disparo_remoto(msg)
@@ -151,6 +154,23 @@ class MultiplayerGame(BaseGame):
                         self.robots_remotos[jugador].health -= cantidad
                         if self.robots_remotos[jugador].health < 0:
                             self.robots_remotos[jugador].health = 0
+
+                elif tipo == "score":
+                    atacante = msg["atacante"]
+                    puntos = msg["puntos"]
+                    victima = msg["victima"]
+                    victima_dead = msg.get("victima_dead", False)
+
+                    # Actualizar puntaje
+                    self.puntajes[atacante] = self.puntajes.get(atacante, 0) + puntos
+
+                    # Log o evento visible
+                    print(f"[SCORE] {atacante} ganó {puntos} puntos por dañar a {victima}")
+
+                    # Mostrar mensaje en pantalla si murió
+                    if victima_dead:
+                        self.chat.add_message(f"💥 {victima} fue detonado por {atacante}!")
+
 
 
             except BlockingIOError:
