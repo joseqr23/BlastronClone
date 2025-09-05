@@ -128,3 +128,35 @@ class HUDPuntajesMultiplayer:
             texto = self.font.render(f"{jugador}: {score}", True, color)
             pantalla.blit(texto, (x, y))
             y += 20
+
+
+class HUDTimer:
+    def __init__(self, game, duracion=180, posicion=(400, 10)):
+        """
+        game: referencia a la instancia del juego (para leer self.tiempo_restante)
+        duracion: segundos de la partida (default 3 min = 180)
+        posicion: coordenadas donde se dibuja el cronómetro
+        """
+        self.game = game
+        self.duracion = duracion
+        self.posicion = posicion
+        self.font = pygame.font.SysFont("Arial", 26, bold=True)
+
+    def draw(self, pantalla):
+        # tiempo restante sincronizado desde Game
+        restante = max(0, self.game.tiempo_restante)
+        minutos = restante // 60
+        segundos = restante % 60
+        texto = f"{minutos:02}:{segundos:02}"
+
+        # 🔴 Cambiar color según urgencia
+        if restante <= 10:
+            color = (255, 0, 0)      # rojo
+        elif restante <= 30:
+            color = (255, 165, 0)    # naranja
+        else:
+            color = (0, 0, 0)  # blanco
+
+        render = self.font.render(texto, True, color)
+        rect = render.get_rect(center=self.posicion)
+        pantalla.blit(render, rect)

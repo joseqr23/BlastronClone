@@ -12,7 +12,7 @@ from systems.collision import check_collisions, check_collisions_laterales_esqui
 from systems.aim_indicator import AimIndicator
 from systems.weapon_manager import WeaponManager
 from systems.hud_manager import HUDManager
-from ui.hud import HUDPuntajesMultiplayer, HUDArmas
+from ui.hud import HUDPuntajesMultiplayer, HUDArmas, HUDTimer
 from systems.event_handler import EventHandler
 from ui.chat import Chat
 
@@ -79,6 +79,13 @@ class MultiplayerGame(BaseGame):
         # Hilo de escucha
         self._listening = True
         threading.Thread(target=self.listen, daemon=True).start()
+
+        # Tiempo de juego
+        self.tiempo_total = 3 * 60  # 3 minutos en segundos
+        self.tiempo_restante = self.tiempo_total
+        self.ultimo_tick = time.time()
+        self.game_over = False
+        self.timer_hud = HUDTimer(self, duracion=180, posicion=(ANCHO // 2, 30))
 
     def listen(self):
         """Recibe mensajes de red y actualiza estado."""
@@ -191,6 +198,10 @@ class MultiplayerGame(BaseGame):
                     if jugador != self.nombre_jugador:
                         self.chat.agregar_mensaje(mensaje)
 
+                elif tipo == "timer":
+                    self.tiempo_restante = msg["restante"]
+                    if self.tiempo_restante <= 0:
+                        self.game_over = True
 
             except BlockingIOError:
                 time.sleep(0.01)
@@ -240,6 +251,15 @@ class MultiplayerGame(BaseGame):
                 self.sock.close()
                 return
 
+            # --- Si el tiempo ya terminó ---
+            if self.game_over:
+                fin_text = self.font.render("¡Tiempo terminado! Fin de la partida", True, (255, 0, 0))
+                rect = fin_text.get_rect(center=(ANCHO // 2, ALTO // 2))
+                self.pantalla.blit(fin_text, rect)
+                pygame.display.flip()
+                pygame.time.delay(5000)
+                return
+
             # --- Input y actualización local ---
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
@@ -255,6 +275,25 @@ class MultiplayerGame(BaseGame):
 
             # --- Actualizar armas ---
             self.weapon_manager.update()
+
+            # --- Si soy host, actualizar cronómetro y enviarlo ---
+            if self.host and not self.game_over:
+                ahora = time.time()
+                delta = ahora - self.ultimo_tick
+                if delta >= 1:  # cada segundo
+                    self.tiempo_restante -= int(delta)
+                    self.ultimo_tick = ahora
+
+                    if self.tiempo_restante <= 0:
+                        self.tiempo_restante = 0
+                        self.game_over = True
+
+                    # enviar a clientes
+                    data = {"tipo": "timer", "restante": self.tiempo_restante}
+                    try:
+                        self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+                    except Exception:
+                        pass
 
             # --- Render ---
             self.draw_scene()
@@ -280,6 +319,9 @@ class MultiplayerGame(BaseGame):
             # HUD y chat
             self.hud_manager.draw(self.pantalla)
             self.chat.draw(self.pantalla)
+
+            # --- Dibujar cronómetro (HUDTimer) ---
+            self.timer_hud.draw(self.pantalla)
 
             # Mensajes de muerte
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
