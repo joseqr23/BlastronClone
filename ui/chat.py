@@ -1,4 +1,5 @@
 # core/ui/chat.py
+from utils.colors import ColorManager
 import pygame
 import time
 
@@ -9,6 +10,9 @@ class Chat:
         (200, 0, 0),     # Rojo
         (255, 140, 0),   # Naranja
         (128, 0, 128),   # Morado
+        (255, 255, 0),   # Amarillo (extra)
+        (0, 255, 255),   # Cyan (extra)
+        (255, 0, 255),   # Fucsia (extra)
     ]
 
     def __init__(self, nombre_jugador, game=None, posicion=(10, 410), ancho=300, alto=80):
@@ -21,7 +25,8 @@ class Chat:
         self.font = pygame.font.SysFont("Arial", 16)
         self.color_fondo = (0, 0, 0, 150)
         self.color_texto = (255, 255, 255)
-        self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)]
+        #self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)]
+        self.color_nombre = ColorManager.get_color(self.nombre_jugador)
         self.input_text = ""
         self.activo = False
         self.scroll_offset = 0
@@ -52,7 +57,8 @@ class Chat:
         for mensaje in mensajes_a_mostrar:
             if ": " in mensaje:
                 nombre, texto = mensaje.split(": ", 1)
-                color_nombre = self.COLORES_NOMBRES[hash(nombre) % len(self.COLORES_NOMBRES)]
+                #color_nombre = self.COLORES_NOMBRES[hash(nombre) % len(self.COLORES_NOMBRES)]
+                color_nombre = ColorManager.get_color(nombre)
                 render_nombre = self.font.render(nombre + ": ", True, color_nombre)
                 pantalla.blit(render_nombre, (self.posicion[0] + 5, self.posicion[1] + y_offset))
 

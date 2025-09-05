@@ -1,3 +1,6 @@
+# utils/colors.py
+import hashlib
+
 class ColorManager:
     colores_disponibles = [
         (0, 0, 255),     # Azul
@@ -5,28 +8,23 @@ class ColorManager:
         (200, 0, 0),     # Rojo
         (255, 140, 0),   # Naranja
         (128, 0, 128),   # Morado
-        (255, 255, 0),   # Amarillo (extra)
-        (0, 255, 255),   # Cyan (extra)
-        (255, 0, 255),   # Fucsia (extra)
+        (255, 255, 0),   # Amarillo
+        (0, 255, 255),   # Cyan
+        (255, 0, 255),   # Fucsia
     ]
-    asignados = {}   # nombre_jugador -> color
+    asignados = {}   # (opcional, no usado por la función determinista)
     usados = set()
 
     @classmethod
-    def get_color(cls, nombre_jugador):
-        # Si ya tenía color, lo devuelve
-        if nombre_jugador in cls.asignados:
-            return cls.asignados[nombre_jugador]
-
-        # Buscar el primer color libre
-        for c in cls.colores_disponibles:
-            if c not in cls.usados:
-                cls.usados.add(c)
-                cls.asignados[nombre_jugador] = c
-                return c
-
-        # Si todos están ocupados → asignar con round-robin
-        idx = len(cls.asignados) % len(cls.colores_disponibles)
-        c = cls.colores_disponibles[idx]
-        cls.asignados[nombre_jugador] = c
-        return c
+    def get_color(cls, nombre_jugador: str):
+        """
+        Asigna un color de forma determinista a partir del nombre.
+        Usa md5(nombre) % len(colores) para que el resultado sea igual
+        en todos los procesos y ejecuciones.
+        """
+        if not nombre_jugador:
+            return cls.colores_disponibles[0]
+        # md5 para estabilidad entre procesos
+        h = int(hashlib.md5(nombre_jugador.encode("utf-8")).hexdigest(), 16)
+        idx = h % len(cls.colores_disponibles)
+        return cls.colores_disponibles[idx]
