@@ -1,3 +1,4 @@
+# systems/weapon_manager.py
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
 import pickle

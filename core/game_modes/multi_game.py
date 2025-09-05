@@ -182,11 +182,14 @@ class MultiplayerGame(BaseGame):
                             print(f"[HOST] reenviado SCORE a emisor {addr} para que vea su puntaje")
                         except Exception as e:
                             print(f"[HOST] fallo reenvío SCORE a {addr}: {e}")
-                                
+
                 elif tipo == "chat":
                     mensaje = msg["mensaje"]
-                    # mostrarlo en el chat local
-                    self.chat.agregar_mensaje(mensaje)
+                    jugador = msg.get("jugador")
+
+                    # Solo mostrar si no es un mensaje propio
+                    if jugador != self.nombre_jugador:
+                        self.chat.agregar_mensaje(mensaje)
 
 
             except BlockingIOError:
