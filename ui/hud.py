@@ -1,3 +1,4 @@
+# ui/hud.py
 import pygame
 from entities.players.robot import Robot
 

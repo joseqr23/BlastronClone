@@ -119,10 +119,6 @@ class WeaponManager:
             self.game.misiles.append(m)
 
     def enviar_evento_puntaje(self, atacante, puntos, victima):
-        # ❌ Quitar esto (duplicaba en el host)
-        # self.game.puntajes[atacante] = self.game.puntajes.get(atacante, 0) + puntos
-
-        # Armar mensaje para todos
         msg = {
             "tipo": "score",
             "atacante": atacante,
@@ -130,7 +126,20 @@ class WeaponManager:
             "victima": victima.nombre_jugador,
             "victima_dead": victima.health <= 0
         }
-        try:
-            self.game.sock.sendto(pickle.dumps(msg), (self.game.server_ip, self.game.port))
-        except Exception:
-            pass
+
+        if self.game.host:
+            # 🔥 si soy host, yo actualizo y reenvío a todos
+            self.game.puntajes[atacante] = self.game.puntajes.get(atacante, 0) + puntos
+
+            # reenvío a todos los clientes
+            for client in list(self.game.known_clients):
+                try:
+                    self.game.sock.sendto(pickle.dumps(msg), client)
+                except Exception:
+                    pass
+        else:
+            # 🚀 si soy cliente, aviso al host que pasó un puntaje
+            try:
+                self.game.sock.sendto(pickle.dumps(msg), (self.game.server_ip, self.game.port))
+            except Exception:
+                pass

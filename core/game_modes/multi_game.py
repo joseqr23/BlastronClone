@@ -167,10 +167,22 @@ class MultiplayerGame(BaseGame):
                     # Log o evento visible
                     print(f"[SCORE] {atacante} ganó {puntos} puntos por dañar a {victima}")
 
-                    # Mostrar mensaje en pantalla si murió
                     if victima_dead:
                         self.chat.add_message(f"💥 {victima} fue detonado por {atacante}!")
-                
+
+                    # --- CORRECCIÓN IMPORTANTE ---
+                    # El host debe asegurarse de que también llegue al emisor (addr).
+                    # Nota: al inicio de listen ya reenvías a todos los clientes excepto addr;
+                    # por eso aquí basta con enviar sólo a addr para completar la distribución
+                    # sin duplicar mensajes a los otros clientes.
+                    if self.host:
+                        try:
+                            # enviar únicamente al emisor para que también reciba el evento
+                            self.sock.sendto(pickle.dumps(msg), addr)
+                            print(f"[HOST] reenviado SCORE a emisor {addr} para que vea su puntaje")
+                        except Exception as e:
+                            print(f"[HOST] fallo reenvío SCORE a {addr}: {e}")
+                                
                 elif tipo == "chat":
                     mensaje = msg["mensaje"]
                     # mostrarlo en el chat local
