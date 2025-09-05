@@ -1,7 +1,10 @@
+# entities/players/robot.py
 import pygame
 from utils.loader import load_spritesheet
 import time
 import random
+from utils.colors import ColorManager
+
 
 class Robot:
     COLORES_NOMBRES = [
@@ -23,7 +26,9 @@ class Robot:
         self.height = 90
 
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
-        self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Color único por nombre
+        
+        #self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Color único por nombre
+        self.color_nombre = ColorManager.get_color(nombre_jugador)
 
         # Animaciones dinámicas según robot_name
         base_path = f"assets/robots/{self.nombre_robot}"
