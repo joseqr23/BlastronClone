@@ -42,11 +42,12 @@ class WeaponManager:
                 granada.rebote_con_robot(robot_estatico)
                 if granada.explotado and granada.estado == "explode":
                     if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
+                        daño = 70
+                        puntos = daño
+                        if robot_estatico.health - daño <= 0:  # va a morir con este golpe
+                            puntos = daño * 2
+
                         self.aplicar_dano(robot_estatico, 70) #robot_estatico.take_damage(70)
-                        puntos = 70
-                        if robot_estatico.health <= 0:
-                            puntos *= 2
-                        #self.game.puntajes[self.game.robot] += puntos
                         self.enviar_evento_puntaje(self.game.robot.nombre_jugador, puntos, robot_estatico)
                         granada.danados.add(robot_estatico)
 
@@ -71,11 +72,12 @@ class WeaponManager:
                 misil.colisiona_con_robot(robot_estatico)
                 if misil.explotado and misil.estado == "explode":
                     if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
+                        daño = 50
+                        puntos = daño
+                        if robot_estatico.health - daño <= 0:  # va a morir con este golpe
+                            puntos = daño * 2
+                            
                         self.aplicar_dano(robot_estatico, 50) #robot_estatico.take_damage(50)
-                        puntos = 50
-                        if robot_estatico.health <= 0:
-                            puntos *= 2
-                        #self.game.puntajes[self.game.robot] += puntos
                         self.enviar_evento_puntaje(self.game.robot.nombre_jugador, puntos, robot_estatico)
                         misil.danados.add(robot_estatico)
 
