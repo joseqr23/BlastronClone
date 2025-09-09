@@ -92,7 +92,7 @@ class MultiplayerGame(BaseGame):
         self.turn_manager = TurnManager(self)
         self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2 - 80, 60))
         self.turnos_iniciados = False
-
+        self.partida_iniciada = False  # 🔴 nueva bandera
 
     def listen(self):
         """Recibe mensajes de red y actualiza estado."""
@@ -257,6 +257,12 @@ class MultiplayerGame(BaseGame):
                         target.vel_y = 0
                         target.current_animation = "idle"
 
+
+                elif tipo == "iniciar_partida":
+                    self.partida_iniciada = True
+                    self.ultimo_tick = time.time()
+                    print(f"[{self.nombre_jugador}] recibió señal de inicio de partida")
+
             except BlockingIOError:
                 time.sleep(0.01)
             except Exception:
@@ -323,9 +329,23 @@ class MultiplayerGame(BaseGame):
                 pygame.time.delay(5000)
                 return
 
+            # 🔴 Aquí revisamos si el host presiona la tecla INICIAR
+            if self.host and not self.partida_iniciada:
+                keys = pygame.key.get_pressed()
+                if keys[pygame.K_i]:  # puedes cambiar la tecla
+                    self.partida_iniciada = True
+                    self.ultimo_tick = time.time()
+                    data = {"tipo": "iniciar_partida"}
+                    try:
+                        self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+                    except Exception:
+                        pass
+                    print("[HOST] Partida iniciada!")
+
 
             # --- Inicializar turnos en host ---
-            if self.host and not self.turnos_iniciados and self.robots_remotos and len(self.robots_remotos) >= 1: # and len(self.robots_remotos) >= 1: PARA ASEGURARSE DE QUE ARRANQUE SOLO SI HAY MAS DE DOS JUGADORES
+            if self.host and self.partida_iniciada and not self.turnos_iniciados and self.robots_remotos and len(self.robots_remotos) >= 1:
+            #if self.host and not self.turnos_iniciados and self.robots_remotos and len(self.robots_remotos) >= 1: # and len(self.robots_remotos) >= 1: PARA ASEGURARSE DE QUE ARRANQUE SOLO SI HAY MAS DE DOS JUGADORES
                 jugadores = [self.nombre_jugador] + list(self.robots_remotos.keys())
                 self.turn_manager.iniciar(jugadores)
                 data = {"tipo": "turnos_init", "jugadores": jugadores}
@@ -349,12 +369,6 @@ class MultiplayerGame(BaseGame):
                     self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
                 except Exception:
                     pass
-
-            # # --- Input y actualización local ---
-            # keys = pygame.key.get_pressed()
-            # self.robot.update(keys)
-            # if keys[pygame.K_DELETE]:
-            #     self.robot.take_damage(50)
 
             # --- Input y actualización local (solo si es tu turno y no cooldown) ---
             if self.turn_manager.jugador_actual() == self.nombre_jugador and not self.turn_manager.en_cooldown:
@@ -389,7 +403,8 @@ class MultiplayerGame(BaseGame):
             self.weapon_manager.update()
 
             # --- Si soy host, actualizar cronómetro y enviarlo ---
-            if self.host and not self.game_over:
+            #if self.host and not self.game_over:
+            if self.host and self.partida_iniciada and not self.game_over:
                 ahora = time.time()
                 delta = ahora - self.ultimo_tick
                 if delta >= 1:  # cada segundo
