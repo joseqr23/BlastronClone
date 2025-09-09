@@ -160,3 +160,21 @@ class HUDTimer:
         render = self.font.render(texto, True, color)
         rect = render.get_rect(center=self.posicion)
         pantalla.blit(render, rect)
+
+class HUDTurnos:
+    def __init__(self, turn_manager, posicion=(10, 60)):
+        self.tm = turn_manager
+        self.font = pygame.font.SysFont("Arial", 20, bold=True)
+        self.pos = posicion
+
+    def draw(self, pantalla):
+        x, y = self.pos
+        jugador = self.tm.jugador_actual()
+        if not jugador:
+            return
+        tiempo = max(0, self.tm.tiempo_restante())
+        texto = f"Turno de {self.tm.jugador_actual()} ({tiempo})"
+        #texto = f"Turno: {jugador} - {tiempo:02d}s"
+        color = (255, 200, 0) if not self.tm.en_cooldown else (200, 100, 100)
+        render = self.font.render(texto, True, color)
+        pantalla.blit(render, (x, y))

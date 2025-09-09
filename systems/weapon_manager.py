@@ -2,12 +2,23 @@
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
 import pickle
+import time
+import pygame
 
 class WeaponManager:
     def __init__(self, game):
         self.game = game
 
     def disparar(self):
+        # 🚫 Bloquear disparo si no es tu turno o estás en cooldown
+        if (
+            self.game.turn_manager.jugador_actual() != self.game.nombre_jugador
+            or self.game.turn_manager.en_cooldown
+        ):
+            print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno.")
+            return
+
+
         origen, vel_x, vel_y = self.game.aim.get_datos_disparo()
         shooter = self.game.nombre_jugador  # dueño local
 
@@ -24,6 +35,33 @@ class WeaponManager:
             m = Misil(origen[0], origen[1], vel_x, vel_y)
             m.owner = shooter
             self.game.misiles.append(m)
+
+        # ✅ Si llegamos aquí, el disparo es válido → se acaba el turno
+        if self.game.turn_manager.jugador_actual() == self.game.nombre_jugador:
+            # 🚀 Detener movimiento inmediatamente
+            self.game.robot.vel_x = 0
+            self.game.robot.current_animation = "idle"
+    
+            # 🚀 Resetear input para que no quede corriendo/saltando
+            pygame.event.clear([pygame.KEYDOWN, pygame.KEYUP])
+            keys = pygame.key.get_pressed()
+            self.game.robot.update([])     # forzar actualización sin teclas
+
+            data = {"tipo": "turno_fin", "jugador": self.game.nombre_jugador}
+            try:
+                self.game.sock.sendto(pickle.dumps(data), (self.game.server_ip, self.game.port))
+            except Exception:
+                pass
+
+            if self.game.host:
+                # Host: aplica lógica de fin de turno
+                self.game.turn_manager.forzar_fin_turno()
+            else:
+                # Cliente: entrar en cooldown local de inmediato
+                self.game.turn_manager.en_cooldown = True
+                self.game.turn_manager.cooldown_inicio = time.time()
+                self.game.turn_manager.cooldown_restante_sync = self.game.turn_manager.cooldown
+                
 
     def update(self):
         self._update_granadas()

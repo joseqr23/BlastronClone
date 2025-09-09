@@ -12,9 +12,10 @@ from systems.collision import check_collisions, check_collisions_laterales_esqui
 from systems.aim_indicator import AimIndicator
 from systems.weapon_manager import WeaponManager
 from systems.hud_manager import HUDManager
-from ui.hud import HUDPuntajesMultiplayer, HUDArmas, HUDTimer
+from ui.hud import HUDPuntajesMultiplayer, HUDArmas, HUDTimer, HUDTurnos
 from systems.event_handler import EventHandler
 from ui.chat import Chat
+from systems.turn_manager import TurnManager
 
 
 class MultiplayerGame(BaseGame):
@@ -87,6 +88,12 @@ class MultiplayerGame(BaseGame):
         self.game_over = False
         self.timer_hud = HUDTimer(self, duracion=180, posicion=(ANCHO // 2, 30))
 
+        # Turnos de jugador
+        self.turn_manager = TurnManager(self)
+        self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2 - 80, 60))
+        self.turnos_iniciados = False
+
+
     def listen(self):
         """Recibe mensajes de red y actualiza estado."""
         while self._listening:
@@ -117,6 +124,7 @@ class MultiplayerGame(BaseGame):
                 tipo = msg.get("tipo")
                 jugador = msg.get("jugador")
 
+                # Estado de jugadores
                 if tipo == "update" and jugador != self.nombre_jugador:
                     if jugador not in self.robots_remotos:
                         self.robots_remotos[jugador] = Robot(
@@ -128,6 +136,7 @@ class MultiplayerGame(BaseGame):
                         # 🔥 Inicializar puntaje del nuevo jugador
                         if jugador not in self.puntajes:
                             self.puntajes[jugador] = 0
+
                     else:
                         r = self.robots_remotos[jugador]
                         r.x = msg["x"]
@@ -203,6 +212,51 @@ class MultiplayerGame(BaseGame):
                     if self.tiempo_restante <= 0:
                         self.game_over = True
 
+
+                 # --- NUEVOS MENSAJES DE TURNOS ---
+                elif tipo == "turnos_init":
+                    self.turn_manager.iniciar(msg["jugadores"])
+
+                elif tipo == "turno_sync":
+                    jugador = msg["jugador"]
+                    if jugador in self.turn_manager.jugadores:
+                        self.turn_manager.turno_actual = self.turn_manager.jugadores.index(jugador)
+                    self.turn_manager.en_cooldown = msg["cooldown"]
+
+                    if self.turn_manager.en_cooldown:
+                        self.turn_manager.cooldown_restante_sync = msg["tiempo"]
+                        self.turn_manager.turno_inicio = None
+                    else:
+                        self.turn_manager.turno_restante_sync = msg["tiempo"]
+                        self.turn_manager.cooldown_inicio = None
+
+
+                elif tipo == "turno_fin":
+                    jugador = msg.get("jugador")
+                    print(f"[NET] Fin de turno de {jugador}")
+
+                    # 🔥 Actualizar turn manager
+                    if self.host:
+                        # si soy host, fuerzo el fin del turno en mi lógica
+                        self.turn_manager.forzar_fin_turno()
+                    else:
+                        # si soy cliente, simplemente pongo cooldown (el host ya mandó el sync)
+                        if jugador == self.turn_manager.jugador_actual():
+                            self.turn_manager.iniciar_cooldown()
+
+                    # 🔥 Frenar totalmente al jugador que terminó su turno
+                    target = None
+                    # 🔥 Frenar al jugador que terminó su turno
+                    if jugador == self.nombre_jugador:
+                        target = self.robot
+                    elif jugador in self.robots_remotos:
+                        target = self.robots_remotos[jugador]
+
+                    if target:
+                        target.vel_x = 0
+                        target.vel_y = 0
+                        target.current_animation = "idle"
+
             except BlockingIOError:
                 time.sleep(0.01)
             except Exception:
@@ -243,6 +297,15 @@ class MultiplayerGame(BaseGame):
         except Exception:
             pass
 
+        # --- Forzar fin de turno al disparar ---
+        if self.turn_manager.jugador_actual() == self.nombre_jugador:
+            self.turn_manager.forzar_fin_turno()
+            data = {"tipo": "turno_fin", "jugador": self.nombre_jugador}
+            try:
+                self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+            except Exception:
+                pass
+
     def run(self):
         """Loop principal: input, robots, armas, HUD y render."""
         while True:
@@ -260,11 +323,60 @@ class MultiplayerGame(BaseGame):
                 pygame.time.delay(5000)
                 return
 
-            # --- Input y actualización local ---
-            keys = pygame.key.get_pressed()
-            self.robot.update(keys)
-            if keys[pygame.K_DELETE]:
-                self.robot.take_damage(50)
+
+            # --- Inicializar turnos en host ---
+            if self.host and not self.turnos_iniciados and self.robots_remotos and len(self.robots_remotos) >= 1: # and len(self.robots_remotos) >= 1: PARA ASEGURARSE DE QUE ARRANQUE SOLO SI HAY MAS DE DOS JUGADORES
+                jugadores = [self.nombre_jugador] + list(self.robots_remotos.keys())
+                self.turn_manager.iniciar(jugadores)
+                data = {"tipo": "turnos_init", "jugadores": jugadores}
+                try:
+                    self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+                except Exception:
+                    pass
+                self.turnos_iniciados = True
+                print(f"[HOST] Turnos iniciados con jugadores: {jugadores}")
+
+            # --- Actualizar turnos ---
+            if self.host and self.turnos_iniciados:
+                self.turn_manager.actualizar()
+                data = {
+                    "tipo": "turno_sync",
+                    "jugador": self.turn_manager.jugador_actual(),
+                    "tiempo": self.turn_manager.tiempo_restante(),
+                    "cooldown": self.turn_manager.en_cooldown,
+                }
+                try:
+                    self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+                except Exception:
+                    pass
+
+            # # --- Input y actualización local ---
+            # keys = pygame.key.get_pressed()
+            # self.robot.update(keys)
+            # if keys[pygame.K_DELETE]:
+            #     self.robot.take_damage(50)
+
+            # --- Input y actualización local (solo si es tu turno y no cooldown) ---
+            if self.turn_manager.jugador_actual() == self.nombre_jugador and not self.turn_manager.en_cooldown:
+                keys = pygame.key.get_pressed()
+                self.robot.update(keys)
+
+                # ⚡ Ejemplo: tecla DELETE simula un disparo
+                if keys[pygame.K_DELETE]:
+                    self.robot.take_damage(50)
+
+                    # 🔥 Fin del turno si soy el host (controla la lógica)
+                    if self.host:
+                        self.turn_manager.forzar_fin_turno()
+                        data = {"tipo": "turno_fin"}
+                        try:
+                            self.sock.sendto(pickle.dumps(data), (self.server_ip, self.port))
+                        except Exception:
+                            pass
+            else:
+                # 🔥 Aplicar solo gravedad/colisiones sin movimiento
+                self.robot.update([])  # o pasa un arreglo vacío en lugar de None
+                self.robot.vel_x = 0  # 🔒 evita que quede con velocidad horizontal
 
             # --- Colisiones ---
             check_collisions(self.robot, self.tiles)
@@ -320,8 +432,11 @@ class MultiplayerGame(BaseGame):
             self.hud_manager.draw(self.pantalla)
             self.chat.draw(self.pantalla)
 
-            # --- Dibujar cronómetro (HUDTimer) ---
+            # HUD de cronometro
             self.timer_hud.draw(self.pantalla)
+
+            # HUD de turnos
+            self.hud_turnos.draw(self.pantalla)
 
             # Mensajes de muerte
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
