@@ -2,7 +2,7 @@ import time
 import pickle
 
 class TurnManager:
-    def __init__(self, game, duracion_turno=10, cooldown=2):
+    def __init__(self, game, duracion_turno=10, cooldown=0):
         self.game = game
         self.duracion_turno = duracion_turno
         self.cooldown = cooldown
