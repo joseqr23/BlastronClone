@@ -7,7 +7,7 @@ from core.game_modes.base_game import BaseGame # Base de juego
 from ui.hud import HUDPuntajes # Hud
 
 from systems.event_handler import EventHandler # Manejador de eventos 
-from systems.weapon_manager import WeaponManager # Manejador de armas
+from systems.weapon_manager_free import WeaponManager # Manejador de armas
 from systems.hud_manager import HUDManager # Manejador de HUD
 
 
