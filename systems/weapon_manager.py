@@ -1,75 +1,91 @@
 # systems/weapon_manager.py
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
-import time
 import pygame
 
 
 class WeaponManager:
+    """
+    Host: dueño real de la física de proyectiles (colisión, rebote,
+    explosión, daño). Cliente: no simula nada, solo dibuja lo que el host
+    le manda por 'proy_sync' (ver multi_game.py).
+    """
+
     def __init__(self, game):
         self.game = game
 
+    # ------------------------------------------------------------------
+    # Disparo
+    # ------------------------------------------------------------------
     def disparar(self):
-        if (
-            self.game.turn_manager.jugador_actual() != self.game.nombre_jugador
-            or self.game.turn_manager.en_cooldown
-        ):
-            print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno.")
+        tm = self.game.turn_manager
+        if tm.jugador_actual() != self.game.nombre_jugador or not tm.puede_disparar():
+            print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno o ya disparó.")
             return
 
-        shooter = self.game.nombre_jugador
+        arma = self.game.robot.arma_equipada
+        if arma not in ("granada", "misil"):
+            return
 
-        if self.game.robot.arma_equipada == 'granada':
-            ancho, alto = Granada.ANCHO, Granada.ALTO
-            origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            g = Granada(origen[0], origen[1], vel_x, vel_y)
-            g.owner = shooter
-            self.game.granadas.append(g)
-            self.game.enviar({
-                "tipo": "disparo",
-                "jugador": self.game.nombre_jugador,
-                "arma": self.game.robot.arma_equipada,
-                "x": origen[0],
-                "y": origen[1],
-                "dir_x": vel_x,
-                "dir_y": vel_y,
-            })
+        ancho, alto = (Granada.ANCHO, Granada.ALTO) if arma == "granada" else (Misil.ANCHO, Misil.ALTO)
+        origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
 
-        elif self.game.robot.arma_equipada == 'misil':
-            ancho, alto = Misil.ANCHO, Misil.ALTO
-            origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            m = Misil(origen[0], origen[1], vel_x, vel_y)
-            m.owner = shooter
-            self.game.misiles.append(m)
-            self.game.enviar({
-                "tipo": "disparo",
-                "jugador": self.game.nombre_jugador,
-                "arma": self.game.robot.arma_equipada,
-                "x": origen[0],
-                "y": origen[1],
-                "dir_x": vel_x,
-                "dir_y": vel_y,
-            })
+        msg = {
+            "tipo": "disparo",
+            "jugador": self.game.nombre_jugador,
+            "arma": arma,
+            "x": origen[0],
+            "y": origen[1],
+            "dir_x": vel_x,
+            "dir_y": vel_y,
+        }
 
-        # Disparo válido -> se acaba el turno
-        if self.game.turn_manager.jugador_actual() == self.game.nombre_jugador:
-            self.game.robot.vel_x = 0
-            self.game.robot.current_animation = "idle"
-            pygame.event.clear([pygame.KEYDOWN, pygame.KEYUP])
-            self.game.robot.update([])
+        # Bloqueo local inmediato: evita que un doble-click dispare dos
+        # veces mientras se espera la confirmación por red.
+        tm.disparo_hecho = True
 
-            self.game.enviar({"tipo": "turno_fin", "jugador": self.game.nombre_jugador})
+        if self.game.host:
+            self.crear_proyectil_host(msg)
+        else:
+            self.game.enviar(msg)
 
-            if self.game.host:
-                self.game.turn_manager.forzar_fin_turno()
-            else:
-                self.game.turn_manager.en_cooldown = True
-                self.game.turn_manager.cooldown_inicio = time.time()
-                self.game.turn_manager.cooldown_restante_sync = self.game.turn_manager.cooldown
+    def crear_proyectil_host(self, msg):
+        """Solo el host llama esto (directo al disparar localmente, o al
+        recibir un 'disparo' de un cliente). Crea el proyectil canónico
+        y arranca la fase post_disparo del turno."""
+        game = self.game
+        if not game.host:
+            return
 
+        jugador = msg["jugador"]
+        arma = msg["arma"]
+        x, y, dx, dy = msg["x"], msg["y"], msg["dir_x"], msg["dir_y"]
+        pid = game._next_proy_id()
+
+        if arma == "granada":
+            g = Granada(x, y, dx, dy)
+            g.owner = jugador
+            g.proj_id = pid
+            game.granadas.append(g)
+        elif arma == "misil":
+            m = Misil(x, y, dx, dy)
+            m.owner = jugador
+            m.proj_id = pid
+            game.misiles.append(m)
+        else:
+            return
+
+        game.turn_manager.registrar_disparo()
+
+    # ------------------------------------------------------------------
+    # Update / draw
+    # ------------------------------------------------------------------
     def update(self):
-        self._update_granadas()
-        self._update_misiles()
+        if self.game.host:
+            self._update_granadas()
+            self._update_misiles()
+        # El cliente no simula física de proyectiles: su estado llega por
+        # red vía "proy_sync" y se aplica directo en multi_game.py.
 
     def draw(self, pantalla):
         for granada in self.game.granadas:
@@ -77,7 +93,9 @@ class WeaponManager:
         for misil in self.game.misiles:
             misil.draw(pantalla)
 
-    # --- Granadas ---
+    # ------------------------------------------------------------------
+    # Física — SOLO se ejecuta en el host
+    # ------------------------------------------------------------------
     def _update_granadas(self):
         for granada in self.game.granadas[:]:
             granada.update(self.game.tiles, self.game.robot)
@@ -92,9 +110,8 @@ class WeaponManager:
                         puntos = daño
                         if robot_estatico.health - daño <= 0:
                             puntos = daño * 2
-                        if self.game.host:
-                            self.aplicar_dano(robot_estatico, daño)
-                            self.game.enviar_evento_puntaje(granada.owner, puntos, robot_estatico)
+                        self.aplicar_dano(robot_estatico, daño)
+                        self.game.enviar_evento_puntaje(granada.owner, puntos, robot_estatico)
                         granada.danados.add(robot_estatico)
 
             if not granada.explotado:
@@ -107,14 +124,12 @@ class WeaponManager:
                     puntos = daño
                     if self.game.robot.health - daño <= 0:
                         puntos = daño * 2
-                    if self.game.host:
-                        print(f"[GRANADA] Host aplica {daño} a {self.game.nombre_jugador} por granada de {granada.owner}")
-                        self.aplicar_dano(self.game.robot, daño)
+                    print(f"[GRANADA] Host aplica {daño} a {self.game.nombre_jugador} por granada de {granada.owner}")
+                    self.aplicar_dano(self.game.robot, daño)
+                    # Fix: no dar puntos si el dueño de la granada es la
+                    # misma víctima (auto-daño).
+                    if getattr(granada, "owner", None) != self.game.robot.nombre_jugador:
                         self.game.enviar_evento_puntaje(granada.owner, puntos, self.game.robot)
-                    else:
-                        if getattr(granada, "owner", None) == self.game.nombre_jugador:
-                            print(f"[GRANADA] Cliente {self.game.nombre_jugador} se hace {daño} (self-hit).")
-                            self.game.robot.take_damage(daño)
                     granada.danados.add(self.game.robot)
                     granada.ya_hizo_dano = True
 
@@ -138,9 +153,8 @@ class WeaponManager:
                         puntos = daño
                         if robot_estatico.health - daño <= 0:
                             puntos = daño * 2
-                        if self.game.host:
-                            self.aplicar_dano(robot_estatico, daño)
-                            self.game.enviar_evento_puntaje(misil.owner, puntos, robot_estatico)
+                        self.aplicar_dano(robot_estatico, daño)
+                        self.game.enviar_evento_puntaje(misil.owner, puntos, robot_estatico)
                         misil.danados.add(robot_estatico)
 
             if not misil.explotado:
@@ -153,14 +167,10 @@ class WeaponManager:
                     puntos = daño
                     if self.game.robot.health - daño <= 0:
                         puntos = daño * 2
-                    if self.game.host:
-                        print(f"[MISIL] Host aplica {daño} a {self.game.nombre_jugador} por misil de {misil.owner}")
-                        self.aplicar_dano(self.game.robot, daño)
+                    print(f"[MISIL] Host aplica {daño} a {self.game.nombre_jugador} por misil de {misil.owner}")
+                    self.aplicar_dano(self.game.robot, daño)
+                    if getattr(misil, "owner", None) != self.game.robot.nombre_jugador:
                         self.game.enviar_evento_puntaje(misil.owner, puntos, self.game.robot)
-                    else:
-                        if getattr(misil, "owner", None) == self.game.nombre_jugador:
-                            print(f"[MISIL] Cliente {self.game.nombre_jugador} se hace {daño} (self-hit).")
-                            self.game.robot.take_damage(daño)
                     misil.danados.add(self.game.robot)
                     misil.ya_hizo_dano = True
 
@@ -171,32 +181,14 @@ class WeaponManager:
                     pass
 
     def aplicar_dano(self, robot, cantidad):
-        """Solo el host llama esto con autoridad real. Aplica el daño
-        localmente y lo notifica a todos vía self.game.enviar()."""
-        if self.game.host:
-            robot.take_damage(cantidad)
-            self.game.enviar({
-                "tipo": "damage",
-                "jugador": robot.nombre_jugador,
-                "cantidad": cantidad,
-                "quien": self.game.nombre_jugador,
-            })
-        else:
-            if robot.es_remoto:
-                self.game.enviar_dano(robot.nombre_jugador, cantidad)
-
-    def recibir_disparo_remoto(self, msg):
-        jugador = msg.get("jugador")
-        if jugador == self.game.nombre_jugador:
+        """Solo se llama desde el host. Aplica el daño localmente y lo
+        notifica a todos los clientes."""
+        if not self.game.host:
             return
-        arma = msg.get("arma")
-        x, y = msg.get("x"), msg.get("y")
-        dx, dy = msg.get("dir_x"), msg.get("dir_y")
-        if arma == 'granada':
-            g = Granada(x, y, dx, dy)
-            g.owner = jugador
-            self.game.granadas.append(g)
-        elif arma == 'misil':
-            m = Misil(x, y, dx, dy)
-            m.owner = jugador
-            self.game.misiles.append(m)
+        robot.take_damage(cantidad)
+        self.game.enviar({
+            "tipo": "damage",
+            "jugador": robot.nombre_jugador,
+            "cantidad": cantidad,
+            "quien": self.game.nombre_jugador,
+        })
