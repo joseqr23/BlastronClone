@@ -2,25 +2,25 @@ import pygame
 import math
 from utils.loader import load_spritesheet
 
+
 class Granada:
     ANCHO = 40
     ALTO = 40
+
     def __init__(self, x, y, vel_x, vel_y, owner=None):
         self.x = x
         self.y = y
         self.owner = owner  # nombre del jugador que disparó
-        
+
         self.width = Granada.ANCHO
         self.height = Granada.ALTO
-
         self.danados = set()  # Robots que ya recibieron daño de esta explosión
-        
+
         # Tiempos
-        self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion
-        self.tiempo_explosion_otros = pygame.time.get_ticks() # inmediato para otras entidades
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000  # 3 segundos para explosion
+        self.tiempo_explosion_otros = pygame.time.get_ticks()  # inmediato para otras entidades
         self.tiempo_post_explosion = 500
         self.tiempo_eliminar = None
-
         # Cargar Sprites
         self.frames = load_spritesheet("assets/weapons/granada_sprite.png", 3, self.width, self.height)
         self.estado = "idle"
@@ -28,22 +28,29 @@ class Granada:
         self.timer = 0
         self.explotado = False
         self.muerta = False
-
         # Física
         self.vel_x = vel_x
         self.vel_y = vel_y
         self.gravity = 0.5
         self.friccion_aire = 0.99
         self.friccion_rebote = 0.6
-
         self.ya_hizo_dano = False
         self.tiempo_creacion = pygame.time.get_ticks()
+
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
-    def update(self, tiles, robot):
+    def update(self, tiles, robots):
+        """
+        robots: lista de robots contra los que puede rebotar (no un único
+        robot). Es importante revisar colisión en CADA sub-paso del
+        movimiento, no solo al final del frame — de lo contrario, a alta
+        velocidad la granada puede "saltarse" al robot entero antes de que
+        se detecte el contacto (tunneling). Antes solo se revisaba contra
+        un robot y una sola vez por frame para los robots remotos, lo cual
+        causaba que la granada pasara de largo.
+        """
         ahora = pygame.time.get_ticks()
-
         # Cambiar estado según tiempo
         if not self.explotado and ahora >= self.tiempo_explosion:
             self.estado = "explode"
@@ -53,24 +60,20 @@ class Granada:
             self.estado = "warning"
         elif not self.explotado:
             self.estado = "idle"
-
         # Física
         if not self.explotado:
             self.vel_y += self.gravity
-
             # Dividir el movimiento en pasos para evitar tunneling
             pasos = int(max(abs(self.vel_x), abs(self.vel_y)) // 5) + 1
             dx = self.vel_x / pasos
             dy = self.vel_y / pasos
-
             for _ in range(pasos):
                 self.x += dx
                 self.y += dy
                 self.rebote_con_tiles(tiles)
-                self.rebote_con_robot(robot)
-
+                for robot in robots:
+                    self.rebote_con_robot(robot)
             self.vel_x *= self.friccion_aire
-
         # Eliminar después de explotar
         if self.explotado and ahora >= self.tiempo_eliminar:
             self.estado = "done"
@@ -96,8 +99,8 @@ class Granada:
 
     def get_hitbox(self):
         # Extiende el rect original en ancho y alto para zona de daño
-        padding_x = 4 # definir ancho de explosion
-        padding_y = 8 # alto de explosion
+        padding_x = 4  # definir ancho de explosion
+        padding_y = 8  # alto de explosion
         rect = self.get_rect()
         hitbox = pygame.Rect(
             rect.left - padding_x,
@@ -107,49 +110,39 @@ class Granada:
         )
         return hitbox
 
-
     def rebote_con_tiles(self, tiles):
         rect = self.get_rect()
-
         # Definir un umbral para considerar "lanzamiento suave"
         umbral_suave = 1.0
-
         for tile in tiles:
             if rect.colliderect(tile.rect):
                 # Determinar factor de rebote según la velocidad actual (suave o normal)
-                # Usamos la velocidad vertical y horizontal para calcular si es suave
                 velocidad_actual = max(abs(self.vel_x), abs(self.vel_y))
                 if velocidad_actual < umbral_suave:
                     factor_rebote = self.friccion_rebote * 0.3  # rebote menor
                 else:
-                    factor_rebote = self.friccion_rebote      # rebote normal
-
+                    factor_rebote = self.friccion_rebote  # rebote normal
                 # Rebote en el piso (granada cayendo)
                 if self.vel_y >= 0 and rect.bottom <= tile.rect.bottom:
                     self.y = tile.rect.top - self.height
                     self.vel_y *= -factor_rebote
-
                 # Rebote en el techo (granada subiendo)
                 elif self.vel_y < 0 and rect.top <= tile.rect.bottom and rect.top >= tile.rect.bottom - 10:
                     self.y = tile.rect.bottom
                     self.vel_y *= -factor_rebote
-
                 # Rebote lateral derecha
                 elif abs(rect.right - tile.rect.left) < 10 and self.vel_x > 0:
                     self.x = tile.rect.left - self.width
                     self.vel_x *= -factor_rebote
-
                 # Rebote lateral izquierda
                 elif abs(rect.left - tile.rect.right) < 10 and self.vel_x < 0:
                     self.x = tile.rect.right
                     self.vel_x *= -factor_rebote
-
                 # Evitar micro rebotes infinitos: solo poner a cero si es muy pequeño
                 if abs(self.vel_x) < 0.1:
                     self.vel_x = 0
                 elif abs(self.vel_x) < 0.5:
-                    self.vel_x *= 0.5  
-
+                    self.vel_x *= 0.5
                 if abs(self.vel_y) < 0.1:
                     self.vel_y = 0
                 elif abs(self.vel_y) < 0.5:
@@ -158,48 +151,38 @@ class Granada:
     def rebote_con_robot(self, robot):
         rect = self.get_rect()
         robot_rect = robot.get_hitbox_lateral()
-
         if rect.colliderect(robot_rect):
             umbral_suave = 1.0
             velocidad_actual = max(abs(self.vel_x), abs(self.vel_y))
             if velocidad_actual < umbral_suave:
                 factor_rebote = self.friccion_rebote * 0.3  # rebote suave
             else:
-                factor_rebote = self.friccion_rebote      # rebote normal
-
+                factor_rebote = self.friccion_rebote  # rebote normal
             # Si el robot está en el aire (saltando o cayendo), aumentamos rebote
             if robot.vel_y != 0:
                 factor_rebote *= 1.5  # +50% de rebote cuando robot está en el aire
-
             # Rebote lateral derecha
             if abs(rect.right - robot_rect.left) < 10 and self.vel_x > 0:
                 self.x = robot_rect.left - self.width
                 self.vel_x *= -factor_rebote
-
             # Rebote lateral izquierda
             elif abs(rect.left - robot_rect.right) < 10 and self.vel_x < 0:
                 self.x = robot_rect.right
                 self.vel_x *= -factor_rebote
-
             # Rebote desde abajo (granada subiendo)
             elif self.vel_y < 0 and rect.top <= robot_rect.bottom and abs(rect.top - robot_rect.bottom) < 10:
                 self.y = robot_rect.bottom
                 self.vel_y *= -factor_rebote
-
             # Rebote desde arriba (granada cayendo sobre robot)
             elif self.vel_y >= 0 and rect.bottom >= robot_rect.top and abs(rect.bottom - robot_rect.top) < 10:
                 self.y = robot_rect.top - self.height
                 self.vel_y *= -factor_rebote
-
             # Evitar micro rebotes infinitos
             if abs(self.vel_x) < 0.1:
                 self.vel_x = 0
             elif abs(self.vel_x) < 0.5:
                 self.vel_x *= 0.5
-
             if abs(self.vel_y) < 0.1:
                 self.vel_y = 0
             elif abs(self.vel_y) < 0.5:
                 self.vel_y *= 0.5
-
-

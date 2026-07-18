@@ -259,14 +259,14 @@ class MultiplayerGame(BaseGame):
         for g in self.granadas:
             items.append({
                 "id": getattr(g, "proj_id", None), "tipo": "granada", "owner": getattr(g, "owner", None),
-                "x": g.x, "y": g.y, "estado": getattr(g, "estado", None),
-                "explotado": getattr(g, "explotado", False),
+                "x": g.x, "y": g.y, "vel_x": g.vel_x, "vel_y": g.vel_y,
+                "estado": getattr(g, "estado", None), "explotado": getattr(g, "explotado", False),
             })
         for m in self.misiles:
             items.append({
                 "id": getattr(m, "proj_id", None), "tipo": "misil", "owner": getattr(m, "owner", None),
-                "x": m.x, "y": m.y, "estado": getattr(m, "estado", None),
-                "explotado": getattr(m, "explotado", False),
+                "x": m.x, "y": m.y, "vel_x": m.vel_x, "vel_y": m.vel_y,
+                "estado": getattr(m, "estado", None), "explotado": getattr(m, "explotado", False),
             })
         self.enviar({"tipo": "proy_sync", "items": items})
 
@@ -429,6 +429,8 @@ class MultiplayerGame(BaseGame):
                 contenedor.append(proxy)
             proxy.x = item["x"]
             proxy.y = item["y"]
+            proxy.vel_x = item.get("vel_x", proxy.vel_x)
+            proxy.vel_y = item.get("vel_y", proxy.vel_y)
             proxy.estado = item.get("estado")
             proxy.explotado = item.get("explotado", False)
 

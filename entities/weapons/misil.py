@@ -2,25 +2,25 @@ import pygame
 import math
 from utils.loader import load_spritesheet
 
+
 class Misil:
     ANCHO = 40
     ALTO = 40
+
     def __init__(self, x, y, vel_x, vel_y, owner=None):
         self.x = x
         self.y = y
         self.owner = owner  # nombre del jugador que disparó
-        
+
         self.width = Misil.ANCHO
         self.height = Misil.ALTO
-
         self.danados = set()  # Robots que ya recibieron daño de esta explosión
-        
-        # Tiempos
-        self.tiempo_explosion = pygame.time.get_ticks() + 3000 # 3 segundos para explosion
-        self.tiempo_explosion_otros = pygame.time.get_ticks() # inmediato para otras entidades
-        self.tiempo_post_explosion = 300 # milisegundos antes de que pueda explotar
-        self.tiempo_eliminar = None
 
+        # Tiempos
+        self.tiempo_explosion = pygame.time.get_ticks() + 3000  # 3 segundos para explosion
+        self.tiempo_explosion_otros = pygame.time.get_ticks()  # inmediato para otras entidades
+        self.tiempo_post_explosion = 300  # milisegundos antes de que pueda explotar
+        self.tiempo_eliminar = None
         # Cargar Sprites
         self.frames = load_spritesheet("assets/weapons/misil_sprite.png", 3, self.width, self.height)
         self.estado = "idle"
@@ -28,22 +28,25 @@ class Misil:
         self.timer = 0
         self.explotado = False
         self.muerta = False
-
         # Física
         self.vel_x = vel_x
         self.vel_y = vel_y
         self.gravity = 0.5
         self.friccion_aire = 0.99
-
         self.ya_hizo_dano = False
         self.tiempo_creacion = pygame.time.get_ticks()
 
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
-    def update(self, tiles, robot):
+    def update(self, tiles, robots):
+        """
+        robots: lista de robots contra los que puede impactar (no un único
+        robot). La colisión se revisa en CADA sub-paso del movimiento, no
+        solo al final del frame — a alta velocidad el misil podía
+        "saltarse" a un robot remoto entero antes de detectarse el impacto.
+        """
         ahora = pygame.time.get_ticks()
-
         # Cambiar estado según tiempo
         if not self.explotado and ahora >= self.tiempo_explosion:
             self.estado = "explode"
@@ -53,24 +56,20 @@ class Misil:
             self.estado = "warning"
         elif not self.explotado:
             self.estado = "idle"
-
         # Física
         if not self.explotado:
             self.vel_y += self.gravity
-
             # Dividir el movimiento en pasos para evitar tunneling
             pasos = int(max(abs(self.vel_x), abs(self.vel_y)) // 5) + 1
             dx = self.vel_x / pasos
             dy = self.vel_y / pasos
-
             for _ in range(pasos):
                 self.x += dx
                 self.y += dy
                 self.colisiona_con_tiles(tiles)
-                self.colisiona_con_robot(robot)
-
+                for robot in robots:
+                    self.colisiona_con_robot(robot)
             self.vel_x *= self.friccion_aire
-
         # Eliminar después de explotar
         if self.explotado and ahora >= self.tiempo_eliminar:
             self.estado = "done"
@@ -80,17 +79,13 @@ class Misil:
         if self.estado in ("idle", "warning"):
             # Elegir frame según estado
             frame = self.frames[0] if self.estado == "idle" else self.frames[1]
-
             # Calcular ángulo de rotación (atan2 usa Y negativo porque en pygame la Y crece hacia abajo)
             angulo = math.degrees(math.atan2(-self.vel_y, self.vel_x))
-
             # Rotar manteniendo tamaño original
             imagen_rotada = pygame.transform.rotozoom(frame, angulo, 1)
-
             # Centrar rotación en el medio del misil
             rect_centrado = imagen_rotada.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
             pantalla.blit(imagen_rotada, rect_centrado.topleft)
-
         elif self.estado == "explode":
             escala_factor = 2  # Duplicar tamaño
             imagen_explode = pygame.transform.scale(
@@ -103,8 +98,8 @@ class Misil:
 
     def get_hitbox(self):
         # Extiende el rect original en ancho y alto para zona de daño
-        padding_x = 4 # definir ancho de explosion
-        padding_y = 8 # alto de explosion
+        padding_x = 4  # definir ancho de explosion
+        padding_y = 8  # alto de explosion
         rect = self.get_rect()
         hitbox = pygame.Rect(
             rect.left - padding_x,
@@ -114,10 +109,8 @@ class Misil:
         )
         return hitbox
 
-
     def colisiona_con_tiles(self, tiles):
         rect = self.get_rect()
-
         for tile in tiles:
             if rect.colliderect(tile.rect):
                 # Forzar explosión inmediata
@@ -128,16 +121,15 @@ class Misil:
                 return  # No seguir revisando, ya explotó
 
     def colisiona_con_robot(self, robot):
+        """
+        Detona al primer contacto con cualquier robot — excepto con el
+        propio dueño del misil durante un breve margen tras el disparo
+        (para que no se autodetone justo al salir del arma).
+        """
         ahora = pygame.time.get_ticks()
-
-        # Si el robot es el jugador, esperar hasta tiempo_explosion
-        if getattr(robot, "es_jugador", False):
-            if ahora < self.tiempo_explosion:
-                return
-        else:  # Otras entidades: usar tiempo_explosion_otros
-            if ahora < self.tiempo_explosion_otros:
-                return
-
+        es_dueño = getattr(robot, "nombre_jugador", None) == self.owner
+        if es_dueño and ahora < self.tiempo_creacion + 250:
+            return
         rect = self.get_rect()
         robot_rect = robot.get_hitbox_lateral()
         if rect.colliderect(robot_rect):

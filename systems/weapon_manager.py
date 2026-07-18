@@ -93,17 +93,31 @@ class WeaponManager:
         for misil in self.game.misiles:
             misil.draw(pantalla)
 
+    def _robots_para_colision(self, owner):
+        """Todos los robots contra los que un proyectil puede
+        colisionar/rebotar: el robot local y TODOS los remotos, incluido
+        el propio dueño del proyectil — así el auto-daño funciona igual
+        para el host que para cualquier cliente.
+
+        Esta lista se pasa a granada/misil.update(), que revisa colisión
+        en CADA sub-paso del movimiento (no solo al final del frame). Eso
+        evita el tunneling a alta velocidad. Misil.py se encarga por su
+        cuenta de no autodetonar contra su propio dueño justo al salir
+        (margen de gracia de ~250ms)."""
+        return [self.game.robot] + list(self.game.robots_estaticos)
+
     # ------------------------------------------------------------------
     # Física — SOLO se ejecuta en el host
     # ------------------------------------------------------------------
     def _update_granadas(self):
         for granada in self.game.granadas[:]:
-            granada.update(self.game.tiles, self.game.robot)
+            robots = self._robots_para_colision(getattr(granada, "owner", None))
+            # El rebote contra tiles y contra TODOS los robots ya ocurre
+            # dentro de update(), sub-paso por sub-paso.
+            granada.update(self.game.tiles, robots)
 
+            # --- Daño/puntaje contra robots remotos (incluye auto-daño) ---
             for robot_estatico in self.game.robots_estaticos:
-                if robot_estatico.nombre_jugador == getattr(granada, "owner", None):
-                    continue
-                granada.rebote_con_robot(robot_estatico)
                 if granada.explotado and granada.estado == "explode":
                     if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
                         daño = 70
@@ -111,13 +125,14 @@ class WeaponManager:
                         if robot_estatico.health - daño <= 0:
                             puntos = daño * 2
                         self.aplicar_dano(robot_estatico, daño)
-                        self.game.enviar_evento_puntaje(granada.owner, puntos, robot_estatico)
+                        # No dar puntos si el dueño de la granada es la
+                        # misma víctima (auto-daño).
+                        if getattr(granada, "owner", None) != robot_estatico.nombre_jugador:
+                            self.game.enviar_evento_puntaje(granada.owner, puntos, robot_estatico)
                         granada.danados.add(robot_estatico)
 
-            if not granada.explotado:
-                granada.rebote_con_tiles(self.game.tiles)
-                granada.rebote_con_robot(self.game.robot)
-            elif granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+            # --- Daño/puntaje contra el robot local (incluye auto-daño) ---
+            if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
                 collided_local = granada.get_hitbox().colliderect(self.game.robot.get_rect())
                 if collided_local and self.game.robot not in granada.danados:
                     daño = 70
@@ -126,8 +141,8 @@ class WeaponManager:
                         puntos = daño * 2
                     print(f"[GRANADA] Host aplica {daño} a {self.game.nombre_jugador} por granada de {granada.owner}")
                     self.aplicar_dano(self.game.robot, daño)
-                    # Fix: no dar puntos si el dueño de la granada es la
-                    # misma víctima (auto-daño).
+                    # No dar puntos si el dueño de la granada es la misma
+                    # víctima (auto-daño).
                     if getattr(granada, "owner", None) != self.game.robot.nombre_jugador:
                         self.game.enviar_evento_puntaje(granada.owner, puntos, self.game.robot)
                     granada.danados.add(self.game.robot)
@@ -141,12 +156,12 @@ class WeaponManager:
 
     def _update_misiles(self):
         for misil in self.game.misiles[:]:
-            misil.update(self.game.tiles, self.game.robot)
+            robots = self._robots_para_colision(getattr(misil, "owner", None))
+            # El impacto contra tiles y contra TODOS los robots ya ocurre
+            # dentro de update(), sub-paso por sub-paso.
+            misil.update(self.game.tiles, robots)
 
             for robot_estatico in self.game.robots_estaticos:
-                if robot_estatico.nombre_jugador == getattr(misil, "owner", None):
-                    continue
-                misil.colisiona_con_robot(robot_estatico)
                 if misil.explotado and misil.estado == "explode":
                     if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
                         daño = 50
@@ -154,13 +169,11 @@ class WeaponManager:
                         if robot_estatico.health - daño <= 0:
                             puntos = daño * 2
                         self.aplicar_dano(robot_estatico, daño)
-                        self.game.enviar_evento_puntaje(misil.owner, puntos, robot_estatico)
+                        if getattr(misil, "owner", None) != robot_estatico.nombre_jugador:
+                            self.game.enviar_evento_puntaje(misil.owner, puntos, robot_estatico)
                         misil.danados.add(robot_estatico)
 
-            if not misil.explotado:
-                misil.colisiona_con_tiles(self.game.tiles)
-                misil.colisiona_con_robot(self.game.robot)
-            elif misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+            if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
                 collided_local = misil.get_hitbox().colliderect(self.game.robot.get_rect())
                 if collided_local and self.game.robot not in misil.danados:
                     daño = 50
