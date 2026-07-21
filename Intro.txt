@@ -6,21 +6,28 @@ blastron_clone/
 │   ├── hud/granada.png; misil.png; nada.png
 │   ├── maps/fondo.png
 │   ├── robots/
-│       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png
-│       ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png
-│       ├── netali/death.png; idle.png; jump.png; robot.png; run.png
-│       ├── robot/death.png; idle.png; jump.png; robot.png; run.png
+│       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
+│       ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
+│       ├── netali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
+│       ├── robot/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
 │   ├── robots_boss/
 │       ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
-│   ├── sfx/death.mp3; explosion.mp3
-│   ├── ui/
+│   ├── sfx/
+│       ├──dano/dano1.mp3;dano2.mp3;dano3.mp3
+│       ├──death/death1.mp3;death2.mp3;death3.mp3
+│       ├──salto/salto1.mp3;salto2.mp3;salto3.mp3
+│       ├──weapons          
+│       │       ├──granada/disparo.mp3;explosion.mp3
+│       │       ├──misil/disparo.mp3;explosion.mp3
+│       └──musica.mp3
+│   ├── ui/icons/free_game.png; solo_game.png; multi_game.png
 │   └── weapons/granada_sprite.png; misil_sprite.png
 │
 ├── core/                        # Núcleo del motor
 │   ├── game_modes/
 │       ├── base_game.py # Base que heredaran el resto de modos
 │       ├── free_game.py # Ya configurado
-│       ├── multi_game.py # pendiente
+│       ├── multi_game.py # Ya configurado
 │       └── solo_game.py # pendiente
 │   └── robot_selector.py 
 │
@@ -43,8 +50,8 @@ blastron_clone/
 │   ├── hud_manager.py
 │   ├── physics.py
 │   ├── turn_manager.py
+│   ├── weapon_manager_free.py
 │   └── weapon_manager.py
-
 │
 ├── ui/                          # Menús, HUD
 │   ├── chat.py
@@ -54,7 +61,13 @@ blastron_clone/
 │   └── text_input.py
 │
 └── utils/                       # Funciones de ayuda
+    ├── colors.py
     ├── editor.py
     ├── loader.py
     ├── math_utils.py
-    └── paths.py
+    ├── paths.py
+    ├── sound_manager.py
+    └── sprite_reproductor.py
+    
+
+     

@@ -34,6 +34,7 @@ from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
+from utils.sound_manager import sound_manager
 from core.game_modes.base_game import BaseGame
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from systems.aim_indicator import AimIndicator
@@ -308,16 +309,28 @@ class MultiplayerGame(BaseGame):
                     es_remoto=True,
                 )
                 r.target_x, r.target_y = r.x, r.y
+                r.is_dead = (msg.get("estado", "idle") == "death")
                 self.robots_remotos[jugador] = r
                 if jugador not in self.puntajes:
                     self.puntajes[jugador] = 0
             else:
                 r = self.robots_remotos[jugador]
+                anim_anterior = r.current_animation
                 r.target_x = msg["x"]
                 r.target_y = msg["y"]
                 r.frame_index = msg.get("frame", 0)
                 r.current_animation = msg.get("estado", "idle")
                 r.facing_right = (msg.get("direccion", 1) == 1)
+                # r.update() nunca corre para robots remotos (solo se
+                # interpola su posición), así que is_dead nunca se limpiaba
+                # solo — se sincroniza aquí a partir de la animación que
+                # manda la máquina dueña de ese robot. En cuanto esa
+                # máquina reaparece y vuelve a mandar "idle"/"run", el
+                # mensaje de "ha sido detonado" desaparece en todas las
+                # pantallas.
+                r.is_dead = (r.current_animation == "death")
+                if r.current_animation == "jump" and anim_anterior != "jump":
+                    sound_manager.salto()
             if "health" in msg:
                 self.robots_remotos[jugador].health = msg["health"]
 
@@ -335,13 +348,10 @@ class MultiplayerGame(BaseGame):
         elif tipo == "damage":
             jugador = msg["jugador"]
             cantidad = msg["cantidad"]
-            quien_disparo = msg.get("quien")
             if jugador == self.nombre_jugador:
-                if quien_disparo != self.nombre_jugador:
-                    self.robot.take_damage(cantidad)
+                self.robot.take_damage(cantidad)
             elif jugador in self.robots_remotos:
-                nuevo = self.robots_remotos[jugador].health - cantidad
-                self.robots_remotos[jugador].health = max(0, nuevo)
+                self.robots_remotos[jugador].take_damage(cantidad)
 
         elif tipo == "score":
             # Solo llega a los CLIENTES (el host se aplica esto directamente
@@ -427,12 +437,16 @@ class MultiplayerGame(BaseGame):
                 proxy.danados = set()
                 proxy.ya_hizo_dano = True  # el cliente nunca aplica daño, solo dibuja
                 contenedor.append(proxy)
+                sound_manager.disparo(item["tipo"])  # proyectil recién aparecido: sonido de disparo
+            explotado_antes = proxy.explotado
             proxy.x = item["x"]
             proxy.y = item["y"]
             proxy.vel_x = item.get("vel_x", proxy.vel_x)
             proxy.vel_y = item.get("vel_y", proxy.vel_y)
             proxy.estado = item.get("estado")
             proxy.explotado = item.get("explotado", False)
+            if proxy.explotado and not explotado_antes:
+                sound_manager.explosion()
 
         self.granadas = [g for g in self.granadas if getattr(g, "proj_id", None) in ids_recibidos]
         self.misiles = [m for m in self.misiles if getattr(m, "proj_id", None) in ids_recibidos]

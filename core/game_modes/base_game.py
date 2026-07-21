@@ -5,6 +5,7 @@ from ui.hud import HUDArmas, HUDPuntajes
 from ui.chat import Chat  # Nuevo: importar chat
 from systems.aim_indicator import AimIndicator
 from utils.paths import resource_path  # Importar para rutas seguras
+from utils.sound_manager import sound_manager
 
 
 class BaseGame:
@@ -12,36 +13,31 @@ class BaseGame:
         pygame.init()
         self.nombre_jugador = nombre_jugador
         self.personaje = personaje
-
         self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         pygame.display.set_caption("Blastron Clone")
         self.reloj = pygame.time.Clock()
-
         # Mapas
         self.tiles = load_static_map()
         self.tiles_laterales = load_static_map_laterales()
-
         # Armas
         self.granadas = []
         self.misiles = []
-
         # Estados
         self.mouse_click_sostenido = False
-
         # Fondo
         self.fondo = pygame.image.load(resource_path("assets/maps/fondo.png")).convert()
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
-
         # Fuente de mensajes de muerte
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
-
         # HUD
         self.hud_armas = HUDArmas(['granada', 'misil'])
         self.font = pygame.font.SysFont('Arial', 20)
         self.puntajes = {}
-
         # Chat
         self.chat = Chat(nombre_jugador=self.nombre_jugador)
+        # Sonido — música de fondo en loop durante toda la partida
+        self.sound_manager = sound_manager
+        self.sound_manager.iniciar_musica()
 
     def run(self):
         """Bucle principal del juego. Debe ser implementado o extendido por subclases."""

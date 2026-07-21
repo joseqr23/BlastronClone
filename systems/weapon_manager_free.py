@@ -1,5 +1,6 @@
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
+from utils.sound_manager import sound_manager
 
 
 class WeaponManager:
@@ -13,12 +14,14 @@ class WeaponManager:
             g = Granada(origen[0], origen[1], vel_x, vel_y)
             g.owner = self.game.robot.nombre_jugador
             self.game.granadas.append(g)
+            sound_manager.disparo("granada")
         elif self.game.robot.arma_equipada == 'misil':
             ancho, alto = Misil.ANCHO, Misil.ALTO
             origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
             m = Misil(origen[0], origen[1], vel_x, vel_y)
             m.owner = self.game.robot.nombre_jugador
             self.game.misiles.append(m)
+            sound_manager.disparo("misil")
 
     def update(self):
         self._update_granadas()

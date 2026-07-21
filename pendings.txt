@@ -1,0 +1,28 @@
+Pendiente:
+- Ordernar de mayor a menor el puntaje del hud y agregar corona al primer lugar siempre.
+- Agregar una opción para que en el modo multijugador al darle click en host, te lleve a otra pantalla con la configuracion de la partida
+    > La partida configurada por defecto es el modo de puntajes > con 3 minutos y por turnos de 10 min
+        > Sugerencia: Boton para cambiar la duracion de la partida: 3 | 5 | 10 min 
+    > Añadir otros modos de partida para que también incluya, por kills (aún no implementado), y ultimo en pie con 1000 de vida cada uno.
+
+
+
+Errores:
+No se puede enviar mensajes en modo Free.
+
+
+
+Lo que yo haría
+
+Mi hoja de ruta sería:
+
+✅ Música + efectos. <<<<<<<<<<<<<<< OK 
+✅ Mejorar menú. <<<<<<<<<<<<<<< OK 
+✅ Sistema dinámico de armas.
+✅ Agregar 5–10 armas nuevas.
+✅ Nuevos modos de juego.
+✅ Configuración.
+✅ Estadísticas.
+✅ Bots.
+✅ Partículas.
+✅ Mapas.

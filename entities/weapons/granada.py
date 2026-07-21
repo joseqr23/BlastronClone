@@ -1,6 +1,7 @@
 import pygame
 import math
 from utils.loader import load_spritesheet
+from utils.sound_manager import sound_manager
 
 
 class Granada:
@@ -56,6 +57,7 @@ class Granada:
             self.estado = "explode"
             self.explotado = True
             self.tiempo_eliminar = ahora + self.tiempo_post_explosion
+            sound_manager.explosion()
         elif not self.explotado and self.tiempo_explosion - ahora <= 500:
             self.estado = "warning"
         elif not self.explotado:

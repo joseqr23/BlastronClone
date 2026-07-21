@@ -1,6 +1,7 @@
 import pygame
 import math
 from utils.loader import load_spritesheet
+from utils.sound_manager import sound_manager
 
 
 class Misil:
@@ -52,6 +53,7 @@ class Misil:
             self.estado = "explode"
             self.explotado = True
             self.tiempo_eliminar = ahora + self.tiempo_post_explosion
+            sound_manager.explosion()
         elif not self.explotado and self.tiempo_explosion - ahora <= 500:
             self.estado = "warning"
         elif not self.explotado:
@@ -118,6 +120,7 @@ class Misil:
                     self.estado = "explode"
                     self.explotado = True
                     self.tiempo_eliminar = pygame.time.get_ticks() + self.tiempo_post_explosion
+                    sound_manager.explosion()
                 return  # No seguir revisando, ya explotó
 
     def colisiona_con_robot(self, robot):
@@ -137,3 +140,4 @@ class Misil:
                 self.estado = "explode"
                 self.explotado = True
                 self.tiempo_eliminar = ahora + self.tiempo_post_explosion
+                sound_manager.explosion()

@@ -1,6 +1,7 @@
 # systems/weapon_manager.py
 from entities.weapons.granada import Granada
 from entities.weapons.misil import Misil
+from utils.sound_manager import sound_manager
 import pygame
 
 
@@ -75,6 +76,7 @@ class WeaponManager:
         else:
             return
 
+        sound_manager.disparo(arma)
         game.turn_manager.registrar_disparo()
 
     # ------------------------------------------------------------------

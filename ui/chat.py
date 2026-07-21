@@ -3,6 +3,7 @@ from utils.colors import ColorManager
 import pygame
 import time
 
+
 class Chat:
     COLORES_NOMBRES = [
         (0, 0, 255),     # Azul
@@ -17,7 +18,7 @@ class Chat:
 
     def __init__(self, nombre_jugador, game=None, posicion=(10, 410), ancho=300, alto=80):
         self.nombre_jugador = nombre_jugador
-        self.game = game 
+        self.game = game
         self.posicion = posicion
         self.ancho = ancho
         self.alto = alto
@@ -25,7 +26,6 @@ class Chat:
         self.font = pygame.font.SysFont("Arial", 16)
         self.color_fondo = (0, 0, 0, 150)
         self.color_texto = (255, 255, 255)
-        #self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)]
         self.color_nombre = ColorManager.get_color(self.nombre_jugador)
         self.input_text = ""
         self.activo = False
@@ -46,29 +46,24 @@ class Chat:
         surface = pygame.Surface((self.ancho, self.alto), pygame.SRCALPHA)
         surface.fill(self.color_fondo)
         pantalla.blit(surface, self.posicion)
-
         # Mensajes visibles según scroll
         max_lineas = self.lineas_visibles()
         inicio = max(0, len(self.mensajes) - max_lineas - self.scroll_offset)
         fin = inicio + max_lineas
         mensajes_a_mostrar = self.mensajes[inicio:fin]
-
         y_offset = 5
         for mensaje in mensajes_a_mostrar:
             if ": " in mensaje:
                 nombre, texto = mensaje.split(": ", 1)
-                #color_nombre = self.COLORES_NOMBRES[hash(nombre) % len(self.COLORES_NOMBRES)]
                 color_nombre = ColorManager.get_color(nombre)
                 render_nombre = self.font.render(nombre + ": ", True, color_nombre)
                 pantalla.blit(render_nombre, (self.posicion[0] + 5, self.posicion[1] + y_offset))
-
                 render_texto = self.font.render(texto, True, self.color_texto)
                 pantalla.blit(render_texto, (self.posicion[0] + 5 + render_nombre.get_width(), self.posicion[1] + y_offset))
             else:
                 render = self.font.render(mensaje, True, self.color_texto)
                 pantalla.blit(render, (self.posicion[0] + 5, self.posicion[1] + y_offset))
             y_offset += 18
-
         # Barra de scroll
         total_mensajes = len(self.mensajes)
         if total_mensajes > max_lineas:
@@ -76,7 +71,6 @@ class Chat:
             barra_altura = max(10, barra_altura)
             max_offset = total_mensajes - max_lineas
             posicion_barra = int((self.scroll_offset / max_offset) * (self.alto - 25 - barra_altura)) if max_offset > 0 else 0
-
             pygame.draw.rect(
                 pantalla,
                 (150, 150, 150),
@@ -87,14 +81,12 @@ class Chat:
                     barra_altura
                 )
             )
-
         # Línea de entrada con cursor parpadeante
         if self.activo:
             ahora = pygame.time.get_ticks()
             if ahora - self.last_cursor_toggle >= self.cursor_interval:
                 self.cursor_visible = not self.cursor_visible
                 self.last_cursor_toggle = ahora
-
             texto_mostrar = "Decir: " + self.input_text
             if self.cursor_visible:
                 texto_mostrar += "|"
@@ -108,8 +100,10 @@ class Chat:
                     if self.input_text.strip():
                         mensaje_formateado = f"{self.nombre_jugador}: {self.input_text.strip()}"
                         self.agregar_mensaje(mensaje_formateado)
-                        # 🔥 enviar al resto
-                        if hasattr(self, "game"):
+                        # Solo se envía por red si este chat pertenece a una
+                        # partida en red (multijugador). En modo libre
+                        # self.game es None y el mensaje se queda local.
+                        if self.game is not None:
                             self.game.enviar_chat(mensaje_formateado)
                     self.input_text = ""
                     self.activo = False
@@ -126,7 +120,6 @@ class Chat:
                     self.scroll_offset = min(self.scroll_offset + 1, max(0, len(self.mensajes) - self.lineas_visibles()))
                 elif evento.key == pygame.K_PAGEDOWN:
                     self.scroll_offset = max(self.scroll_offset - 1, 0)
-
         elif evento.type == pygame.MOUSEBUTTONDOWN and not self.activo:
             if evento.button == 4:
                 self.scroll_offset = min(self.scroll_offset + 1, max(0, len(self.mensajes) - self.lineas_visibles()))

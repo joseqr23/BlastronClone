@@ -1,6 +1,7 @@
 # entities/players/robot.py
 import pygame
 from utils.loader import load_spritesheet
+from utils.sound_manager import sound_manager
 import time
 import random
 from utils.colors import ColorManager
@@ -15,21 +16,17 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto = False):
+    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
         self.nombre_robot = nombre_robot
         self.es_remoto = es_remoto
-
         self.width = 60
         self.height = 90
-
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
-        
-        #self.color_nombre = self.COLORES_NOMBRES[hash(nombre_jugador) % len(self.COLORES_NOMBRES)] # Color único por nombre
-        self.color_nombre = ColorManager.get_color(nombre_jugador)
 
+        self.color_nombre = ColorManager.get_color(nombre_jugador)
         # Animaciones dinámicas según robot_name
         base_path = f"assets/robots/{self.nombre_robot}"
         self.animations = {
@@ -38,22 +35,18 @@ class Robot:
             "jump": load_spritesheet(f"{base_path}/jump.png", 1, self.width, self.height),
             "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
         }
-
         # Inicializa la imagen para que nunca sea None
         self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))
         if self.image is None:
             self.image = pygame.Surface((self.width, self.height))
             self.image.fill((255, 0, 255))  # Color de emergencia si no carga el spritesheet
-
-        self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
-        self.death_sound.set_volume(0.5)
-
+        # self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
+        # self.death_sound.set_volume(0.5)
         self.arma_equipada = None  # 'granada', 'misil', o None
         self.es_jugador = True
-
         # Configuración inicial del robot
         self.reset()
-        
+
     def reset(self):
         self.x = self.spawn_x
         self.y = self.spawn_y
@@ -67,17 +60,14 @@ class Robot:
         self.health = 200
         self.is_dead = False
         self.dead_timer = 0
-
         self.current_animation = "idle"
         self.frame_index = 0
         self.frame_timer = 0
-
         # Reaparecer en posición aleatoria
         min_x = 100
         max_x = 800
         self.x = random.randint(min_x, max_x)
         self.y = 0  # empieza desde arriba y caerá
-
         # Asegura que la imagen esté inicializada
         if hasattr(self, "animations") and "idle" in self.animations:
             self.image = self.animations["idle"][0]
@@ -93,12 +83,14 @@ class Robot:
             self.health -= amount
             if self.health <= 0:
                 self.die()
+            else:
+                sound_manager.dano()
 
     def die(self):
         self.is_dead = True
         self.frame_index = 0
         self.dead_timer = pygame.time.get_ticks()
-        self.death_sound.play()
+        sound_manager.muerte()
 
     def manejar_controles(self, keys):
         self.vel_x = 0
@@ -108,10 +100,10 @@ class Robot:
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.vel_x = self.speed
             self.facing_right = True
-
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
             self.vel_y = -self.jump_power
             self.on_ground = False
+            sound_manager.salto()
 
     def aplicar_fisica(self):
         self.x += self.vel_x
@@ -131,14 +123,11 @@ class Robot:
         else:
             self.current_animation = "idle"
             self.frame_index = 0
-
         self.image = self.animations[self.current_animation][self.frame_index]
         if not self.facing_right:
             self.image = pygame.transform.flip(self.image, True, False)
 
     def update(self, keys=None):
-        if self.es_remoto:
-            return  # 🔥 no recalcular nada, solo usar valores recibidos
         
         if self.is_dead:
             self.current_animation = "death"
@@ -147,7 +136,6 @@ class Robot:
                 self.frame_timer = 0
                 if self.frame_index < len(self.animations["death"]) - 1:
                     self.frame_index += 1
-
             # Reinicia tras 2 segundos muerto
             if pygame.time.get_ticks() - self.dead_timer > 2000:
                 self.reset()
@@ -155,7 +143,10 @@ class Robot:
             if not self.facing_right:
                 self.image = pygame.transform.flip(self.image, True, False)
             return
-
+        
+        if self.es_remoto:
+            return  # no recalcular nada, solo usar valores recibidos
+        
         if keys:  # Solo maneja controles si keys es proporcionado
             self.manejar_controles(keys)
         self.aplicar_fisica()
@@ -163,24 +154,20 @@ class Robot:
 
     def draw(self, pantalla):
         if self.es_remoto:
-            # 🔧 Forzar a usar el frame recibido por red
+            # Forzar a usar el frame recibido por red
             anim = self.animations.get(self.current_animation, self.animations["idle"])
             idx = int(self.frame_index) % len(anim)
             self.image = anim[idx]
             if not self.facing_right:
                 self.image = pygame.transform.flip(self.image, True, False)
-
         pantalla.blit(self.image, (self.x, self.y))
-
         # Barra de vida
         bar_width = 60
         bar_height = 10
         health_ratio = max(self.health / 200, 0)
         health_color = (200, 0, 0) if self.health < 60 else (0, 200, 0)
-
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
-
         texto_nombre = self.font_nombre.render(self.nombre_jugador, True, self.color_nombre)  # Nombre encima
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
