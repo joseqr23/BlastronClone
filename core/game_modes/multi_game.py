@@ -76,8 +76,9 @@ class MultiplayerGame(BaseGame):
     """MultiplayerGame con red TCP confiable, host autoritativo para
     turnos/daño/score/proyectiles, y sincronización de robots remotos."""
 
-    def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000):
+    def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000, duracion_min=3, modo_partida="puntos"):
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje)
+        self.modo_partida = modo_partida  # solo "puntos" implementado por ahora
 
         # --- Robot local ---
         self.robot = Robot(
@@ -128,11 +129,11 @@ class MultiplayerGame(BaseGame):
             self._iniciar_cliente()
 
         # Tiempo de juego
-        self.tiempo_total = 3 * 60
+        self.tiempo_total = duracion_min * 60
         self.tiempo_restante = self.tiempo_total
         self.ultimo_tick = time.time()
         self.game_over = False
-        self.timer_hud = HUDTimer(self, duracion=180, posicion=(ANCHO // 2, 30))
+        self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
 
         # Turnos
         self.turn_manager = TurnManager(self)
@@ -237,7 +238,7 @@ class MultiplayerGame(BaseGame):
             # El host agrega el mensaje directamente aquí — antes solo se
             # agregaba al RECIBIR el evento por red, y el host nunca se
             # "recibe" su propio mensaje, por eso no lo veía.
-            self.chat.agregar_mensaje(f"💥 {victima.nombre_jugador} fue detonado por {atacante}!")
+            self.chat.agregar_mensaje(f"{victima.nombre_jugador} fue detonado por {atacante}!")
         print(f"[SCORE] {atacante} ganó {puntos} puntos por dañar a {victima.nombre_jugador}")
         self.enviar({
             "tipo": "score",
@@ -362,7 +363,7 @@ class MultiplayerGame(BaseGame):
             victima_dead = msg.get("victima_dead", False)
             self.puntajes[atacante] = self.puntajes.get(atacante, 0) + puntos
             if victima_dead:
-                self.chat.agregar_mensaje(f"💥 {victima} fue detonado por {atacante}!")
+                self.chat.agregar_mensaje(f"{victima} fue detonado por {atacante}!")
 
         elif tipo == "chat":
             jugador = msg.get("jugador")

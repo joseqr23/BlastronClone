@@ -52,6 +52,14 @@ class Menu:
         "Modo Libre": "free_game.png",
     }
 
+    # Modos de partida disponibles en la config de Host: (clave, etiqueta, disponible)
+    MODOS_PARTIDA = [
+        ("puntos", "POR PUNTOS", True),
+        ("muertes", "POR MUERTES", False),
+        ("lms", "LAST MAN STANDING", False),
+    ]
+    DURACIONES = [3, 5, 10]
+
     def __init__(self, pantalla):
         self.pantalla = pantalla
         self.ancho, self.alto = pantalla.get_size()
@@ -65,21 +73,21 @@ class Menu:
         self.font_pill = pygame.font.SysFont("Arial", 16, bold=True)
         self.font_flecha = pygame.font.SysFont("Arial", 22, bold=True)
         self.font_badge = pygame.font.SysFont("Arial", 11, bold=True)
+        self.font_config_titulo = pygame.font.SysFont("Arial", 30, bold=True)
+        self.font_config_seccion = pygame.font.SysFont("Arial", 15, bold=True)
+        self.font_config_boton = pygame.font.SysFont("Arial", 20, bold=True)
 
-
-        # Añadir imagenes como emojis
+        # Iconos de modo (imágenes, más confiable multiplataforma que emoji)
         self.iconos_modo = {}
-
         for modo, archivo in self.ICONOS_MODO.items():
-            ruta = resource_path(f"assets/ui/icons/{archivo}")
-            img = pygame.image.load(ruta).convert_alpha()
+            try:
+                ruta = resource_path(f"assets/ui/icons/{archivo}")
+                img = pygame.image.load(ruta).convert_alpha()
+                img = pygame.transform.smoothscale(img, (28, 28))
+                self.iconos_modo[modo] = img
+            except Exception:
+                self.iconos_modo[modo] = None
 
-            # tamaño que quieras
-            img = pygame.transform.smoothscale(img, (28, 28))
-
-            self.iconos_modo[modo] = img
-
-        # modo -> (etiqueta descripción corta, disponible)
         self.opciones = ["Modo Solo", "Modo Multijugador", "Modo Libre"]
         self.opciones_desc = {
             "Modo Solo": "Contra bots — próximamente",
@@ -91,7 +99,6 @@ class Menu:
             "Modo Multijugador": True,
             "Modo Libre": True,
         }
-        # Selecciona por defecto la primera opción disponible
         self.opcion_seleccionada = next(
             (i for i, o in enumerate(self.opciones) if self.opciones_disponibles[o]), 0
         )
@@ -110,7 +117,7 @@ class Menu:
                 self.portraits[carpeta] = pygame.transform.smoothscale(img, (64, 64))
         self.personaje_idx = 0
 
-        # Rects interactivos (se recalculan cada frame en draw)
+        # Rects interactivos — pantalla principal
         self.rect_flecha_izq = None
         self.rect_flecha_der = None
         self.rect_opciones = []
@@ -118,8 +125,19 @@ class Menu:
         self.rect_cliente = None
         self.cursor_actual = None
 
+        # Rects interactivos — pantalla de configuración de host
+        self.rect_duracion = {}
+        self.rect_modo_partida = {}
+        self.rect_volver = None
+        self.rect_empezar = None
+
         self._mensaje_bloqueo = None
         self._mensaje_bloqueo_timer = 0
+
+        # Estado de navegación interna del menú
+        self.pantalla_estado = "principal"  # "principal" | "host_config"
+        self.host_duracion_min = 3
+        self.host_modo_partida = "puntos"
 
     # ------------------------------------------------------------------
     def _mostrar_bloqueo(self, texto):
@@ -138,288 +156,109 @@ class Menu:
         input_ip = TextInput((0, 0, 220, 34), self.font_input, max_length=15)
         input_ip.text = "192.168.1.236"
 
-        t0 = pygame.time.get_ticks()
-
         while True:
             self.pantalla.blit(fondo, (0, 0))
             mouse_pos = pygame.mouse.get_pos()
-            cursor_hover = False
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     exit()
 
-                self.text_input.handle_event(event)
-                if self.opciones[self.opcion_seleccionada] == "Modo Multijugador" and modo_multijugador_opcion == 1:
-                    input_ip.handle_event(event)
+                # ============================================================
+                # PANTALLA PRINCIPAL
+                # ============================================================
+                if self.pantalla_estado == "principal":
+                    self.text_input.handle_event(event)
+                    if self.opciones[self.opcion_seleccionada] == "Modo Multijugador" and modo_multijugador_opcion == 1:
+                        input_ip.handle_event(event)
 
-                if event.type == pygame.KEYDOWN and not self.text_input.active and not input_ip.active:
-                    if event.key == pygame.K_UP:
-                        self.opcion_seleccionada = (self.opcion_seleccionada - 1) % len(self.opciones)
-                    elif event.key == pygame.K_DOWN:
-                        self.opcion_seleccionada = (self.opcion_seleccionada + 1) % len(self.opciones)
-                    elif event.key == pygame.K_LEFT:
-                        self.personaje_idx = (self.personaje_idx - 1) % len(self.personajes)
-                    elif event.key == pygame.K_RIGHT:
-                        self.personaje_idx = (self.personaje_idx + 1) % len(self.personajes)
-                    elif event.key == pygame.K_RETURN:
-                        modo_actual = self.opciones[self.opcion_seleccionada]
-                        if not self.opciones_disponibles[modo_actual]:
-                            self._mostrar_bloqueo("Este modo estará disponible próximamente")
-                        else:
-                            seleccion = {
-                                "modo": modo_actual,
-                                "nombre": self.text_input.get_text() or "Jugador",
-                                "personaje": self.personajes[self.personaje_idx],
-                            }
-                            if modo_actual == "Modo Multijugador":
-                                seleccion["host"] = (modo_multijugador_opcion == 0)
-                                seleccion["server_ip"] = (
-                                    input_ip.get_text() if modo_multijugador_opcion == 1 else "127.0.0.1"
-                                )
-                            return seleccion
-
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if self.rect_flecha_izq and self.rect_flecha_izq.collidepoint(mouse_pos):
-                        self.personaje_idx = (self.personaje_idx - 1) % len(self.personajes)
-                    elif self.rect_flecha_der and self.rect_flecha_der.collidepoint(mouse_pos):
-                        self.personaje_idx = (self.personaje_idx + 1) % len(self.personajes)
-
-                    for i, rect in enumerate(self.rect_opciones):
-                        if rect.collidepoint(mouse_pos):
-                            modo_click = self.opciones[i]
-                            if not self.opciones_disponibles[modo_click]:
+                    if event.type == pygame.KEYDOWN and not self.text_input.active and not input_ip.active:
+                        if event.key == pygame.K_UP:
+                            self.opcion_seleccionada = (self.opcion_seleccionada - 1) % len(self.opciones)
+                        elif event.key == pygame.K_DOWN:
+                            self.opcion_seleccionada = (self.opcion_seleccionada + 1) % len(self.opciones)
+                        elif event.key == pygame.K_LEFT:
+                            self.personaje_idx = (self.personaje_idx - 1) % len(self.personajes)
+                        elif event.key == pygame.K_RIGHT:
+                            self.personaje_idx = (self.personaje_idx + 1) % len(self.personajes)
+                        elif event.key == pygame.K_RETURN:
+                            modo_actual = self.opciones[self.opcion_seleccionada]
+                            if not self.opciones_disponibles[modo_actual]:
                                 self._mostrar_bloqueo("Este modo estará disponible próximamente")
+                            elif modo_actual == "Modo Multijugador" and modo_multijugador_opcion == 0:
+                                # Host: ir a la pantalla de configuración en vez de arrancar directo
+                                self.pantalla_estado = "host_config"
                             else:
-                                self.opcion_seleccionada = i
+                                seleccion = {
+                                    "modo": modo_actual,
+                                    "nombre": self.text_input.get_text() or "Jugador",
+                                    "personaje": self.personajes[self.personaje_idx],
+                                }
+                                if modo_actual == "Modo Multijugador":
+                                    seleccion["host"] = False
+                                    seleccion["server_ip"] = input_ip.get_text()
+                                return seleccion
 
-                    if self.opciones[self.opcion_seleccionada] == "Modo Multijugador":
-                        if self.rect_host and self.rect_host.collidepoint(mouse_pos):
-                            modo_multijugador_opcion = 0
-                        elif self.rect_cliente and self.rect_cliente.collidepoint(mouse_pos):
-                            modo_multijugador_opcion = 1
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        if self.rect_flecha_izq and self.rect_flecha_izq.collidepoint(mouse_pos):
+                            self.personaje_idx = (self.personaje_idx - 1) % len(self.personajes)
+                        elif self.rect_flecha_der and self.rect_flecha_der.collidepoint(mouse_pos):
+                            self.personaje_idx = (self.personaje_idx + 1) % len(self.personajes)
+
+                        for i, rect in enumerate(self.rect_opciones):
+                            if rect and rect.collidepoint(mouse_pos):
+                                modo_click = self.opciones[i]
+                                if not self.opciones_disponibles[modo_click]:
+                                    self._mostrar_bloqueo("Este modo estará disponible próximamente")
+                                else:
+                                    self.opcion_seleccionada = i
+
+                        if self.opciones[self.opcion_seleccionada] == "Modo Multijugador":
+                            if self.rect_host and self.rect_host.collidepoint(mouse_pos):
+                                modo_multijugador_opcion = 0
+                                # Clic en Host -> pantalla de configuración de partida
+                                self.pantalla_estado = "host_config"
+                            elif self.rect_cliente and self.rect_cliente.collidepoint(mouse_pos):
+                                modo_multijugador_opcion = 1
+
+                # ============================================================
+                # PANTALLA DE CONFIGURACIÓN DE HOST
+                # ============================================================
+                elif self.pantalla_estado == "host_config":
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                            self.pantalla_estado = "principal"
+                        elif event.key == pygame.K_RETURN:
+                            return self._construir_seleccion_host()
+
+                    if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        if self.rect_volver and self.rect_volver.collidepoint(mouse_pos):
+                            self.pantalla_estado = "principal"
+
+                        for dur, rect in self.rect_duracion.items():
+                            if rect.collidepoint(mouse_pos):
+                                self.host_duracion_min = dur
+
+                        for clave, rect in self.rect_modo_partida.items():
+                            info = next(m for m in self.MODOS_PARTIDA if m[0] == clave)
+                            if rect.collidepoint(mouse_pos):
+                                if info[2]:
+                                    self.host_modo_partida = clave
+                                else:
+                                    self._mostrar_bloqueo("Este modo de partida estará disponible próximamente")
+
+                        if self.rect_empezar and self.rect_empezar.collidepoint(mouse_pos):
+                            return self._construir_seleccion_host()
 
             self.text_input.update()
             input_ip.update()
 
-            # ---------------- Layout general ----------------
-            margen_x = 60
-            content_w = self.ancho - margen_x * 2
+            if self.pantalla_estado == "principal":
+                cursor_hover = self._draw_pantalla_principal(mouse_pos, modo_multijugador_opcion, input_ip)
+            else:
+                cursor_hover = self._draw_pantalla_host_config(mouse_pos)
 
-            # Título
-            titulo = self.font_titulo.render("BLASTRON", True, COL_TEXT)
-            acento = self.font_titulo.render(" CLONE", True, COL_ACCENT)
-            titulo_y = 34
-            tx = margen_x
-            self.pantalla.blit(titulo, (tx, titulo_y))
-            self.pantalla.blit(acento, (tx + titulo.get_width(), titulo_y))
-            sub = self.font_subtitulo.render("Elige tu robot y prepárate para la batalla", True, COL_TEXT_DIM)
-            self.pantalla.blit(sub, (tx + 2, titulo_y + 46))
-
-            pygame.draw.line(self.pantalla, COL_CARD_BORDER, (margen_x, titulo_y + 78),
-                              (self.ancho - margen_x, titulo_y + 78), 2)
-
-            top_y = titulo_y + 96
-
-            # ---------------- Tarjeta: Jugador (nombre + personaje) ----------------
-            card_jugador = pygame.Rect(margen_x, top_y, content_w, 150)
-            _draw_panel(self.pantalla, card_jugador)
-
-            # Nombre
-            lbl_nombre = self.font_label.render("NOMBRE DEL JUGADOR", True, COL_TEXT_DIM)
-            self.pantalla.blit(lbl_nombre, (card_jugador.x + 24, card_jugador.y + 18))
-            self.text_input.rect.topleft = (card_jugador.x + 24, card_jugador.y + 42)
-            self.text_input.rect.height = 38
-            self.text_input.rect.width = 260
-            self.text_input.color_inactive = COL_INPUT_BG
-            self.text_input.color_active = COL_INPUT_BG
-            self.text_input.color_border = COL_INPUT_BORDER_ACTIVE if self.text_input.active else COL_INPUT_BORDER
-            pygame.draw.rect(self.pantalla, COL_INPUT_BG, self.text_input.rect, border_radius=8)
-            pygame.draw.rect(self.pantalla, self.text_input.color_border, self.text_input.rect,
-                              width=2, border_radius=8)
-            self._draw_text_input_contents(self.text_input)
-
-            # Separador vertical
-            sep_x = card_jugador.x + 320
-            pygame.draw.line(self.pantalla, COL_CARD_BORDER, (sep_x, card_jugador.y + 16),
-                              (sep_x, card_jugador.y + card_jugador.height - 16), 2)
-
-            # Personaje
-            lbl_personaje = self.font_label.render("PERSONAJE", True, COL_TEXT_DIM)
-            self.pantalla.blit(lbl_personaje, (sep_x + 24, card_jugador.y + 18))
-
-            portrait_frame_rect = pygame.Rect(0, 0, 76, 76)
-            portrait_frame_rect.topleft = (sep_x + 24, card_jugador.y + 50)
-            pygame.draw.rect(self.pantalla, COL_INPUT_BG, portrait_frame_rect, border_radius=10)
-            pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, portrait_frame_rect, width=2, border_radius=10)
-            portrait = self.portraits[self.personajes[self.personaje_idx]]
-            portrait_rect = portrait.get_rect(center=portrait_frame_rect.center)
-            self.pantalla.blit(portrait, portrait_rect)
-
-            # Flecha izquierda (botón circular)
-            flecha_izq_center = (portrait_frame_rect.left - 26, portrait_frame_rect.centery)
-            self.rect_flecha_izq = pygame.Rect(0, 0, 34, 34)
-            self.rect_flecha_izq.center = flecha_izq_center
-            hover_izq = self.rect_flecha_izq.collidepoint(mouse_pos)
-            pygame.draw.circle(self.pantalla, COL_OPTION_HOVER if hover_izq else COL_INPUT_BG,
-                                flecha_izq_center, 17)
-            pygame.draw.circle(self.pantalla, COL_ACCENT if hover_izq else COL_INPUT_BORDER,
-                                flecha_izq_center, 17, width=2)
-            f_izq = self.font_flecha.render("<", True, COL_TEXT)
-            self.pantalla.blit(f_izq, f_izq.get_rect(center=flecha_izq_center))
-            if hover_izq:
-                cursor_hover = True
-
-            # Flecha derecha
-            flecha_der_center = (portrait_frame_rect.right + 26, portrait_frame_rect.centery)
-            self.rect_flecha_der = pygame.Rect(0, 0, 34, 34)
-            self.rect_flecha_der.center = flecha_der_center
-            hover_der = self.rect_flecha_der.collidepoint(mouse_pos)
-            pygame.draw.circle(self.pantalla, COL_OPTION_HOVER if hover_der else COL_INPUT_BG,
-                                flecha_der_center, 17)
-            pygame.draw.circle(self.pantalla, COL_ACCENT if hover_der else COL_INPUT_BORDER,
-                                flecha_der_center, 17, width=2)
-            f_der = self.font_flecha.render(">", True, COL_TEXT)
-            self.pantalla.blit(f_der, f_der.get_rect(center=flecha_der_center))
-            if hover_der:
-                cursor_hover = True
-
-            # Nombre del personaje + contador
-            nombre_personaje = self.personajes[self.personaje_idx].title()
-            texto_nombre = self.font_opcion.render(nombre_personaje, True, COL_TEXT)
-            self.pantalla.blit(texto_nombre, (flecha_der_center[0] + 26, portrait_frame_rect.top + 4))
-            contador = self.font_opcion_desc.render(
-                f"{self.personaje_idx + 1} / {len(self.personajes)}", True, COL_TEXT_DIM
-            )
-            self.pantalla.blit(contador, (flecha_der_center[0] + 26, portrait_frame_rect.top + 32))
-
-            # ---------------- Tarjeta: Modos de juego ----------------
-            modos_y = card_jugador.bottom + 22
-            for i, opcion in enumerate(self.opciones):
-                disponible = self.opciones_disponibles[opcion]
-                rect_op = pygame.Rect(margen_x, modos_y, content_w, 56)
-                self.rect_opciones_ensure(i, rect_op)
-
-                hover = disponible and rect_op.collidepoint(mouse_pos)
-                seleccionado = (i == self.opcion_seleccionada)
-
-                if not disponible:
-                    color_fondo = COL_OPTION_IDLE
-                    color_borde = COL_CARD_BORDER
-                elif seleccionado:
-                    color_fondo = COL_OPTION_SELECTED
-                    color_borde = COL_ACCENT
-                elif hover:
-                    color_fondo = COL_OPTION_HOVER
-                    color_borde = COL_ACCENT_DIM
-                else:
-                    color_fondo = COL_OPTION_IDLE
-                    color_borde = COL_CARD_BORDER
-
-                _draw_panel(self.pantalla, rect_op, color=color_fondo, border=color_borde,
-                            radius=12, border_w=2 if (seleccionado or hover) else 1)
-
-                # Barra de acento a la izquierda si está seleccionado
-                if seleccionado and disponible:
-                    barra = pygame.Rect(rect_op.x, rect_op.y + 8, 5, rect_op.height - 16)
-                    pygame.draw.rect(self.pantalla, COL_ACCENT, barra, border_radius=3)
-
-
-                icono = self.iconos_modo.get(opcion)
-
-                if icono:
-                    icono_rect = icono.get_rect(
-                        center=(rect_op.x + 34, rect_op.centery)
-                    )
-                    self.pantalla.blit(icono, icono_rect)
-                # icono = self.ICONOS_MODO.get(opcion, "•")
-                # icono_surf = self.font_opcion.render(icono, True, COL_TEXT if disponible else COL_TEXT_DISABLED)
-                # self.pantalla.blit(icono_surf, (rect_op.x + 20, rect_op.y + rect_op.height // 2 - 16))
-
-                color_texto = COL_TEXT if disponible else COL_TEXT_DISABLED
-                texto_op = self.font_opcion.render(opcion, True, color_texto)
-                self.pantalla.blit(texto_op, (rect_op.x + 60, rect_op.y + 8))
-                desc_op = self.font_opcion_desc.render(self.opciones_desc[opcion], True,
-                                                         COL_TEXT_DIM if disponible else COL_TEXT_DISABLED)
-                self.pantalla.blit(desc_op, (rect_op.x + 60, rect_op.y + 32))
-
-                if not disponible:
-                    badge_text = self.font_badge.render("PRÓXIMAMENTE", True, (255, 255, 255))
-                    badge_rect = badge_text.get_rect()
-                    badge_rect.size = (badge_rect.width + 16, badge_rect.height + 8)
-                    badge_rect.midright = (rect_op.right - 18, rect_op.centery)
-                    pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, badge_rect, border_radius=10)
-                    self.pantalla.blit(badge_text, badge_text.get_rect(center=badge_rect.center))
-                elif hover or seleccionado:
-                    cursor_hover = cursor_hover or hover
-
-                # ---- Panel Host/Cliente embebido dentro de la opción Multijugador ----
-                if opcion == "Modo Multijugador" and seleccionado:
-                    panel_y = rect_op.bottom + 8
-                    panel_h = 56 if modo_multijugador_opcion == 0 else 96
-                    panel_rect = pygame.Rect(rect_op.x + 20, panel_y, rect_op.width - 40, panel_h)
-                    _draw_panel(self.pantalla, panel_rect, color=(26, 30, 41), border=COL_CARD_BORDER,
-                                radius=10, border_w=1)
-
-                    pill_w, pill_h = 100, 32
-                    self.rect_host = pygame.Rect(panel_rect.x + 16, panel_rect.y + 12, pill_w, pill_h)
-                    self.rect_cliente = pygame.Rect(panel_rect.x + 16 + pill_w + 12, panel_rect.y + 12,
-                                                     pill_w, pill_h)
-
-                    for rect_pill, label, activo in (
-                        (self.rect_host, "Host", modo_multijugador_opcion == 0),
-                        (self.rect_cliente, "Cliente", modo_multijugador_opcion == 1),
-                    ):
-                        color_pill = COL_PILL_ACTIVE if activo else COL_PILL_BG
-                        color_txt_pill = (20, 20, 20) if activo else COL_TEXT_DIM
-                        pygame.draw.rect(self.pantalla, color_pill, rect_pill, border_radius=16)
-                        pygame.draw.rect(self.pantalla, COL_ACCENT if activo else COL_INPUT_BORDER,
-                                          rect_pill, width=2, border_radius=16)
-                        txt_pill = self.font_pill.render(label, True, color_txt_pill)
-                        self.pantalla.blit(txt_pill, txt_pill.get_rect(center=rect_pill.center))
-                        if rect_pill.collidepoint(mouse_pos):
-                            cursor_hover = True
-
-                    if modo_multijugador_opcion == 1:
-                        lbl_ip = self.font_opcion_desc.render("IP del servidor:", True, COL_TEXT_DIM)
-                        self.pantalla.blit(lbl_ip, (panel_rect.x + 16, panel_rect.y + 54))
-                        input_ip.rect.topleft = (panel_rect.x + 130, panel_rect.y + 50)
-                        input_ip.rect.height = 30
-                        input_ip.color_border = COL_INPUT_BORDER_ACTIVE if input_ip.active else COL_INPUT_BORDER
-                        pygame.draw.rect(self.pantalla, COL_INPUT_BG, input_ip.rect, border_radius=6)
-                        pygame.draw.rect(self.pantalla, input_ip.color_border, input_ip.rect,
-                                          width=2, border_radius=6)
-                        self._draw_text_input_contents(input_ip)
-
-                    modos_y = panel_rect.bottom + 14
-                else:
-                    modos_y = rect_op.bottom + 12
-
-            # ---------------- Mensaje de bloqueo (modo no disponible) ----------------
-            if self._mensaje_bloqueo:
-                elapsed = pygame.time.get_ticks() - self._mensaje_bloqueo_timer
-                if elapsed < 2200:
-                    alpha = 255 if elapsed < 1800 else max(0, 255 - int((elapsed - 1800) / 400 * 255))
-                    aviso = self.font_opcion_desc.render(self._mensaje_bloqueo, True, (255, 210, 150))
-                    aviso_surf = pygame.Surface((aviso.get_width() + 24, aviso.get_height() + 14),
-                                                 pygame.SRCALPHA)
-                    pygame.draw.rect(aviso_surf, (60, 40, 20, min(230, alpha)),
-                                      aviso_surf.get_rect(), border_radius=8)
-                    aviso_surf.blit(aviso, (12, 7))
-                    aviso_surf.set_alpha(alpha)
-                    self.pantalla.blit(aviso_surf, (margen_x, self.alto - 40))
-                else:
-                    self._mensaje_bloqueo = None
-
-            # ---------------- Pie: instrucciones ----------------
-            ayuda = self.font_opcion_desc.render(
-                "↑ ↓ elige el modo   •   ← → cambia de robot   •   Enter para confirmar",
-                True, COL_TEXT_DIM
-            )
-            self.pantalla.blit(ayuda, ayuda.get_rect(midbottom=(self.ancho // 2, self.alto - 14)))
-
-            # ---------------- Cursor ----------------
             if cursor_hover and self.cursor_actual != "HAND":
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
                 self.cursor_actual = "HAND"
@@ -429,6 +268,354 @@ class Menu:
 
             pygame.display.flip()
             clock.tick(60)
+
+    # ------------------------------------------------------------------
+    def _construir_seleccion_host(self):
+        return {
+            "modo": "Modo Multijugador",
+            "nombre": self.text_input.get_text() or "Jugador",
+            "personaje": self.personajes[self.personaje_idx],
+            "host": True,
+            "server_ip": "127.0.0.1",
+            "duracion_min": self.host_duracion_min,
+            "modo_partida": self.host_modo_partida,
+        }
+
+    # ------------------------------------------------------------------
+    # PANTALLA PRINCIPAL — dibujo
+    # ------------------------------------------------------------------
+    def _draw_pantalla_principal(self, mouse_pos, modo_multijugador_opcion, input_ip):
+        cursor_hover = False
+        margen_x = 60
+        content_w = self.ancho - margen_x * 2
+
+        titulo = self.font_titulo.render("BLASTRON", True, COL_TEXT)
+        acento = self.font_titulo.render(" CLONE", True, COL_ACCENT)
+        titulo_y = 34
+        tx = margen_x
+        self.pantalla.blit(titulo, (tx, titulo_y))
+        self.pantalla.blit(acento, (tx + titulo.get_width(), titulo_y))
+        sub = self.font_subtitulo.render("Elige tu robot y prepárate para la batalla", True, COL_TEXT_DIM)
+        self.pantalla.blit(sub, (tx + 2, titulo_y + 46))
+
+        pygame.draw.line(self.pantalla, COL_CARD_BORDER, (margen_x, titulo_y + 78),
+                          (self.ancho - margen_x, titulo_y + 78), 2)
+
+        top_y = titulo_y + 96
+
+        card_jugador = pygame.Rect(margen_x, top_y, content_w, 150)
+        _draw_panel(self.pantalla, card_jugador)
+
+        lbl_nombre = self.font_label.render("NOMBRE DEL JUGADOR", True, COL_TEXT_DIM)
+        self.pantalla.blit(lbl_nombre, (card_jugador.x + 24, card_jugador.y + 18))
+        self.text_input.rect.topleft = (card_jugador.x + 24, card_jugador.y + 42)
+        self.text_input.rect.height = 38
+        self.text_input.rect.width = 260
+        self.text_input.color_border = COL_INPUT_BORDER_ACTIVE if self.text_input.active else COL_INPUT_BORDER
+        pygame.draw.rect(self.pantalla, COL_INPUT_BG, self.text_input.rect, border_radius=8)
+        pygame.draw.rect(self.pantalla, self.text_input.color_border, self.text_input.rect,
+                          width=2, border_radius=8)
+        self._draw_text_input_contents(self.text_input)
+
+        sep_x = card_jugador.x + 320
+        pygame.draw.line(self.pantalla, COL_CARD_BORDER, (sep_x, card_jugador.y + 16),
+                          (sep_x, card_jugador.y + card_jugador.height - 16), 2)
+
+        lbl_personaje = self.font_label.render("PERSONAJE", True, COL_TEXT_DIM)
+        self.pantalla.blit(lbl_personaje, (sep_x + 24, card_jugador.y + 18))
+
+        portrait_frame_rect = pygame.Rect(0, 0, 76, 76)
+        portrait_frame_rect.topleft = (sep_x + 24, card_jugador.y + 50)
+        pygame.draw.rect(self.pantalla, COL_INPUT_BG, portrait_frame_rect, border_radius=10)
+        pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, portrait_frame_rect, width=2, border_radius=10)
+        portrait = self.portraits[self.personajes[self.personaje_idx]]
+        portrait_rect = portrait.get_rect(center=portrait_frame_rect.center)
+        self.pantalla.blit(portrait, portrait_rect)
+
+        flecha_izq_center = (portrait_frame_rect.left - 26, portrait_frame_rect.centery)
+        self.rect_flecha_izq = pygame.Rect(0, 0, 34, 34)
+        self.rect_flecha_izq.center = flecha_izq_center
+        hover_izq = self.rect_flecha_izq.collidepoint(mouse_pos)
+        pygame.draw.circle(self.pantalla, COL_OPTION_HOVER if hover_izq else COL_INPUT_BG, flecha_izq_center, 17)
+        pygame.draw.circle(self.pantalla, COL_ACCENT if hover_izq else COL_INPUT_BORDER, flecha_izq_center, 17, width=2)
+        f_izq = self.font_flecha.render("<", True, COL_TEXT)
+        self.pantalla.blit(f_izq, f_izq.get_rect(center=flecha_izq_center))
+        cursor_hover = cursor_hover or hover_izq
+
+        flecha_der_center = (portrait_frame_rect.right + 26, portrait_frame_rect.centery)
+        self.rect_flecha_der = pygame.Rect(0, 0, 34, 34)
+        self.rect_flecha_der.center = flecha_der_center
+        hover_der = self.rect_flecha_der.collidepoint(mouse_pos)
+        pygame.draw.circle(self.pantalla, COL_OPTION_HOVER if hover_der else COL_INPUT_BG, flecha_der_center, 17)
+        pygame.draw.circle(self.pantalla, COL_ACCENT if hover_der else COL_INPUT_BORDER, flecha_der_center, 17, width=2)
+        f_der = self.font_flecha.render(">", True, COL_TEXT)
+        self.pantalla.blit(f_der, f_der.get_rect(center=flecha_der_center))
+        cursor_hover = cursor_hover or hover_der
+
+        nombre_personaje = self.personajes[self.personaje_idx].title()
+        texto_nombre = self.font_opcion.render(nombre_personaje, True, COL_TEXT)
+        self.pantalla.blit(texto_nombre, (flecha_der_center[0] + 26, portrait_frame_rect.top + 4))
+        contador = self.font_opcion_desc.render(
+            f"{self.personaje_idx + 1} / {len(self.personajes)}", True, COL_TEXT_DIM
+        )
+        self.pantalla.blit(contador, (flecha_der_center[0] + 26, portrait_frame_rect.top + 32))
+
+        modos_y = card_jugador.bottom + 22
+        for i, opcion in enumerate(self.opciones):
+            disponible = self.opciones_disponibles[opcion]
+            rect_op = pygame.Rect(margen_x, modos_y, content_w, 56)
+            self.rect_opciones_ensure(i, rect_op)
+
+            hover = disponible and rect_op.collidepoint(mouse_pos)
+            seleccionado = (i == self.opcion_seleccionada)
+
+            if not disponible:
+                color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
+            elif seleccionado:
+                color_fondo, color_borde = COL_OPTION_SELECTED, COL_ACCENT
+            elif hover:
+                color_fondo, color_borde = COL_OPTION_HOVER, COL_ACCENT_DIM
+            else:
+                color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
+
+            _draw_panel(self.pantalla, rect_op, color=color_fondo, border=color_borde,
+                        radius=12, border_w=2 if (seleccionado or hover) else 1)
+
+            if seleccionado and disponible:
+                barra = pygame.Rect(rect_op.x, rect_op.y + 8, 5, rect_op.height - 16)
+                pygame.draw.rect(self.pantalla, COL_ACCENT, barra, border_radius=3)
+
+            icono = self.iconos_modo.get(opcion)
+            if icono:
+                icono_rect = icono.get_rect(center=(rect_op.x + 34, rect_op.centery))
+                self.pantalla.blit(icono, icono_rect)
+
+            color_texto = COL_TEXT if disponible else COL_TEXT_DISABLED
+            texto_op = self.font_opcion.render(opcion, True, color_texto)
+            self.pantalla.blit(texto_op, (rect_op.x + 60, rect_op.y + 8))
+            desc_op = self.font_opcion_desc.render(self.opciones_desc[opcion], True,
+                                                     COL_TEXT_DIM if disponible else COL_TEXT_DISABLED)
+            self.pantalla.blit(desc_op, (rect_op.x + 60, rect_op.y + 32))
+
+            if not disponible:
+                badge_text = self.font_badge.render("PRÓXIMAMENTE", True, (255, 255, 255))
+                badge_rect = badge_text.get_rect()
+                badge_rect.size = (badge_rect.width + 16, badge_rect.height + 8)
+                badge_rect.midright = (rect_op.right - 18, rect_op.centery)
+                pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, badge_rect, border_radius=10)
+                self.pantalla.blit(badge_text, badge_text.get_rect(center=badge_rect.center))
+            elif hover:
+                cursor_hover = True
+
+            # ---- Panel Host/Cliente embebido dentro de la opción Multijugador ----
+            if opcion == "Modo Multijugador" and seleccionado:
+                panel_y = rect_op.bottom + 8
+                panel_h = 56 if modo_multijugador_opcion == 0 else 96
+                panel_rect = pygame.Rect(rect_op.x + 20, panel_y, rect_op.width - 40, panel_h)
+                _draw_panel(self.pantalla, panel_rect, color=(26, 30, 41), border=COL_CARD_BORDER,
+                            radius=10, border_w=1)
+
+                pill_w, pill_h = 100, 32
+                self.rect_host = pygame.Rect(panel_rect.x + 16, panel_rect.y + 12, pill_w, pill_h)
+                self.rect_cliente = pygame.Rect(panel_rect.x + 16 + pill_w + 12, panel_rect.y + 12, pill_w, pill_h)
+
+                for rect_pill, label, activo in (
+                    (self.rect_host, "Host", modo_multijugador_opcion == 0),
+                    (self.rect_cliente, "Cliente", modo_multijugador_opcion == 1),
+                ):
+                    color_pill = COL_PILL_ACTIVE if activo else COL_PILL_BG
+                    color_txt_pill = (20, 20, 20) if activo else COL_TEXT_DIM
+                    pygame.draw.rect(self.pantalla, color_pill, rect_pill, border_radius=16)
+                    pygame.draw.rect(self.pantalla, COL_ACCENT if activo else COL_INPUT_BORDER,
+                                      rect_pill, width=2, border_radius=16)
+                    txt_pill = self.font_pill.render(label, True, color_txt_pill)
+                    self.pantalla.blit(txt_pill, txt_pill.get_rect(center=rect_pill.center))
+                    if rect_pill.collidepoint(mouse_pos):
+                        cursor_hover = True
+
+                hint_host = self.font_opcion_desc.render("→ abre configuración de partida", True, COL_TEXT_DIM)
+                self.pantalla.blit(hint_host, (self.rect_cliente.right + 14, self.rect_host.centery - 8))
+
+                if modo_multijugador_opcion == 1:
+                    lbl_ip = self.font_opcion_desc.render("IP del servidor:", True, COL_TEXT_DIM)
+                    self.pantalla.blit(lbl_ip, (panel_rect.x + 16, panel_rect.y + 54))
+                    input_ip.rect.topleft = (panel_rect.x + 130, panel_rect.y + 50)
+                    input_ip.rect.height = 30
+                    input_ip.color_border = COL_INPUT_BORDER_ACTIVE if input_ip.active else COL_INPUT_BORDER
+                    pygame.draw.rect(self.pantalla, COL_INPUT_BG, input_ip.rect, border_radius=6)
+                    pygame.draw.rect(self.pantalla, input_ip.color_border, input_ip.rect, width=2, border_radius=6)
+                    self._draw_text_input_contents(input_ip)
+
+                modos_y = panel_rect.bottom + 14
+            else:
+                modos_y = rect_op.bottom + 12
+
+        self._draw_mensaje_bloqueo(margen_x)
+
+        ayuda = self.font_opcion_desc.render(
+            "↑ ↓ elige el modo   •   ← → cambia de robot   •   Enter para confirmar",
+            True, COL_TEXT_DIM
+        )
+        self.pantalla.blit(ayuda, ayuda.get_rect(midbottom=(self.ancho // 2, self.alto - 14)))
+
+        return cursor_hover
+
+    # ------------------------------------------------------------------
+    # PANTALLA DE CONFIGURACIÓN DE HOST — dibujo
+    # ------------------------------------------------------------------
+    def _draw_pantalla_host_config(self, mouse_pos):
+        cursor_hover = False
+        margen_x = 60
+        content_w = self.ancho - margen_x * 2
+
+        self.rect_volver = pygame.Rect(margen_x, 30, 110, 36)
+        hover_volver = self.rect_volver.collidepoint(mouse_pos)
+        _draw_panel(self.pantalla, self.rect_volver,
+                    color=COL_OPTION_HOVER if hover_volver else COL_OPTION_IDLE,
+                    border=COL_ACCENT if hover_volver else COL_CARD_BORDER, radius=8, border_w=2)
+        txt_volver = self.font_config_seccion.render("← Volver", True, COL_TEXT)
+        self.pantalla.blit(txt_volver, txt_volver.get_rect(center=self.rect_volver.center))
+        cursor_hover = cursor_hover or hover_volver
+
+        titulo = self.font_config_titulo.render("Configuración del Host", True, COL_TEXT)
+        self.pantalla.blit(titulo, (margen_x, 84))
+        sub = self.font_subtitulo.render("Define cómo se jugará esta partida", True, COL_TEXT_DIM)
+        self.pantalla.blit(sub, (margen_x + 2, 128))
+
+        pygame.draw.line(self.pantalla, COL_CARD_BORDER, (margen_x, 156), (self.ancho - margen_x, 156), 2)
+
+        # ---------------- Tarjeta: Tiempo de partida ----------------
+        card_tiempo = pygame.Rect(margen_x, 176, content_w, 108)
+        _draw_panel(self.pantalla, card_tiempo)
+        lbl_tiempo = self.font_config_seccion.render("TIEMPO DE PARTIDA", True, COL_TEXT_DIM)
+        self.pantalla.blit(lbl_tiempo, (card_tiempo.x + 24, card_tiempo.y + 16))
+
+        self.rect_duracion = {}
+        btn_w, btn_h, gap = 130, 48, 16
+        bx = card_tiempo.x + 24
+        by = card_tiempo.y + 46
+        for dur in self.DURACIONES:
+            rect_btn = pygame.Rect(bx, by, btn_w, btn_h)
+            self.rect_duracion[dur] = rect_btn
+            activo = (dur == self.host_duracion_min)
+            hover = rect_btn.collidepoint(mouse_pos)
+            if activo:
+                color_fondo, color_borde, color_txt = COL_OPTION_SELECTED, COL_ACCENT, COL_TEXT
+            elif hover:
+                color_fondo, color_borde, color_txt = COL_OPTION_HOVER, COL_ACCENT_DIM, COL_TEXT
+            else:
+                color_fondo, color_borde, color_txt = COL_OPTION_IDLE, COL_CARD_BORDER, COL_TEXT_DIM
+            _draw_panel(self.pantalla, rect_btn, color=color_fondo, border=color_borde,
+                        radius=10, border_w=2 if (activo or hover) else 1)
+            txt = self.font_config_boton.render(f"{dur} MIN", True, color_txt)
+            self.pantalla.blit(txt, txt.get_rect(center=rect_btn.center))
+            cursor_hover = cursor_hover or hover
+            bx += btn_w + gap
+
+        # ---------------- Tarjeta: Modo de juego ----------------
+        card_modo = pygame.Rect(margen_x, card_tiempo.bottom + 20, content_w, 140)
+        _draw_panel(self.pantalla, card_modo)
+        lbl_modo = self.font_config_seccion.render("MODO DE JUEGO", True, COL_TEXT_DIM)
+        self.pantalla.blit(lbl_modo, (card_modo.x + 24, card_modo.y + 16))
+
+        self.rect_modo_partida = {}
+        card_w = (content_w - 48 - 2 * 16) // 3
+        card_h = 84
+        cx = card_modo.x + 24
+        cy = card_modo.y + 46
+        for clave, etiqueta, disponible in self.MODOS_PARTIDA:
+            rect_modo = pygame.Rect(cx, cy, card_w, card_h)
+            self.rect_modo_partida[clave] = rect_modo
+            activo = (clave == self.host_modo_partida) and disponible
+            hover = disponible and rect_modo.collidepoint(mouse_pos)
+
+            if not disponible:
+                color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
+            elif activo:
+                color_fondo, color_borde = COL_OPTION_SELECTED, COL_ACCENT
+            elif hover:
+                color_fondo, color_borde = COL_OPTION_HOVER, COL_ACCENT_DIM
+            else:
+                color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
+
+            _draw_panel(self.pantalla, rect_modo, color=color_fondo, border=color_borde,
+                        radius=10, border_w=2 if (activo or hover) else 1)
+
+            if activo:
+                barra = pygame.Rect(rect_modo.x, rect_modo.y + 8, 5, rect_modo.height - 16)
+                pygame.draw.rect(self.pantalla, COL_ACCENT, barra, border_radius=3)
+
+            color_txt = COL_TEXT if disponible else COL_TEXT_DISABLED
+            txt_surf = self.font_opcion_desc.render(etiqueta, True, color_txt)
+            if txt_surf.get_width() > rect_modo.width - 20:
+                palabras = etiqueta.split(" ")
+                mitad = len(palabras) // 2 or 1
+                linea1 = " ".join(palabras[:mitad])
+                linea2 = " ".join(palabras[mitad:])
+                l1 = self.font_opcion_desc.render(linea1, True, color_txt)
+                l2 = self.font_opcion_desc.render(linea2, True, color_txt)
+                y_off = -18 if not disponible else -10
+                self.pantalla.blit(l1, l1.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off)))
+                self.pantalla.blit(l2, l2.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off + 20)))
+            else:
+                y_off = -14 if not disponible else 0
+                self.pantalla.blit(txt_surf, txt_surf.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off)))
+
+            if not disponible:
+                badge_text = self.font_badge.render("PRÓXIMAMENTE", True, (255, 255, 255))
+                badge_rect = badge_text.get_rect()
+                badge_rect.size = (badge_rect.width + 12, badge_rect.height + 6)
+                badge_rect.midbottom = (rect_modo.centerx, rect_modo.bottom - 10)
+                pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, badge_rect, border_radius=8)
+                self.pantalla.blit(badge_text, badge_text.get_rect(center=badge_rect.center))
+            elif hover:
+                cursor_hover = True
+
+            cx += card_w + 16
+
+        # ---------------- Botón Empezar partida ----------------
+        self.rect_empezar = pygame.Rect(0, 0, 320, 56)
+        self.rect_empezar.center = (self.ancho // 2, card_modo.bottom + 56)
+        hover_empezar = self.rect_empezar.collidepoint(mouse_pos)
+        _draw_panel(self.pantalla, self.rect_empezar,
+                    color=COL_ACCENT if hover_empezar else COL_ACCENT_DIM,
+                    border=COL_ACCENT, radius=14, border_w=2)
+        txt_empezar = self.font_config_titulo.render("EMPEZAR PARTIDA", True, (25, 20, 15))
+        self.pantalla.blit(txt_empezar, txt_empezar.get_rect(center=self.rect_empezar.center))
+        cursor_hover = cursor_hover or hover_empezar
+
+        modo_label = next(m[1] for m in self.MODOS_PARTIDA if m[0] == self.host_modo_partida)
+        resumen = self.font_opcion_desc.render(
+            f"{self.host_duracion_min} minutos  •  {modo_label.title()}",
+            True, COL_TEXT_DIM
+        )
+        self.pantalla.blit(resumen, resumen.get_rect(midtop=(self.ancho // 2, self.rect_empezar.bottom + 10)))
+
+        self._draw_mensaje_bloqueo(margen_x)
+
+        ayuda = self.font_opcion_desc.render(
+            "Esc para volver   •   Enter para empezar con la configuración actual",
+            True, COL_TEXT_DIM
+        )
+        self.pantalla.blit(ayuda, ayuda.get_rect(midbottom=(self.ancho // 2, self.alto - 14)))
+
+        return cursor_hover
+
+    # ------------------------------------------------------------------
+    def _draw_mensaje_bloqueo(self, margen_x):
+        if not self._mensaje_bloqueo:
+            return
+        elapsed = pygame.time.get_ticks() - self._mensaje_bloqueo_timer
+        if elapsed < 2200:
+            alpha = 255 if elapsed < 1800 else max(0, 255 - int((elapsed - 1800) / 400 * 255))
+            aviso = self.font_opcion_desc.render(self._mensaje_bloqueo, True, (255, 210, 150))
+            aviso_surf = pygame.Surface((aviso.get_width() + 24, aviso.get_height() + 14), pygame.SRCALPHA)
+            pygame.draw.rect(aviso_surf, (60, 40, 20, min(230, alpha)), aviso_surf.get_rect(), border_radius=8)
+            aviso_surf.blit(aviso, (12, 7))
+            aviso_surf.set_alpha(alpha)
+            self.pantalla.blit(aviso_surf, (margen_x, self.alto - 40))
+        else:
+            self._mensaje_bloqueo = None
 
     # ------------------------------------------------------------------
     def rect_opciones_ensure(self, i, rect):

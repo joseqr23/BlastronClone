@@ -1,14 +1,9 @@
 Pendiente:
-- Ordernar de mayor a menor el puntaje del hud y agregar corona al primer lugar siempre.
-- Agregar una opción para que en el modo multijugador al darle click en host, te lleve a otra pantalla con la configuracion de la partida
-    > La partida configurada por defecto es el modo de puntajes > con 3 minutos y por turnos de 10 min
-        > Sugerencia: Boton para cambiar la duracion de la partida: 3 | 5 | 10 min 
-    > Añadir otros modos de partida para que también incluya, por kills (aún no implementado), y ultimo en pie con 1000 de vida cada uno.
-
-
-
-Errores:
-No se puede enviar mensajes en modo Free.
+Tengo los personajes de manera dinamica, quiere decir que si por ejemplo añado una carpeta con un nombre en assets/robot/ 
+esta tomará la carpeta como un personaje y usará los png que contenga> death.png > idle.png > jump.png > portrait.png > robot.png > run.png en donde portrait.png es el que define si es un personaje seleccionable.
+Dicho esto, estuve pensando en que podria hacer algo dinamico tambien con las armas, ya que de momento solo tengo 2 y quisiera crear más para hacer más dinamico el juego, como minas y etc. Existe alguna manera de hacer dinamicas las armas?
+no de igual forma, es decir no creandolas por carpetas, sino usando algun metodo convencional, como json o etc, para que cada que quiera crear un arma sea sumamente sencillo y solo agregue sus valores y componentes, y use sus png, mp3 y etc.
+Dime que me conviene o cual seria la mejor idea, incluso tambien siguiendo usando la misma estructura (añadir archivos .py por cada arma con clases) pero hacer los datos algo más dinamicos.
 
 
 
