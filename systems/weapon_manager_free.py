@@ -7,15 +7,18 @@ class WeaponManager:
         self.game = game
 
     def disparar(self):
-        origen, vel_x, vel_y = self.game.aim.get_datos_disparo()
         if self.game.robot.arma_equipada == 'granada':
             ancho, alto = Granada.ANCHO, Granada.ALTO
             origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            self.game.granadas.append(Granada(origen[0], origen[1], vel_x, vel_y))
+            g = Granada(origen[0], origen[1], vel_x, vel_y)
+            g.owner = self.game.robot.nombre_jugador
+            self.game.granadas.append(g)
         elif self.game.robot.arma_equipada == 'misil':
             ancho, alto = Misil.ANCHO, Misil.ALTO
             origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
-            self.game.misiles.append(Misil(origen[0], origen[1], vel_x, vel_y))
+            m = Misil(origen[0], origen[1], vel_x, vel_y)
+            m.owner = self.game.robot.nombre_jugador
+            self.game.misiles.append(m)
 
     def update(self):
         self._update_granadas()
@@ -27,12 +30,22 @@ class WeaponManager:
         for misil in self.game.misiles:
             misil.draw(pantalla)
 
+    def _robots_para_colision(self):
+        """update() de Granada/Misil ahora espera una LISTA de robots (no
+        uno solo) y revisa colisión en cada sub-paso del movimiento — así
+        se evita que a alta velocidad el proyectil traspase a un robot
+        estático, igual que se corrigió en el modo multijugador."""
+        return [self.game.robot] + list(self.game.robots_estaticos)
+
     # --- Granadas ---
     def _update_granadas(self):
         for granada in self.game.granadas[:]:
-            granada.update(self.game.tiles, self.game.robot)
+            # El rebote contra tiles y contra TODOS los robots ya ocurre
+            # dentro de update(), sub-paso por sub-paso — ya no hace falta
+            # llamar rebote_con_robot() aparte para cada robot_estatico.
+            granada.update(self.game.tiles, self._robots_para_colision())
+
             for robot_estatico in self.game.robots_estaticos:
-                granada.rebote_con_robot(robot_estatico)
                 if granada.explotado and granada.estado == "explode":
                     if robot_estatico not in granada.danados and granada.get_hitbox().colliderect(robot_estatico.get_rect()):
                         robot_estatico.take_damage(70)
@@ -42,10 +55,7 @@ class WeaponManager:
                         self.game.puntajes[self.game.robot] += puntos
                         granada.danados.add(robot_estatico)
 
-            if not granada.explotado:
-                granada.rebote_con_tiles(self.game.tiles)
-                granada.rebote_con_robot(self.game.robot)
-            elif granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
+            if granada.explotado and granada.estado == "explode" and not granada.ya_hizo_dano:
                 if granada.get_hitbox().colliderect(self.game.robot.get_rect()):
                     self.game.robot.take_damage(70)
                     granada.ya_hizo_dano = True
@@ -56,9 +66,11 @@ class WeaponManager:
     # --- Misiles ---
     def _update_misiles(self):
         for misil in self.game.misiles[:]:
-            misil.update(self.game.tiles, self.game.robot)
+            # El impacto contra tiles y contra TODOS los robots ya ocurre
+            # dentro de update(), sub-paso por sub-paso.
+            misil.update(self.game.tiles, self._robots_para_colision())
+
             for robot_estatico in self.game.robots_estaticos:
-                misil.colisiona_con_robot(robot_estatico)
                 if misil.explotado and misil.estado == "explode":
                     if robot_estatico not in misil.danados and misil.get_hitbox().colliderect(robot_estatico.get_rect()):
                         robot_estatico.take_damage(50)
@@ -68,10 +80,7 @@ class WeaponManager:
                         self.game.puntajes[self.game.robot] += puntos
                         misil.danados.add(robot_estatico)
 
-            if not misil.explotado:
-                misil.colisiona_con_tiles(self.game.tiles)
-                misil.colisiona_con_robot(self.game.robot)
-            elif misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
+            if misil.explotado and misil.estado == "explode" and not misil.ya_hizo_dano:
                 if misil.get_hitbox().colliderect(self.game.robot.get_rect()):
                     self.game.robot.take_damage(50)
                     misil.ya_hizo_dano = True
