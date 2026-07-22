@@ -1,0 +1,17 @@
+{
+  "nombre": "Mine",
+  "comportamiento": "mina",
+  "daño": 100,
+  "ancho": 30,
+  "alto": 30,
+  "gravedad": 0.5,
+  "friccion_aire": 0.99,
+  "friccion_rebote": 0.6,
+  "radio_proximidad": 25,
+  "margen_dueño_ms": 350,
+  "tiempo_post_explosion_ms": 500,
+  "hitbox_padding_x": 3,
+  "hitbox_padding_y": 8,
+  "sprite": "assets/weapons/mine/sprite.png",
+  "frames": 3
+}

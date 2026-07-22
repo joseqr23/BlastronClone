@@ -1,0 +1,16 @@
+{
+  "nombre": "Misil",
+  "comportamiento": "impacto",
+  "daño": 50,
+  "ancho": 40,
+  "alto": 40,
+  "gravedad": 0.5,
+  "friccion_aire": 0.99,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 300,
+  "margen_dueño_ms": 250,
+  "hitbox_padding_x": 4,
+  "hitbox_padding_y": 8,
+  "sprite": "assets/weapons/misil/sprite.png",
+  "frames": 3
+}

@@ -1,25 +1,24 @@
 # core/game_modes/multi_game.py
 """
-MultiplayerGame — v3: proyectiles host-autoritativos.
+MultiplayerGame — v4: proyectiles host-autoritativos y genéricos.
 
-NUEVO respecto a la versión anterior:
-
-1. Los proyectiles (granadas/misiles) YA NO se simulan de forma independiente
-   en cada máquina. Solo el HOST corre física real (colisión, rebote,
+1. Los proyectiles YA NO se simulan de forma independiente en cada
+   máquina. Solo el HOST corre física real (colisión, rebote/impacto,
    explosión, daño). Los clientes reciben snapshots ("proy_sync") con la
-   posición/estado de cada proyectil activo y solo los dibujan — no calculan
-   nada. Esto elimina la divergencia que causaba que las granadas "traspasaran"
-   en la pantalla del cliente.
+   posición/estado de cada proyectil activo y solo los dibujan.
 
-2. Cada proyectil tiene un proj_id único asignado por el host, para poder
-   identificar la misma granada/misil entre el snapshot anterior y el nuevo.
+2. Cada proyectil tiene un proj_id único asignado por el host.
 
-3. self.robots_estaticos ahora se actualiza ANTES de weapon_manager.update(),
-   no después — antes quedaba un frame desfasado.
+3. self.robots_estaticos se actualiza ANTES de weapon_manager.update().
 
-4. TurnManager ahora maneja una fase intermedia "post_disparo": tras disparar,
-   el jugador pierde la posibilidad de volver a disparar pero puede seguir
-   moviéndose durante unos segundos antes de que el turno termine.
+4. TurnManager maneja una fase intermedia "post_disparo": tras disparar,
+   el jugador no puede volver a disparar pero puede seguir moviéndose
+   unos segundos antes de que el turno termine.
+
+5. Las armas ya no están hardcodeadas (Granada/Misil): son instancias de
+   Proyectil configuradas por assets/weapons/<arma>/config.json, y viven
+   todas juntas en self.proyectiles (una sola lista, sin importar el
+   arma) — ver entities/weapons/proyectil.py y utils/weapon_loader.py.
 """
 
 import pygame
@@ -32,8 +31,8 @@ import queue
 
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
-from entities.weapons.granada import Granada
-from entities.weapons.misil import Misil
+from entities.weapons.proyectil import Proyectil
+from utils.weapon_loader import cargar_armas
 from utils.sound_manager import sound_manager
 from core.game_modes.base_game import BaseGame
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
@@ -93,9 +92,8 @@ class MultiplayerGame(BaseGame):
         self.robots_estaticos = []
         self._ultimo_seq_recibido = {}
 
-        # --- Proyectiles (host: físicos reales | cliente: proxies visuales) ---
-        self.granadas = []
-        self.misiles = []
+        # Los proyectiles activos ya viven en self.proyectiles (una sola
+        # lista para cualquier arma), inicializada en BaseGame.__init__.
         self._proy_id_counter = 0
 
         # --- HUD, armas y chat ---
@@ -103,7 +101,7 @@ class MultiplayerGame(BaseGame):
         self.weapon_manager = WeaponManager(self)
         self.puntajes[self.nombre_jugador] = 0
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
-        self.hud_armas = HUDArmas(['granada', 'misil'])
+        self.hud_armas = HUDArmas(list(cargar_armas().keys()))
         self.hud_manager = HUDManager(self)
         self.chat = Chat(nombre_jugador, game=self)
         self.event_handler = EventHandler(self)
@@ -235,9 +233,6 @@ class MultiplayerGame(BaseGame):
             return
         self.puntajes[atacante] = self.puntajes.get(atacante, 0) + puntos
         if victima.health <= 0:
-            # El host agrega el mensaje directamente aquí — antes solo se
-            # agregaba al RECIBIR el evento por red, y el host nunca se
-            # "recibe" su propio mensaje, por eso no lo veía.
             self.chat.agregar_mensaje(f"{victima.nombre_jugador} fue detonado por {atacante}!")
         print(f"[SCORE] {atacante} ganó {puntos} puntos por dañar a {victima.nombre_jugador}")
         self.enviar({
@@ -254,21 +249,20 @@ class MultiplayerGame(BaseGame):
 
     def _sync_proyectiles(self):
         """Solo el host llama esto: transmite el estado real de cada
-        proyectil activo para que los clientes lo dibujen tal cual."""
+        proyectil activo (sin importar el arma) para que los clientes lo
+        dibujen tal cual."""
         if not self.host:
             return
         items = []
-        for g in self.granadas:
+        for p in self.proyectiles:
             items.append({
-                "id": getattr(g, "proj_id", None), "tipo": "granada", "owner": getattr(g, "owner", None),
-                "x": g.x, "y": g.y, "vel_x": g.vel_x, "vel_y": g.vel_y,
-                "estado": getattr(g, "estado", None), "explotado": getattr(g, "explotado", False),
-            })
-        for m in self.misiles:
-            items.append({
-                "id": getattr(m, "proj_id", None), "tipo": "misil", "owner": getattr(m, "owner", None),
-                "x": m.x, "y": m.y, "vel_x": m.vel_x, "vel_y": m.vel_y,
-                "estado": getattr(m, "estado", None), "explotado": getattr(m, "explotado", False),
+                "id": getattr(p, "proj_id", None),
+                "tipo": p.tipo,
+                "owner": getattr(p, "owner", None),
+                "x": p.x, "y": p.y,
+                "vel_x": p.vel_x, "vel_y": p.vel_y,
+                "estado": getattr(p, "estado", None),
+                "explotado": getattr(p, "explotado", False),
             })
         self.enviar({"tipo": "proy_sync", "items": items})
 
@@ -281,10 +275,6 @@ class MultiplayerGame(BaseGame):
                 msg, origen_sock = self._incoming.get_nowait()
             except queue.Empty:
                 break
-            # "damage" y "disparo" no se retransmiten en crudo: el host los
-            # resuelve y emite sus propios eventos derivados (damage/score
-            # ya viajan resueltos; disparo genera un proyectil canónico que
-            # se sincroniza vía proy_sync).
             if self.host and msg.get("tipo") not in ("damage", "disparo"):
                 self.enviar(msg, excluir_socket=origen_sock)
             self._procesar_mensaje(msg)
@@ -322,13 +312,6 @@ class MultiplayerGame(BaseGame):
                 r.frame_index = msg.get("frame", 0)
                 r.current_animation = msg.get("estado", "idle")
                 r.facing_right = (msg.get("direccion", 1) == 1)
-                # r.update() nunca corre para robots remotos (solo se
-                # interpola su posición), así que is_dead nunca se limpiaba
-                # solo — se sincroniza aquí a partir de la animación que
-                # manda la máquina dueña de ese robot. En cuanto esa
-                # máquina reaparece y vuelve a mandar "idle"/"run", el
-                # mensaje de "ha sido detonado" desaparece en todas las
-                # pantallas.
                 r.is_dead = (r.current_animation == "death")
                 if r.current_animation == "jump" and anim_anterior != "jump":
                     sound_manager.salto()
@@ -336,9 +319,6 @@ class MultiplayerGame(BaseGame):
                 self.robots_remotos[jugador].health = msg["health"]
 
         elif tipo == "disparo":
-            # Solo el host crea el proyectil canónico. Si por algún motivo
-            # un cliente recibe esto (no debería, se excluye del relay),
-            # simplemente se ignora.
             if self.host:
                 self.weapon_manager.crear_proyectil_host(msg)
 
@@ -355,8 +335,6 @@ class MultiplayerGame(BaseGame):
                 self.robots_remotos[jugador].take_damage(cantidad)
 
         elif tipo == "score":
-            # Solo llega a los CLIENTES (el host se aplica esto directamente
-            # en enviar_evento_puntaje sin pasar por la red).
             atacante = msg["atacante"]
             puntos = msg["puntos"]
             victima = msg["victima"]
@@ -421,23 +399,21 @@ class MultiplayerGame(BaseGame):
 
     def _aplicar_proy_sync(self, items):
         """Cliente: aplica el snapshot de proyectiles del host. No se
-        calcula ninguna física ni colisión aquí, solo se refleja el estado."""
+        calcula ninguna física ni colisión aquí, solo se refleja el
+        estado. Funciona para cualquier arma, no solo granada/misil."""
         ids_recibidos = set()
         for item in items:
             pid = item.get("id")
             if pid is None:
                 continue
             ids_recibidos.add(pid)
-            contenedor = self.granadas if item["tipo"] == "granada" else self.misiles
-            proxy = next((p for p in contenedor if getattr(p, "proj_id", None) == pid), None)
+            proxy = next((p for p in self.proyectiles if getattr(p, "proj_id", None) == pid), None)
             if proxy is None:
-                cls = Granada if item["tipo"] == "granada" else Misil
-                proxy = cls(item["x"], item["y"], 0, 0)
+                proxy = Proyectil(item["tipo"], item["x"], item["y"], 0, 0, owner=item.get("owner"))
                 proxy.proj_id = pid
-                proxy.owner = item.get("owner")
                 proxy.danados = set()
                 proxy.ya_hizo_dano = True  # el cliente nunca aplica daño, solo dibuja
-                contenedor.append(proxy)
+                self.proyectiles.append(proxy)
                 sound_manager.disparo(item["tipo"])  # proyectil recién aparecido: sonido de disparo
             explotado_antes = proxy.explotado
             proxy.x = item["x"]
@@ -447,10 +423,9 @@ class MultiplayerGame(BaseGame):
             proxy.estado = item.get("estado")
             proxy.explotado = item.get("explotado", False)
             if proxy.explotado and not explotado_antes:
-                sound_manager.explosion()
+                sound_manager.explosion(item["tipo"])
 
-        self.granadas = [g for g in self.granadas if getattr(g, "proj_id", None) in ids_recibidos]
-        self.misiles = [m for m in self.misiles if getattr(m, "proj_id", None) in ids_recibidos]
+        self.proyectiles = [p for p in self.proyectiles if getattr(p, "proj_id", None) in ids_recibidos]
 
     # ------------------------------------------------------------------
     # Loop principal

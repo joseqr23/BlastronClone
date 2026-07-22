@@ -1,6 +1,7 @@
 # ui/hud.py
 import pygame
 from entities.players.robot import Robot
+from utils.weapon_loader import cargar_armas
 
 
 def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
@@ -21,39 +22,84 @@ def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
 
 
 class HUDArmas:
-    def __init__(self, armas_disponibles, posicion=(700, 10)):
+    """
+    Selector de armas. La lista de armas es dinámica (viene de
+    assets/weapons/*/config.json vía cargar_armas()) — cuantas más armas
+    agregues, más ancho ocupa la fila de botones. Por eso incluye un
+    botón de colapsar/expandir a la izquierda, siempre visible, para no
+    comerse la pantalla con cada arma nueva.
+
+    Íconos: busca assets/hud/<arma>.png primero; si no existe, usa el
+    primer frame del sprite propio del arma como ícono automático — así
+    un arma nueva no necesita ningún archivo extra para aparecer bien en
+    el HUD (aunque un ícono dedicado siempre se ve mejor).
+    """
+
+    def __init__(self, armas_disponibles, posicion=(500, 10)):
         self.armas = ['nada'] + armas_disponibles + ['spawn_robot']
         self.pos = posicion
         self.seleccion = 'nada'
+        self.colapsado = False
+
+        self.ancho_boton = 60
+        self.alto_boton = 60
+        self.padding = 10
+        self.ancho_toggle = 30
+
         self.botones = []
+        self.rect_toggle = pygame.Rect(0, 0, 0, 0)
         self.imagenes = {}
+        self.font_toggle = pygame.font.SysFont("Arial", 20, bold=True)
+
         self.crear_botones()
         self.cargar_imagenes()
 
     def crear_botones(self):
         x, y = self.pos
-        ancho = 60
-        alto = 60
-        padding = 10
+        self.rect_toggle = pygame.Rect(x, y, self.ancho_toggle, self.alto_boton)
         self.botones = []
+        x_armas = x + self.ancho_toggle + self.padding
         for i, arma in enumerate(self.armas):
-            rect = pygame.Rect(x + i*(ancho + padding), y, ancho, alto)
+            rect = pygame.Rect(x_armas + i * (self.ancho_boton + self.padding), y, self.ancho_boton, self.alto_boton)
             self.botones.append((arma, rect))
 
     def cargar_imagenes(self):
+        catalogo = cargar_armas()
         for arma in self.armas:
+            imagen = None
             try:
-                ruta_img = f"assets/hud/{arma}.png"
-                imagen = pygame.image.load(ruta_img).convert_alpha()
+                imagen = pygame.image.load(f"assets/hud/{arma}.png").convert_alpha()
                 imagen = pygame.transform.smoothscale(imagen, (40, 40))
-                self.imagenes[arma] = imagen
-            except Exception as e:
-                print(f"No se pudo cargar imagen para {arma}: {e}")
-                self.imagenes[arma] = None
+            except Exception:
+                # Sin ícono propio en assets/hud/: usamos el primer frame
+                # del sprite del arma (idle) como ícono automático.
+                config = catalogo.get(arma)
+                frames = config.get("_frames_img") if config else None
+                if frames:
+                    try:
+                        imagen = pygame.transform.smoothscale(frames[0], (40, 40))
+                    except Exception:
+                        imagen = None
+            self.imagenes[arma] = imagen
+
+    def punto_sobre_hud(self, pos):
+        """Usado por event_handler.py para no disparar cuando el clic cae
+        sobre el botón de colapsar o (si está expandido) sobre algún
+        botón de arma."""
+        if self.rect_toggle.collidepoint(pos):
+            return True
+        if self.colapsado:
+            return False
+        return any(rect.collidepoint(pos) for _, rect in self.botones)
 
     def manejar_evento(self, evento):
         if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
             pos = evento.pos
+            if self.rect_toggle.collidepoint(pos):
+                self.colapsado = not self.colapsado
+                return None
+            if self.colapsado:
+                return None
             for arma, rect in self.botones:
                 if rect.collidepoint(pos):
                     self.seleccion = arma
@@ -61,6 +107,15 @@ class HUDArmas:
         return None
 
     def draw(self, pantalla, font):
+        # Botón de colapsar/expandir — siempre visible.
+        pygame.draw.rect(pantalla, (80, 80, 80), self.rect_toggle)
+        flecha = "▶" if self.colapsado else "◀"
+        texto_flecha = self.font_toggle.render(flecha, True, (255, 255, 255))
+        pantalla.blit(texto_flecha, texto_flecha.get_rect(center=self.rect_toggle.center))
+
+        if self.colapsado:
+            return
+
         for arma, rect in self.botones:
             color = (0, 200, 0) if self.seleccion == arma else (150, 150, 150)
             pygame.draw.rect(pantalla, color, rect)

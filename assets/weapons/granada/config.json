@@ -1,0 +1,16 @@
+{
+  "nombre": "Granada",
+  "comportamiento": "rebote",
+  "daño": 70,
+  "ancho": 40,
+  "alto": 40,
+  "gravedad": 0.5,
+  "friccion_aire": 0.99,
+  "friccion_rebote": 0.6,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 500,
+  "hitbox_padding_x": 4,
+  "hitbox_padding_y": 8,
+  "sprite": "assets/weapons/granada/sprite.png",
+  "frames": 3
+}

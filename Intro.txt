@@ -3,7 +3,7 @@ blastron_clone/
 ├── main.py                      # Punto de entrada
 ├── settings.py                  # Configuraciones globales
 ├── assets/                      # Imágenes, sonidos, música
-│   ├── hud/granada.png; misil.png; nada.png
+│   ├── hud/granada.png; misil.png; nada.png; mine.png
 │   ├── maps/fondo.png
 │   ├── robots/
 │       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
@@ -19,9 +19,13 @@ blastron_clone/
 │       ├──weapons          
 │       │       ├──granada/disparo.mp3;explosion.mp3
 │       │       ├──misil/disparo.mp3;explosion.mp3
+│       │       ├──mine/disparo.mp3;explosion.mp3
 │       └──musica.mp3
 │   ├── ui/icons/free_game.png; solo_game.png; multi_game.png
-│   └── weapons/granada_sprite.png; misil_sprite.png
+│   └── weapons/
+│       ├── granada/sprite.png; config.json 
+│       ├── misil/sprite.png; config.json
+│       ├── mine/sprite.png; config.json
 │
 ├── core/                        # Núcleo del motor
 │   ├── game_modes/
@@ -32,12 +36,9 @@ blastron_clone/
 │   └── robot_selector.py 
 │
 ├── entities/                    # Jugadores, bots, proyectiles
-│   ├── robots/
 │       ├── boss/boss.py
 │       ├── players/robot.py;robot_estatico.py
-│       ├── weapons/granada.py;misil.py
-│   ├── projectile.py
-│   └── weapon.py
+│       ├── weapons/proyectil.png 
 │
 ├── levels/                      # Mapa, objetos del mundo
 │   ├── map_loader.py
@@ -48,7 +49,6 @@ blastron_clone/
 │   ├── collision.py
 │   ├── event_handler.py
 │   ├── hud_manager.py
-│   ├── physics.py
 │   ├── turn_manager.py
 │   ├── weapon_manager_free.py
 │   └── weapon_manager.py
@@ -62,12 +62,12 @@ blastron_clone/
 │
 └── utils/                       # Funciones de ayuda
     ├── colors.py
-    ├── editor.py
     ├── loader.py
-    ├── math_utils.py
+    ├── map_editor.py
     ├── paths.py
     ├── sound_manager.py
-    └── sprite_reproductor.py
+    ├── sprite_reproductor.py
+    └── weapon_manager.py
     
 
      

@@ -1,9 +1,31 @@
+Errores:
+* Quiero aumentar el tamaño del misil pero no funciona, al poner 60 u otro numero diferente a 40 en alto y ancho de mi json, no funciona, no dibuja el arma:
+{
+  "nombre": "Mine",
+  "comportamiento": "rebote",
+  "daño": 100,
+  "ancho": 40,
+  "alto": 40,
+  "gravedad": 0.5,
+  "friccion_aire": 0.99,
+  "friccion_rebote": 0.6,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 500,
+  "hitbox_padding_x": 4,
+  "hitbox_padding_y": 8,
+  "sprite": "assets/weapons/mine/sprite.png",
+  "frames": 3
+}
+Mi codigo de proyectil.py:
+
+
+
+
+
 Pendiente:
-Tengo los personajes de manera dinamica, quiere decir que si por ejemplo añado una carpeta con un nombre en assets/robot/ 
-esta tomará la carpeta como un personaje y usará los png que contenga> death.png > idle.png > jump.png > portrait.png > robot.png > run.png en donde portrait.png es el que define si es un personaje seleccionable.
-Dicho esto, estuve pensando en que podria hacer algo dinamico tambien con las armas, ya que de momento solo tengo 2 y quisiera crear más para hacer más dinamico el juego, como minas y etc. Existe alguna manera de hacer dinamicas las armas?
-no de igual forma, es decir no creandolas por carpetas, sino usando algun metodo convencional, como json o etc, para que cada que quiera crear un arma sea sumamente sencillo y solo agregue sus valores y componentes, y use sus png, mp3 y etc.
-Dime que me conviene o cual seria la mejor idea, incluso tambien siguiendo usando la misma estructura (añadir archivos .py por cada arma con clases) pero hacer los datos algo más dinamicos.
+* Más mapas: Actualmente tengo un mapa creado unicamente, mi estructura es la siguiente:
+Tengo un python en > utils > map_editor.py que basicamente carga una imagen de fondo y yo manualmente construyo el mapa tal cual esta la imagen, y el archivo me genera cordenadas, estas cordenadas las copio en el mapa levels/map_loader.py y carga, pero quisiera saber si puedo hacer esto más dinamico.
+Tipo: Genero otro mapa, con otras cordenadas y otra imagen, y se juega en esas zona, esto obviamente seria añadido en el menu del host.
 
 
 
@@ -14,10 +36,8 @@ Mi hoja de ruta sería:
 ✅ Música + efectos. <<<<<<<<<<<<<<< OK 
 ✅ Mejorar menú. <<<<<<<<<<<<<<< OK 
 ✅ Sistema dinámico de armas.
+
+✅ Mapas.
 ✅ Agregar 5–10 armas nuevas.
 ✅ Nuevos modos de juego.
-✅ Configuración.
-✅ Estadísticas.
 ✅ Bots.
-✅ Partículas.
-✅ Mapas.

@@ -1,3 +1,4 @@
+# levels/map_loader.py
 from levels.tile import Tile
 
 ####################### PARA PLATAFORMAS #######################

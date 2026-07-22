@@ -28,14 +28,10 @@ class EventHandler:
             # Disparo
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
                 if not self.game.mouse_click_sostenido:
-                    clic_sobre_hud = any(
-                        rect.collidepoint(evento.pos) for _, rect in self.game.hud_armas.botones
-                    )
+                    clic_sobre_hud = self.game.hud_armas.punto_sobre_hud(evento.pos)
                     if not clic_sobre_hud and self.game.robot.arma_equipada not in [None, 'nada']:
                         self.game.weapon_manager.disparar()
                         self.game.mouse_click_sostenido = True
-
             if evento.type == pygame.MOUSEBUTTONUP and evento.button == 1:
                 self.game.mouse_click_sostenido = False
-
         return True
