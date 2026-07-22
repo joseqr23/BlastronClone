@@ -69,9 +69,25 @@ class Proyectil:
 
         self.comportamiento = self.config.get("comportamiento", "impacto")
 
+        # Cuántos de los ÚLTIMOS frames del spritesheet se usan para animar
+        # la explosión (en vez de mostrar uno solo fijo). Por defecto 1 =
+        # el comportamiento de siempre (un único frame estático). Ponle 2
+        # en el JSON de un arma para que anime, por ejemplo, los frames
+        # "warning" + "explode" como una secuencia de explosión.
+        self.frames_explosion_count = max(1, self.config.get("frames_explosion", 1))
+
         # Usado por el comportamiento "mina" (y cualquier otro que necesite
         # congelar por completo la física una vez asentado). Ver update().
         self._detenida = False
+
+        # Timer LOCAL para animar los frames de explosión (ver draw()).
+        # Ojo: NO usa tiempo_eliminar porque en el cliente los proyectiles
+        # son "proxies" sincronizados por red (ver _aplicar_proy_sync en
+        # multi_game.py) — su estado/explotado llega directo del host sin
+        # pasar nunca por _detonar(), así que tiempo_eliminar queda en None
+        # ahí. Este timer se arranca solo, la primera vez que draw() ve el
+        # estado "explode", sea cual sea el motivo por el que llegó a él.
+        self._explode_frame_start = None
 
     @property
     def daño(self):
@@ -167,7 +183,18 @@ class Proyectil:
             else:
                 pantalla.blit(frame, (int(self.x), int(self.y)))
         elif self.estado == "explode":
-            idx = min(2, len(self.frames) - 1)
+            total_frames = len(self.frames)
+            count = min(self.frames_explosion_count, total_frames)
+            if count <= 1:
+                idx = total_frames - 1
+            else:
+                if self._explode_frame_start is None:
+                    self._explode_frame_start = pygame.time.get_ticks()
+                transcurrido = pygame.time.get_ticks() - self._explode_frame_start
+                duracion_tramo = max(1, self.tiempo_post_explosion // count)
+                paso = min(count - 1, transcurrido // duracion_tramo)
+                idx = total_frames - count + paso
+
             if self.explosion_width and self.explosion_height:
                 ancho_exp, alto_exp = self.explosion_width, self.explosion_height
             else:

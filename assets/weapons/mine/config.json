@@ -4,6 +4,8 @@
   "daño": 100,
   "ancho": 30,
   "alto": 30,
+  "ancho_explosion": 60,
+  "alto_explosion": 60,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "friccion_rebote": 0.6,
@@ -12,6 +14,9 @@
   "tiempo_post_explosion_ms": 500,
   "hitbox_padding_x": 3,
   "hitbox_padding_y": 8,
+  "hitbox_padding_x_explosion": 5,
+  "hitbox_padding_y_explosion": 8,
   "sprite": "assets/weapons/mine/sprite.png",
-  "frames": 3
+  "frames": 3,
+  "frames_explosion": 1
 }

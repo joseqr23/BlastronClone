@@ -12,5 +12,6 @@
   "hitbox_padding_x": 4,
   "hitbox_padding_y": 8,
   "sprite": "assets/weapons/misil/sprite.png",
-  "frames": 3
+  "frames": 3,
+  "frames_explosion": 2
 }

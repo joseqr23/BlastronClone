@@ -16,5 +16,6 @@
   "hitbox_padding_x_explosion": 10,
   "hitbox_padding_y_explosion": 10,
   "sprite": "assets/weapons/supermisil/sprite.png",
-  "frames": 3
+  "frames": 3,
+  "frames_explosion": 2
 }

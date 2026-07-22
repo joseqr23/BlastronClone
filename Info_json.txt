@@ -2,15 +2,20 @@
   "nombre": "Mine",
   "comportamiento": "rebote",
   "daño": 100,
-  "ancho": 40, >>>> ancho de dibujado
-  "alto": 40, >>>> alto de dibujado
+  "ancho": 40, >>>> ancho de dibujado arma
+  "alto": 40, >>>> alto de dibujado arma
+  "ancho_explosion": 40, >>>> ancho de dibujado explosion (opcional)
+  "ancho_explosion": 40, >>>> alto de dibujado explosion (opcional)
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "friccion_rebote": 0.6,
   "tiempo_explosion_ms": 3000,
   "tiempo_post_explosion_ms": 500,
-  "hitbox_padding_x": 4,  >>>> tamaño ancho de ratio de explosion
-  "hitbox_padding_y": 8,  >>>> tamaño alto de ratio de explosion
+  "hitbox_padding_x": 4,  >>>> tamaño ancho de ratio de arma
+  "hitbox_padding_y": 8,  >>>> tamaño alto de ratio de arma
+  "hitbox_padding_x_explosion": 4,  >>>> tamaño ancho de ratio de explosion (opcional)
+  "hitbox_padding_y_explosion": 8,  >>>> tamaño alto de ratio de explosion (opcional)
   "sprite": "assets/weapons/mine/sprite.png",
-  "frames": 3
+  "frames": 3,
+  "frames_explosion": 2 >>>> Hace que reproduzca como explosion los 2 ultimos frames (opcional)
 }
