@@ -23,10 +23,12 @@ Campos de config.json:
     comportamiento         (str)  "rebote" | "impacto" | "mina" — ver
                                    entities/weapons/proyectil.py
     daño                   (int)
-    ancho, alto             (int)  tamaño LÓGICO del proyectil (display +
-                                   hitbox base). No necesita coincidir con
-                                   el tamaño real del sprite — se escala
-                                   automáticamente.
+    ancho_proyectil, alto_proyectil  (int)  tamaño VISUAL del proyectil en
+                                   vuelo (solo dibujado). No necesita
+                                   coincidir con el tamaño real del
+                                   sprite — se escala automáticamente.
+    ancho_explosion, alto_explosion  (int, opcional)  tamaño VISUAL de la
+                                   explosión, independiente del proyectil.
     gravedad                (float)
     friccion_aire            (float)
     friccion_rebote           (float) solo relevante si comportamiento="rebote"
@@ -37,7 +39,17 @@ Campos de config.json:
     margen_dueño_ms              (int)  tiempo tras el disparo en que el arma
                                         ignora a su propio dueño (para no
                                         autodetonarse al salir)
-    hitbox_padding_x/_y            (int)  margen extra del área de daño
+    hitbox_ancho_proyectil, hitbox_alto_proyectil  (int, opcional)
+                                   tamaño REAL de colisión/daño en vuelo
+                                   (detona/rebota/hace daño según este
+                                   tamaño, no según el visual). Si no se
+                                   define, usa ancho_proyectil/alto_proyectil.
+    hitbox_ancho_explosion, hitbox_alto_explosion  (int, opcional)
+                                   igual que arriba pero para la explosión.
+                                   Si no se define, cae a
+                                   hitbox_ancho_proyectil/alto_proyectil, y
+                                   si tampoco esos están, usa el tamaño
+                                   visual de la explosión.
     sprite                          (str)  ruta al spritesheet
     frames                          (int)  cantidad de frames en el spritesheet
                                            (por convención: 0=idle, 1=warning,
@@ -103,8 +115,8 @@ def cargar_armas(forzar_recarga=False):
         config.setdefault("id", nombre)
         sprite_path = config.get("sprite", os.path.join(carpeta, "sprite.png"))
         frames = config.get("frames", 3)
-        ancho = config.get("ancho", 40)   # tamaño lógico deseado (display + hitbox)
-        alto = config.get("alto", 40)
+        ancho = config.get("ancho_proyectil", 40)   # tamaño lógico deseado (display)
+        alto = config.get("alto_proyectil", 40)
         try:
             config["_frames_img"] = _cargar_frames_escalados(sprite_path, frames, ancho, alto)
         except Exception as e:

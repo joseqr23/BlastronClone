@@ -35,8 +35,8 @@ class Proyectil:
         self.x = x
         self.y = y
         self.owner = owner
-        self.width = self.config.get("ancho", 40)
-        self.height = self.config.get("alto", 40)
+        self.width = self.config.get("ancho_proyectil", 40)
+        self.height = self.config.get("alto_proyectil", 40)
         # Tamaño de la EXPLOSIÓN, si el arma lo define aparte del tamaño
         # del proyectil (p. ej. un misil grande con una onda expansiva aún
         # más grande). Si no se especifica, se mantiene el comportamiento
@@ -97,27 +97,25 @@ class Proyectil:
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
     def get_hitbox(self):
-        if self.estado == "explode" and self.explosion_width and self.explosion_height:
-            # Arma con explosión de tamaño propio: el área de daño se
-            # centra en el mismo punto que el proyectil, pero con las
-            # dimensiones de la explosión (no las del proyectil).
-            padding_x = self.config.get("hitbox_padding_x_explosion",
-                                         self.config.get("hitbox_padding_x", 4))
-            padding_y = self.config.get("hitbox_padding_y_explosion",
-                                         self.config.get("hitbox_padding_y", 8))
-            centro_x = self.x + self.width / 2
-            centro_y = self.y + self.height / 2
-            rect = pygame.Rect(0, 0, self.explosion_width, self.explosion_height)
-            rect.center = (centro_x, centro_y)
+        centro_x = self.x + self.width / 2
+        centro_y = self.y + self.height / 2
+        if self.estado == "explode":
+            ancho_visual = self.explosion_width or self.width * 2
+            alto_visual = self.explosion_height or self.height * 2
+            hitbox_ancho = self.config.get(
+                "hitbox_ancho_explosion",
+                self.config.get("hitbox_ancho_proyectil", ancho_visual)
+            )
+            hitbox_alto = self.config.get(
+                "hitbox_alto_explosion",
+                self.config.get("hitbox_alto_proyectil", alto_visual)
+            )
         else:
-            padding_x = self.config.get("hitbox_padding_x", 4)
-            padding_y = self.config.get("hitbox_padding_y", 8)
-            rect = self.get_rect()
-
-        return pygame.Rect(
-            rect.left - padding_x, rect.top - padding_y,
-            rect.width + 2 * padding_x, rect.height + 2 * padding_y
-        )
+            hitbox_ancho = self.config.get("hitbox_ancho_proyectil", self.width)
+            hitbox_alto = self.config.get("hitbox_alto_proyectil", self.height)
+        rect = pygame.Rect(0, 0, hitbox_ancho, hitbox_alto)
+        rect.center = (centro_x, centro_y)
+        return rect
 
     def _detonar(self):
         if self.explotado:
@@ -219,10 +217,7 @@ def _comportamiento_rebote(p, tiles, robots):
 
 
 def _comportamiento_impacto(p, tiles, robots):
-    """Detona al primer contacto con un tile o con cualquier robot que no
-    sea su propio dueño (con margen de gracia al salir), igual que el
-    misil original."""
-    rect = p.get_rect()
+    rect = p.get_hitbox()          # antes: p.get_rect()
     for tile in tiles:
         if rect.colliderect(tile.rect):
             p._detonar()
@@ -259,7 +254,7 @@ COMPORTAMIENTOS = {
 # por cualquier arma con comportamiento="rebote".
 # ----------------------------------------------------------------------
 def _rebote_con_tiles(p, tiles):
-    rect = p.get_rect()
+    rect = p.get_hitbox()          # antes: p.get_rect()
     umbral_suave = 1.0
     for tile in tiles:
         if rect.colliderect(tile.rect):
@@ -289,7 +284,7 @@ def _rebote_con_tiles(p, tiles):
 
 
 def _rebote_con_robot(p, robot):
-    rect = p.get_rect()
+    rect = p.get_hitbox()          # antes: p.get_rect()
     robot_rect = robot.get_hitbox_lateral()
     if rect.colliderect(robot_rect):
         umbral_suave = 1.0
@@ -326,7 +321,7 @@ def _rebote_con_robot(p, robot):
 # Proyectil.update, que corta el resto de la física una vez True).
 # ----------------------------------------------------------------------
 def _asentar_en_tiles(p, tiles):
-    rect = p.get_rect()
+    rect = p.get_hitbox()          # antes: p.get_rect()
     for tile in tiles:
         if rect.colliderect(tile.rect):
             if p.vel_y >= 0:
@@ -342,7 +337,7 @@ def _revisar_proximidad(p, robots):
     centro_x = p.x + p.width / 2
     centro_y = p.y + p.height / 2
     ahora = pygame.time.get_ticks()
-    rect = p.get_rect()
+    rect = p.get_hitbox()          # antes: p.get_rect()
     for robot in robots:
         es_dueño = getattr(robot, "nombre_jugador", None) == p.owner
         if es_dueño and ahora < p.tiempo_creacion + p.margen_dueño_ms:

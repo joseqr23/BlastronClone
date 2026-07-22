@@ -26,6 +26,7 @@ blastron_clone/
 │       ├── granada/sprite.png; config.json 
 │       ├── misil/sprite.png; config.json
 │       ├── mine/sprite.png; config.json
+│       ├── supermisil/sprite.png; config.json
 │
 ├── core/                        # Núcleo del motor
 │   ├── game_modes/

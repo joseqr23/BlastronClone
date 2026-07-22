@@ -12,7 +12,7 @@ class WeaponManager:
         config = config_arma(arma)
         if not config:
             return
-        ancho, alto = config.get("ancho", 40), config.get("alto", 40)
+        ancho, alto = config.get("ancho_proyectil", 40), config.get("alto_proyectil", 40)
         origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
         p = Proyectil(arma, origen[0], origen[1], vel_x, vel_y, owner=self.game.robot.nombre_jugador)
         self.game.proyectiles.append(p)
