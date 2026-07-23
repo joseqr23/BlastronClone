@@ -70,9 +70,11 @@ def main():
         from core.game_modes.multi_game import MultiplayerGame as Game
         host = seleccion.get("host", True)
         server_ip = seleccion.get("server_ip", "127.0.0.1")
-        duracion_min = seleccion.get("duracion_min", 3)      # ← nuevo
-        modo_partida = seleccion.get("modo_partida", "puntos")  # ← nuevo
-        juego = Game(nombre_jugador, personaje, host, server_ip, duracion_min=duracion_min, modo_partida=modo_partida)
+        duracion_min = seleccion.get("duracion_min", 3)
+        modo_partida = seleccion.get("modo_partida", "puntos")
+        mapa_id = seleccion.get("mapa", "parque")
+        juego = Game(nombre_jugador, personaje, host, server_ip,
+                    duracion_min=duracion_min, modo_partida=modo_partida, mapa_id=mapa_id)
     elif modo == "free":
         from core.game_modes.free_game import FreeGame as Game
         juego = Game(nombre_jugador, personaje)

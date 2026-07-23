@@ -1,9 +1,10 @@
+# ui/menu.py
 import os
 import math
 import pygame
 from ui.text_input import TextInput
 from utils.paths import resource_path  # Asegúrate de importar esto
-
+from utils.mapa_loader import listar_mapas  # agregar al bloque de imports arriba del archivo
 
 # ---------------------------------------------------------------------------
 # Paleta de colores del menú
@@ -104,6 +105,21 @@ class Menu:
         )
 
         self.text_input = TextInput((0, 0, 260, 38), self.font_input, max_length=29)
+
+        # Cargar mapas
+        self.mapas = listar_mapas()
+        self.mapa_thumbs = {}
+        for mapa_id, _nombre, fondo_path in self.mapas:
+            try:
+                img = pygame.image.load(resource_path(fondo_path)).convert()
+                self.mapa_thumbs[mapa_id] = pygame.transform.smoothscale(img, (100, 62))
+            except Exception:
+                self.mapa_thumbs[mapa_id] = None
+        self.host_mapa_id = self.mapas[0][0] if self.mapas else None
+        self.mapa_scroll_offset = 0
+        self._mapa_items_por_pagina = 1
+        self.rect_mapa = {}
+
 
         # 🔹 Cargar automáticamente todos los robots que tengan portrait.png
         self.personajes = []
@@ -236,6 +252,19 @@ class Menu:
                         if self.rect_volver and self.rect_volver.collidepoint(mouse_pos):
                             self.pantalla_estado = "principal"
 
+
+                        if self.rect_mapa_flecha_izq and self.rect_mapa_flecha_izq.collidepoint(mouse_pos):
+                            self.mapa_scroll_offset = max(0, self.mapa_scroll_offset - self._mapa_items_por_pagina)
+                        elif self.rect_mapa_flecha_der and self.rect_mapa_flecha_der.collidepoint(mouse_pos):
+                            self.mapa_scroll_offset += self._mapa_items_por_pagina
+                        for mapa_id, rect in self.rect_mapa.items():
+                            if rect.collidepoint(mouse_pos):
+                                self.host_mapa_id = mapa_id
+
+                        for mapa_id, rect in self.rect_mapa.items():
+                            if rect.collidepoint(mouse_pos):
+                                self.host_mapa_id = mapa_id
+
                         for dur, rect in self.rect_duracion.items():
                             if rect.collidepoint(mouse_pos):
                                 self.host_duracion_min = dur
@@ -279,6 +308,7 @@ class Menu:
             "server_ip": "127.0.0.1",
             "duracion_min": self.host_duracion_min,
             "modo_partida": self.host_modo_partida,
+            "mapa": self.host_mapa_id or "parque",
         }
 
     # ------------------------------------------------------------------
@@ -468,7 +498,7 @@ class Menu:
         margen_x = 60
         content_w = self.ancho - margen_x * 2
 
-        self.rect_volver = pygame.Rect(margen_x, 30, 110, 36)
+        self.rect_volver = pygame.Rect(margen_x, 16, 100, 32)
         hover_volver = self.rect_volver.collidepoint(mouse_pos)
         _draw_panel(self.pantalla, self.rect_volver,
                     color=COL_OPTION_HOVER if hover_volver else COL_OPTION_IDLE,
@@ -478,22 +508,20 @@ class Menu:
         cursor_hover = cursor_hover or hover_volver
 
         titulo = self.font_config_titulo.render("Configuración del Host", True, COL_TEXT)
-        self.pantalla.blit(titulo, (margen_x, 84))
+        self.pantalla.blit(titulo, (margen_x, 54))
         sub = self.font_subtitulo.render("Define cómo se jugará esta partida", True, COL_TEXT_DIM)
-        self.pantalla.blit(sub, (margen_x + 2, 128))
-
-        pygame.draw.line(self.pantalla, COL_CARD_BORDER, (margen_x, 156), (self.ancho - margen_x, 156), 2)
+        self.pantalla.blit(sub, (margen_x + 2, 92))
+        pygame.draw.line(self.pantalla, COL_CARD_BORDER, (margen_x, 112), (self.ancho - margen_x, 112), 2)
 
         # ---------------- Tarjeta: Tiempo de partida ----------------
-        card_tiempo = pygame.Rect(margen_x, 176, content_w, 108)
+        card_tiempo = pygame.Rect(margen_x, 122, content_w, 84)
         _draw_panel(self.pantalla, card_tiempo)
         lbl_tiempo = self.font_config_seccion.render("TIEMPO DE PARTIDA", True, COL_TEXT_DIM)
-        self.pantalla.blit(lbl_tiempo, (card_tiempo.x + 24, card_tiempo.y + 16))
-
+        self.pantalla.blit(lbl_tiempo, (card_tiempo.x + 24, card_tiempo.y + 10))
         self.rect_duracion = {}
-        btn_w, btn_h, gap = 130, 48, 16
+        btn_w, btn_h, gap = 120, 40, 14
         bx = card_tiempo.x + 24
-        by = card_tiempo.y + 46
+        by = card_tiempo.y + 36
         for dur in self.DURACIONES:
             rect_btn = pygame.Rect(bx, by, btn_w, btn_h)
             self.rect_duracion[dur] = rect_btn
@@ -513,22 +541,20 @@ class Menu:
             bx += btn_w + gap
 
         # ---------------- Tarjeta: Modo de juego ----------------
-        card_modo = pygame.Rect(margen_x, card_tiempo.bottom + 20, content_w, 140)
+        card_modo = pygame.Rect(margen_x, card_tiempo.bottom + 8, content_w, 98)
         _draw_panel(self.pantalla, card_modo)
         lbl_modo = self.font_config_seccion.render("MODO DE JUEGO", True, COL_TEXT_DIM)
-        self.pantalla.blit(lbl_modo, (card_modo.x + 24, card_modo.y + 16))
-
+        self.pantalla.blit(lbl_modo, (card_modo.x + 24, card_modo.y + 10))
         self.rect_modo_partida = {}
         card_w = (content_w - 48 - 2 * 16) // 3
-        card_h = 84
+        card_h = 56
         cx = card_modo.x + 24
-        cy = card_modo.y + 46
+        cy = card_modo.y + 34
         for clave, etiqueta, disponible in self.MODOS_PARTIDA:
             rect_modo = pygame.Rect(cx, cy, card_w, card_h)
             self.rect_modo_partida[clave] = rect_modo
             activo = (clave == self.host_modo_partida) and disponible
             hover = disponible and rect_modo.collidepoint(mouse_pos)
-
             if not disponible:
                 color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
             elif activo:
@@ -537,14 +563,11 @@ class Menu:
                 color_fondo, color_borde = COL_OPTION_HOVER, COL_ACCENT_DIM
             else:
                 color_fondo, color_borde = COL_OPTION_IDLE, COL_CARD_BORDER
-
             _draw_panel(self.pantalla, rect_modo, color=color_fondo, border=color_borde,
                         radius=10, border_w=2 if (activo or hover) else 1)
-
             if activo:
-                barra = pygame.Rect(rect_modo.x, rect_modo.y + 8, 5, rect_modo.height - 16)
+                barra = pygame.Rect(rect_modo.x, rect_modo.y + 6, 5, rect_modo.height - 12)
                 pygame.draw.rect(self.pantalla, COL_ACCENT, barra, border_radius=3)
-
             color_txt = COL_TEXT if disponible else COL_TEXT_DISABLED
             txt_surf = self.font_opcion_desc.render(etiqueta, True, color_txt)
             if txt_surf.get_width() > rect_modo.width - 20:
@@ -554,33 +577,96 @@ class Menu:
                 linea2 = " ".join(palabras[mitad:])
                 l1 = self.font_opcion_desc.render(linea1, True, color_txt)
                 l2 = self.font_opcion_desc.render(linea2, True, color_txt)
-                y_off = -18 if not disponible else -10
+                y_off = -12 if not disponible else -8
                 self.pantalla.blit(l1, l1.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off)))
-                self.pantalla.blit(l2, l2.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off + 20)))
+                self.pantalla.blit(l2, l2.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off + 16)))
             else:
-                y_off = -14 if not disponible else 0
+                y_off = -10 if not disponible else 0
                 self.pantalla.blit(txt_surf, txt_surf.get_rect(center=(rect_modo.centerx, rect_modo.centery + y_off)))
-
             if not disponible:
                 badge_text = self.font_badge.render("PRÓXIMAMENTE", True, (255, 255, 255))
                 badge_rect = badge_text.get_rect()
-                badge_rect.size = (badge_rect.width + 12, badge_rect.height + 6)
-                badge_rect.midbottom = (rect_modo.centerx, rect_modo.bottom - 10)
+                badge_rect.size = (badge_rect.width + 10, badge_rect.height + 4)
+                badge_rect.midbottom = (rect_modo.centerx, rect_modo.bottom - 6)
                 pygame.draw.rect(self.pantalla, COL_ACCENT_DIM, badge_rect, border_radius=8)
                 self.pantalla.blit(badge_text, badge_text.get_rect(center=badge_rect.center))
             elif hover:
                 cursor_hover = True
-
             cx += card_w + 16
 
+        # ---------------- Tarjeta: Mapas ----------------
+        card_mapa = pygame.Rect(margen_x, card_modo.bottom + 8, content_w, 130)
+        _draw_panel(self.pantalla, card_mapa)
+        lbl_mapa = self.font_config_seccion.render("MAPA", True, COL_TEXT_DIM)
+        self.pantalla.blit(lbl_mapa, (card_mapa.x + 24, card_mapa.y + 10))
+        self.rect_mapa = {}
+        self.rect_mapa_flecha_izq = None
+        self.rect_mapa_flecha_der = None
+        thumb_w, thumb_h, gap_m = 90, 56, 14
+        arrow_w, arrow_h = 28, 28
+        inner_left = card_mapa.x + 24
+        inner_right = card_mapa.right - 24
+        my = card_mapa.y + 34
+
+        items_totales = len(self.mapas)
+        items_sin_flechas = max(1, (inner_right - inner_left) // (thumb_w + gap_m))
+        mostrar_flechas = items_totales > items_sin_flechas
+        if mostrar_flechas:
+            ancho_disponible = (inner_right - inner_left) - 2 * (arrow_w + 12)
+            items_por_pagina = max(1, ancho_disponible // (thumb_w + gap_m))
+        else:
+            items_por_pagina = items_sin_flechas
+        max_offset = max(0, items_totales - items_por_pagina)
+        self.mapa_scroll_offset = max(0, min(self.mapa_scroll_offset, max_offset))
+        self._mapa_items_por_pagina = items_por_pagina
+
+        mx = inner_left + (arrow_w + 12 if mostrar_flechas else 0)
+        visibles = self.mapas[self.mapa_scroll_offset: self.mapa_scroll_offset + items_por_pagina]
+        for mapa_id, nombre_mapa, _ in visibles:
+            thumb_rect = pygame.Rect(mx, my, thumb_w, thumb_h)
+            activo = (mapa_id == self.host_mapa_id)
+            hover = thumb_rect.collidepoint(mouse_pos)
+            pygame.draw.rect(self.pantalla, COL_INPUT_BG, thumb_rect, border_radius=8)
+            thumb = self.mapa_thumbs.get(mapa_id)
+            if thumb:
+                self.pantalla.blit(thumb, thumb.get_rect(center=thumb_rect.center))
+            color_borde = COL_ACCENT if activo else (COL_ACCENT_DIM if hover else COL_CARD_BORDER)
+            pygame.draw.rect(self.pantalla, color_borde, thumb_rect, width=2, border_radius=8)
+            txt_mapa = self.font_opcion_desc.render(nombre_mapa, True, COL_TEXT if activo else COL_TEXT_DIM)
+            self.pantalla.blit(txt_mapa, txt_mapa.get_rect(midtop=(thumb_rect.centerx, thumb_rect.bottom + 4)))
+            self.rect_mapa[mapa_id] = pygame.Rect(mx, my, thumb_w, thumb_h + 18)
+            if hover:
+                cursor_hover = True
+            mx += thumb_w + gap_m
+
+        if mostrar_flechas:
+            centro_y = my + thumb_h // 2
+            self.rect_mapa_flecha_izq = pygame.Rect(inner_left, centro_y - arrow_h // 2, arrow_w, arrow_h)
+            self.rect_mapa_flecha_der = pygame.Rect(inner_right - arrow_w, centro_y - arrow_h // 2, arrow_w, arrow_h)
+            for rect_flecha, simbolo, habilitada in (
+                (self.rect_mapa_flecha_izq, "<", self.mapa_scroll_offset > 0),
+                (self.rect_mapa_flecha_der, ">", self.mapa_scroll_offset < max_offset),
+            ):
+                hover = habilitada and rect_flecha.collidepoint(mouse_pos)
+                pygame.draw.rect(self.pantalla, COL_OPTION_HOVER if hover else COL_INPUT_BG, rect_flecha, border_radius=6)
+                pygame.draw.rect(self.pantalla, COL_ACCENT if hover else COL_INPUT_BORDER, rect_flecha, width=2, border_radius=6)
+                txt_f = self.font_flecha.render(simbolo, True, COL_TEXT if habilitada else COL_TEXT_DISABLED)
+                self.pantalla.blit(txt_f, txt_f.get_rect(center=rect_flecha.center))
+                if hover:
+                    cursor_hover = True
+            pagina_actual = self.mapa_scroll_offset // items_por_pagina + 1
+            total_paginas = max(1, -(-items_totales // items_por_pagina))
+            txt_pag = self.font_opcion_desc.render(f"{pagina_actual} / {total_paginas}", True, COL_TEXT_DIM)
+            self.pantalla.blit(txt_pag, txt_pag.get_rect(midtop=(card_mapa.centerx, card_mapa.bottom - 16)))
+
         # ---------------- Botón Empezar partida ----------------
-        self.rect_empezar = pygame.Rect(0, 0, 320, 56)
-        self.rect_empezar.center = (self.ancho // 2, card_modo.bottom + 56)
+        self.rect_empezar = pygame.Rect(0, 0, 300, 48)
+        self.rect_empezar.center = (self.ancho // 2, card_mapa.bottom + 42)
         hover_empezar = self.rect_empezar.collidepoint(mouse_pos)
         _draw_panel(self.pantalla, self.rect_empezar,
                     color=COL_ACCENT if hover_empezar else COL_ACCENT_DIM,
                     border=COL_ACCENT, radius=14, border_w=2)
-        txt_empezar = self.font_config_titulo.render("EMPEZAR PARTIDA", True, (25, 20, 15))
+        txt_empezar = self.font_config_boton.render("EMPEZAR PARTIDA", True, (25, 20, 15))
         self.pantalla.blit(txt_empezar, txt_empezar.get_rect(center=self.rect_empezar.center))
         cursor_hover = cursor_hover or hover_empezar
 
@@ -589,16 +675,14 @@ class Menu:
             f"{self.host_duracion_min} minutos  •  {modo_label.title()}",
             True, COL_TEXT_DIM
         )
-        self.pantalla.blit(resumen, resumen.get_rect(midtop=(self.ancho // 2, self.rect_empezar.bottom + 10)))
+        self.pantalla.blit(resumen, resumen.get_rect(midtop=(self.ancho // 2, self.rect_empezar.bottom + 8)))
 
         self._draw_mensaje_bloqueo(margen_x)
-
         ayuda = self.font_opcion_desc.render(
             "Esc para volver   •   Enter para empezar con la configuración actual",
             True, COL_TEXT_DIM
         )
         self.pantalla.blit(ayuda, ayuda.get_rect(midbottom=(self.ancho // 2, self.alto - 14)))
-
         return cursor_hover
 
     # ------------------------------------------------------------------

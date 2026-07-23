@@ -75,8 +75,8 @@ class MultiplayerGame(BaseGame):
     """MultiplayerGame con red TCP confiable, host autoritativo para
     turnos/daño/score/proyectiles, y sincronización de robots remotos."""
 
-    def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000, duracion_min=3, modo_partida="puntos"):
-        super().__init__(nombre_jugador=nombre_jugador, personaje=personaje)
+    def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000, duracion_min=3, modo_partida="puntos", mapa_id="parque"):
+        super().__init__(nombre_jugador=nombre_jugador, personaje=personaje, mapa_id=mapa_id)
         self.modo_partida = modo_partida  # solo "puntos" implementado por ahora
 
         # --- Robot local ---
@@ -166,6 +166,12 @@ class MultiplayerGame(BaseGame):
             print(f"[Host] Cliente conectado: {addr}")
             with self._client_sockets_lock:
                 self._client_sockets.append(conn)
+            # Aviso inmediato del mapa en uso — así el cliente lo recarga
+            # antes de que empiece a chocar contra tiles que no tiene.
+            try:
+                _send_framed(conn, {"tipo": "mapa_init", "mapa_id": self.mapa_id})
+            except Exception:
+                pass
             threading.Thread(target=self._recibir_de_socket, args=(conn,), daemon=True).start()
 
     def _recibir_de_socket(self, sock):
@@ -263,6 +269,7 @@ class MultiplayerGame(BaseGame):
                 "vel_x": p.vel_x, "vel_y": p.vel_y,
                 "estado": getattr(p, "estado", None),
                 "explotado": getattr(p, "explotado", False),
+                "facing_right": getattr(p, "_facing_right", True),
             })
         self.enviar({"tipo": "proy_sync", "items": items})
 
@@ -356,6 +363,12 @@ class MultiplayerGame(BaseGame):
         elif tipo == "turnos_init":
             self.turn_manager.iniciar(msg["jugadores"])
 
+        elif tipo == "mapa_init":
+            if not self.host:
+                nuevo_mapa = msg.get("mapa_id", "parque")
+                if nuevo_mapa != self.mapa_id:
+                    self.cargar_mapa(nuevo_mapa)
+
         elif tipo == "turno_sync":
             jugador = msg["jugador"]
             if jugador in self.turn_manager.jugadores:
@@ -409,12 +422,13 @@ class MultiplayerGame(BaseGame):
             ids_recibidos.add(pid)
             proxy = next((p for p in self.proyectiles if getattr(p, "proj_id", None) == pid), None)
             if proxy is None:
-                proxy = Proyectil(item["tipo"], item["x"], item["y"], 0, 0, owner=item.get("owner"))
+                proxy = Proyectil(item["tipo"], item["x"], item["y"], 0, 0, owner=item.get("owner"),
+                                facing_right=item.get("facing_right", True))
                 proxy.proj_id = pid
                 proxy.danados = set()
-                proxy.ya_hizo_dano = True  # el cliente nunca aplica daño, solo dibuja
+                proxy.ya_hizo_dano = True
                 self.proyectiles.append(proxy)
-                sound_manager.disparo(item["tipo"])  # proyectil recién aparecido: sonido de disparo
+                sound_manager.disparo(item["tipo"])
             explotado_antes = proxy.explotado
             proxy.x = item["x"]
             proxy.y = item["y"]
@@ -422,6 +436,7 @@ class MultiplayerGame(BaseGame):
             proxy.vel_y = item.get("vel_y", proxy.vel_y)
             proxy.estado = item.get("estado")
             proxy.explotado = item.get("explotado", False)
+            proxy._facing_right = item.get("facing_right", proxy._facing_right)
             if proxy.explotado and not explotado_antes:
                 sound_manager.explosion(item["tipo"])
 
