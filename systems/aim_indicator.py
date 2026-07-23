@@ -1,5 +1,7 @@
+# systems/aim_indicator.py
 import pygame
 import math
+
 
 class AimIndicator:
     def __init__(self, origen, max_fuerza=120): # CAMBIAR LONGITUD DE FLECHA
@@ -11,12 +13,10 @@ class AimIndicator:
         dx = mouse_pos[0] - self.origen[0]
         dy = mouse_pos[1] - self.origen[1]
         distancia = math.hypot(dx, dy)
-
         if distancia > self.max_fuerza:
             escala = self.max_fuerza / distancia
             dx *= escala
             dy *= escala
-
         self.direccion = (dx, dy)
 
     def get_fuerza(self):
@@ -29,26 +29,38 @@ class AimIndicator:
         """Devuelve la punta de la flecha"""
         return (self.origen[0] + self.direccion[0], self.origen[1] + self.direccion[1])
 
-    def get_datos_disparo(self, ancho_proyectil=0, alto_proyectil=0):
+    def get_datos_disparo(self, ancho_proyectil=0, alto_proyectil=0, distancia_spawn=0):
         """
         Devuelve:
-        - posición inicial (ajustada para que el centro del proyectil coincida con el origen)
+        - posición inicial (ajustada para que el centro del proyectil coincida
+          con el punto de aparición)
         - velocidad en X
         - velocidad en Y
+
+        distancia_spawn: cuántos píxeles alejar el punto de aparición del
+        centro del jugador, EN LA DIRECCIÓN APUNTADA, antes de calcular la
+        posición. Por defecto 0 — mantiene el comportamiento de siempre
+        (proyectil nace justo en el centro del jugador, como granada/misil,
+        que se alejan solos gracias a su velocidad). Para armas que no
+        vuelan (cuerpo a cuerpo), pasa un valor > 0 para que el arma
+        aparezca a un costado del jugador según hacia dónde apunte, en vez
+        de quedarse centrada en él.
         """
         angulo = self.get_angulo()
         velocidad = self.get_fuerza() / self.max_fuerza * 25
-
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
 
+        centro_x = self.origen[0] + math.cos(angulo) * distancia_spawn
+        centro_y = self.origen[1] + math.sin(angulo) * distancia_spawn
+
         # Ajuste para que el proyectil esté centrado visualmente
         origen_ajustado = (
-            self.origen[0] - ancho_proyectil / 2,
-            self.origen[1] - alto_proyectil / 2
+            centro_x - ancho_proyectil / 2,
+            centro_y - alto_proyectil / 2
         )
-
         return origen_ajustado, vel_x, vel_y
+
     def draw(self, pantalla):
         punta = self.get_punta()
         distancia = self.get_fuerza()

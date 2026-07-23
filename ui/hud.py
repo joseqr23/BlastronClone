@@ -2,6 +2,7 @@
 import pygame
 from entities.players.robot import Robot
 from utils.weapon_loader import cargar_armas
+from settings import ANCHO
 
 
 def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
@@ -23,19 +24,25 @@ def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
 
 class HUDArmas:
     """
-    Selector de armas. La lista de armas es dinámica (viene de
-    assets/weapons/*/config.json vía cargar_armas()) — cuantas más armas
-    agregues, más ancho ocupa la fila de botones. Por eso incluye un
-    botón de colapsar/expandir a la izquierda, siempre visible, para no
-    comerse la pantalla con cada arma nueva.
+    Selector de armas en cuadrícula (grid) que se ajusta sola al ancho de
+    pantalla — calcula cuántos botones caben por fila según ANCHO (de
+    settings.py) y su propia posición de inicio, y cuando se llena una
+    fila continúa hacia abajo. No hace falta tocar nada cuando agregas
+    un arma nueva, sin importar cuántas termines teniendo: nunca se sale
+    de la pantalla, solo crece hacia abajo.
+
+    Incluye:
+      - Botón de colapsar/expandir a la izquierda, siempre visible.
+      - Panel de fondo semitransparente para que se vea como un widget,
+        no íconos sueltos flotando sobre el mapa.
+      - Tooltip con el nombre legible del arma (campo "nombre" de su
+        config.json) al pasar el mouse por encima.
 
     Íconos: busca assets/hud/<arma>.png primero; si no existe, usa el
-    primer frame del sprite propio del arma como ícono automático — así
-    un arma nueva no necesita ningún archivo extra para aparecer bien en
-    el HUD (aunque un ícono dedicado siempre se ve mejor).
+    primer frame del sprite propio del arma como ícono automático.
     """
 
-    def __init__(self, armas_disponibles, posicion=(500, 10)):
+    def __init__(self, armas_disponibles, posicion=(600, 10), margen_derecho=20, max_por_fila=None):
         self.armas = ['nada'] + armas_disponibles + ['spawn_robot']
         self.pos = posicion
         self.seleccion = 'nada'
@@ -45,24 +52,65 @@ class HUDArmas:
         self.alto_boton = 60
         self.padding = 10
         self.ancho_toggle = 30
+        self.margen_derecho = margen_derecho
+        # Si se pasa un número fijo, se usa tal cual; si no, se calcula
+        # solo según cuánto espacio quede hasta el borde de la pantalla.
+        self.max_por_fila = max_por_fila
 
         self.botones = []
         self.rect_toggle = pygame.Rect(0, 0, 0, 0)
+        self.rect_panel = pygame.Rect(0, 0, 0, 0)
         self.imagenes = {}
+        self.nombres_legibles = {}
         self.font_toggle = pygame.font.SysFont("Arial", 20, bold=True)
+        self.font_tooltip = pygame.font.SysFont("Arial", 14, bold=True)
 
         self.crear_botones()
         self.cargar_imagenes()
+
+    # ------------------------------------------------------------------
+    # Layout
+    # ------------------------------------------------------------------
+    def _calcular_por_fila(self):
+        if self.max_por_fila is not None:
+            return max(1, self.max_por_fila)
+        x_armas = self.pos[0] + self.ancho_toggle + self.padding
+        disponible = max(self.ancho_boton, (ANCHO - self.margen_derecho) - x_armas)
+        return max(1, int((disponible + self.padding) // (self.ancho_boton + self.padding)))
 
     def crear_botones(self):
         x, y = self.pos
         self.rect_toggle = pygame.Rect(x, y, self.ancho_toggle, self.alto_boton)
         self.botones = []
+
         x_armas = x + self.ancho_toggle + self.padding
+        por_fila = self._calcular_por_fila()
+
         for i, arma in enumerate(self.armas):
-            rect = pygame.Rect(x_armas + i * (self.ancho_boton + self.padding), y, self.ancho_boton, self.alto_boton)
+            fila, col = divmod(i, por_fila)
+            rect = pygame.Rect(
+                x_armas + col * (self.ancho_boton + self.padding),
+                y + fila * (self.alto_boton + self.padding),
+                self.ancho_boton, self.alto_boton,
+            )
             self.botones.append((arma, rect))
 
+        # Panel de fondo que envuelve toggle + toda la cuadrícula.
+        columnas = min(len(self.armas), por_fila) if self.armas else 1
+        filas = (len(self.armas) - 1) // por_fila + 1 if self.armas else 1
+        ancho_grid = columnas * (self.ancho_boton + self.padding) - self.padding
+        alto_grid = filas * (self.alto_boton + self.padding) - self.padding
+        margen = 6
+        self.rect_panel = pygame.Rect(
+            x - margen,
+            y - margen,
+            self.ancho_toggle + self.padding + ancho_grid + margen * 2,
+            max(self.alto_boton, alto_grid) + margen * 2,
+        )
+
+    # ------------------------------------------------------------------
+    # Recursos
+    # ------------------------------------------------------------------
     def cargar_imagenes(self):
         catalogo = cargar_armas()
         for arma in self.armas:
@@ -82,6 +130,19 @@ class HUDArmas:
                         imagen = None
             self.imagenes[arma] = imagen
 
+            config = catalogo.get(arma)
+            if config and config.get("nombre"):
+                self.nombres_legibles[arma] = config["nombre"]
+            elif arma == 'nada':
+                self.nombres_legibles[arma] = 'Ninguna'
+            elif arma == 'spawn_robot':
+                self.nombres_legibles[arma] = 'Invocar robot'
+            else:
+                self.nombres_legibles[arma] = arma.capitalize()
+
+    # ------------------------------------------------------------------
+    # Eventos
+    # ------------------------------------------------------------------
     def punto_sobre_hud(self, pos):
         """Usado por event_handler.py para no disparar cuando el clic cae
         sobre el botón de colapsar o (si está expandido) sobre algún
@@ -106,8 +167,16 @@ class HUDArmas:
                     return arma
         return None
 
+    # ------------------------------------------------------------------
+    # Dibujo
+    # ------------------------------------------------------------------
     def draw(self, pantalla, font):
-        # Botón de colapsar/expandir — siempre visible.
+        panel = self.rect_toggle.inflate(6, 6) if self.colapsado else self.rect_panel
+        fondo = pygame.Surface((panel.width, panel.height), pygame.SRCALPHA)
+        fondo.fill((20, 20, 20, 160))
+        pantalla.blit(fondo, panel.topleft)
+        pygame.draw.rect(pantalla, (200, 200, 200), panel, width=1)
+
         pygame.draw.rect(pantalla, (80, 80, 80), self.rect_toggle)
         flecha = "▶" if self.colapsado else "◀"
         texto_flecha = self.font_toggle.render(flecha, True, (255, 255, 255))
@@ -115,6 +184,9 @@ class HUDArmas:
 
         if self.colapsado:
             return
+
+        mouse_pos = pygame.mouse.get_pos()
+        hover = None
 
         for arma, rect in self.botones:
             color = (0, 200, 0) if self.seleccion == arma else (150, 150, 150)
@@ -124,10 +196,30 @@ class HUDArmas:
                 img_rect = imagen.get_rect(center=rect.center)
                 pantalla.blit(imagen, img_rect)
             else:
-                texto_mostrar = arma.capitalize() if arma != 'nada' else 'Ninguna'
+                texto_mostrar = self.nombres_legibles.get(arma, arma.capitalize())
                 text = font.render(texto_mostrar, True, (0, 0, 0))
                 text_rect = text.get_rect(center=rect.center)
                 pantalla.blit(text, text_rect)
+            if rect.collidepoint(mouse_pos):
+                hover = (arma, rect)
+
+        if hover is not None:
+            self._draw_tooltip(pantalla, *hover)
+
+    def _draw_tooltip(self, pantalla, arma, rect):
+        texto = self.nombres_legibles.get(arma, arma.capitalize())
+        render = self.font_tooltip.render(texto, True, (255, 255, 255))
+        padding = 4
+        fondo_rect = render.get_rect()
+        fondo_rect.inflate_ip(padding * 2, padding * 2)
+        fondo_rect.midtop = (rect.centerx, rect.bottom + 4)
+        # No dejar que el tooltip se salga de la pantalla por la derecha.
+        if fondo_rect.right > ANCHO:
+            fondo_rect.right = ANCHO - 2
+        fondo = pygame.Surface(fondo_rect.size, pygame.SRCALPHA)
+        fondo.fill((0, 0, 0, 210))
+        pantalla.blit(fondo, fondo_rect.topleft)
+        pantalla.blit(render, render.get_rect(center=fondo_rect.center))
 
 
 class HUDPuntajes:

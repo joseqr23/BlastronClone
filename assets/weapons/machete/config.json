@@ -1,0 +1,22 @@
+{
+    "nombre": "Machete",
+    "comportamiento": "cuerpo_a_cuerpo",
+    "daño": 40,
+    "ancho_proyectil": 180,
+    "alto_proyectil": 180,
+    "ancho_explosion": 180,
+    "alto_explosion": 180,
+    "gravedad": 0,
+    "friccion_aire": 1,
+    "tiempo_explosion_ms": 600,
+    "advertencia_ms": 120,
+    "margen_dueño_ms": 1350,
+    "tiempo_post_explosion_ms": 250,
+    "hitbox_ancho_proyectil": 0,
+    "hitbox_alto_proyectil": 0,
+    "hitbox_ancho_explosion": 130,
+    "hitbox_alto_explosion": 130,
+    "sprite": "assets/weapons/machete/sprite.png",
+    "frames": 3,
+    "frames_explosion": 1
+}

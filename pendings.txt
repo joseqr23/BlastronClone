@@ -1,30 +1,11 @@
-Errores:
-* Quiero aumentar el tamaño del misil pero no funciona, al poner 60 u otro numero diferente a 40 en alto y ancho de mi json, no funciona, no dibuja el arma:
-{
-  "nombre": "Mine",
-  "comportamiento": "rebote",
-  "daño": 100,
-  "ancho": 40,
-  "alto": 40,
-  "gravedad": 0.5,
-  "friccion_aire": 0.99,
-  "friccion_rebote": 0.6,
-  "tiempo_explosion_ms": 3000,
-  "tiempo_post_explosion_ms": 500,
-  "hitbox_padding_x": 4,
-  "hitbox_padding_y": 8,
-  "sprite": "assets/weapons/mine/sprite.png",
-  "frames": 3
-}
-Mi codigo de proyectil.py:
-
-
-
-
-
 Pendiente:
 * Más mapas: Actualmente tengo un mapa creado unicamente, mi estructura es la siguiente:
-Tengo un python en > utils > map_editor.py que basicamente carga una imagen de fondo y yo manualmente construyo el mapa tal cual esta la imagen, y el archivo me genera cordenadas, estas cordenadas las copio en el mapa levels/map_loader.py y carga, pero quisiera saber si puedo hacer esto más dinamico.
+Tengo un python en > utils > map_editor.py <<< Este archivo es totalmente independiente del juego, solo lo cree para editar mapas. 
+Basicamente se carga una imagen de fondo que se encuentra en assets/maps/fondo.png y yo manualmente construyo la estructura tal cual esta la imagen, y el archivo me genera cordenadas.
+Estas cordenadas las copio en el mapa levels/map_loader.py y al momendo de cargar el mapa, este genera las estructuras que he creado en base a esas cordenadas.
+Al tener la imagen de fondo como referencia + las estructuras que cree se crea visualmente como si la imagen tuviera texturas propias.
+
+La creacion de mapas la puedo hacer yo, en lugar de menu
 Tipo: Genero otro mapa, con otras cordenadas y otra imagen, y se juega en esas zona, esto obviamente seria añadido en el menu del host.
 
 

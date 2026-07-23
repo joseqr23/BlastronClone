@@ -1,3 +1,8 @@
+"""
+IMPORTANTE: este archivo NO decide a quién le hace daño una explosión —
+esa decisión vive ÚNICAMENTE en Proyectil.robots_afectados(). Aquí solo
+se itera esa lista y se aplica el daño/puntaje.
+"""
 from entities.weapons.proyectil import Proyectil
 from utils.weapon_loader import config_arma
 from utils.sound_manager import sound_manager
@@ -12,7 +17,8 @@ class WeaponManager:
         config = config_arma(arma)
         if not config:
             return
-        ancho, alto = config.get("ancho_proyectil", 40), config.get("alto_proyectil", 40)
+        ancho = config.get("ancho_proyectil", 40)
+        alto = config.get("alto_proyectil", 40)
         origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
         p = Proyectil(arma, origen[0], origen[1], vel_x, vel_y, owner=self.game.robot.nombre_jugador)
         self.game.proyectiles.append(p)
@@ -33,26 +39,20 @@ class WeaponManager:
 
     def _update_proyectiles(self):
         for p in self.game.proyectiles[:]:
+            candidatos = self._robots_para_colision()
             # La colisión/rebote/impacto contra tiles y TODOS los robots
             # ya ocurre dentro de p.update(), sub-paso por sub-paso.
-            p.update(self.game.tiles, self._robots_para_colision())
-
+            p.update(self.game.tiles, candidatos)
             daño = p.daño
 
-            for robot_estatico in self.game.robots_estaticos:
-                if p.explotado and p.estado == "explode":
-                    if robot_estatico not in p.danados and p.get_hitbox().colliderect(robot_estatico.get_rect()):
-                        robot_estatico.take_damage(daño)
-                        puntos = daño
-                        if robot_estatico.health <= 0:
-                            puntos *= 2
-                        self.game.puntajes[self.game.robot] += puntos
-                        p.danados.add(robot_estatico)
-
-            if p.explotado and p.estado == "explode" and not p.ya_hizo_dano:
-                if p.get_hitbox().colliderect(self.game.robot.get_rect()):
-                    self.game.robot.take_damage(daño)
-                    p.ya_hizo_dano = True
+            # Proyectil decide TODO sobre a quién dañar. Aquí solo se aplica.
+            for robot in p.robots_afectados(candidatos):
+                robot.take_damage(daño)
+                puntos = daño
+                if robot.health <= 0:
+                    puntos *= 2
+                self.game.puntajes[self.game.robot] += puntos
+                p.danados.add(robot)
 
             if p.estado == "done":
                 self.game.proyectiles.remove(p)
