@@ -32,7 +32,9 @@ class HUDArmas:
     de la pantalla, solo crece hacia abajo.
 
     Incluye:
-      - Botón de colapsar/expandir a la izquierda, siempre visible.
+      - Botón de colapsar/expandir, siempre visible, a la DERECHA de la
+        cuadrícula de armas (las armas quedan ancladas en `posicion`, el
+        botón se calcula después según el ancho real de la cuadrícula).
       - Panel de fondo semitransparente para que se vea como un widget,
         no íconos sueltos flotando sobre el mapa.
       - Tooltip con el nombre legible del arma (campo "nombre" de su
@@ -74,37 +76,45 @@ class HUDArmas:
     def _calcular_por_fila(self):
         if self.max_por_fila is not None:
             return max(1, self.max_por_fila)
-        x_armas = self.pos[0] + self.ancho_toggle + self.padding
-        disponible = max(self.ancho_boton, (ANCHO - self.margen_derecho) - x_armas)
+        # Reserva espacio para el toggle AL FINAL (a la derecha de la
+        # cuadrícula), no al principio.
+        disponible = max(
+            self.ancho_boton,
+            (ANCHO - self.margen_derecho) - self.pos[0] - self.ancho_toggle - self.padding
+        )
         return max(1, int((disponible + self.padding) // (self.ancho_boton + self.padding)))
 
     def crear_botones(self):
         x, y = self.pos
-        self.rect_toggle = pygame.Rect(x, y, self.ancho_toggle, self.alto_boton)
         self.botones = []
-
-        x_armas = x + self.ancho_toggle + self.padding
         por_fila = self._calcular_por_fila()
 
+        # Las armas se anclan en (x, y) tal cual — ya no se corren para
+        # dejarle hueco al toggle antes de ellas.
         for i, arma in enumerate(self.armas):
             fila, col = divmod(i, por_fila)
             rect = pygame.Rect(
-                x_armas + col * (self.ancho_boton + self.padding),
+                x + col * (self.ancho_boton + self.padding),
                 y + fila * (self.alto_boton + self.padding),
                 self.ancho_boton, self.alto_boton,
             )
             self.botones.append((arma, rect))
 
-        # Panel de fondo que envuelve toggle + toda la cuadrícula.
         columnas = min(len(self.armas), por_fila) if self.armas else 1
         filas = (len(self.armas) - 1) // por_fila + 1 if self.armas else 1
         ancho_grid = columnas * (self.ancho_boton + self.padding) - self.padding
         alto_grid = filas * (self.alto_boton + self.padding) - self.padding
+
+        # El toggle se ubica DESPUÉS de la cuadrícula, a su derecha.
+        x_toggle = x + ancho_grid + self.padding
+        self.rect_toggle = pygame.Rect(x_toggle, y, self.ancho_toggle, self.alto_boton)
+
+        # Panel de fondo que envuelve toda la cuadrícula + el toggle.
         margen = 6
         self.rect_panel = pygame.Rect(
             x - margen,
             y - margen,
-            self.ancho_toggle + self.padding + ancho_grid + margen * 2,
+            ancho_grid + self.padding + self.ancho_toggle + margen * 2,
             max(self.alto_boton, alto_grid) + margen * 2,
         )
 
@@ -178,7 +188,10 @@ class HUDArmas:
         pygame.draw.rect(pantalla, (200, 200, 200), panel, width=1)
 
         pygame.draw.rect(pantalla, (80, 80, 80), self.rect_toggle)
-        flecha = "▶" if self.colapsado else "◀"
+        # El toggle ahora está a la derecha de las armas: ">" significa
+        # "las armas están a la izquierda, clic para ocultarlas"
+        # (expandido) y "<" significa "clic para mostrarlas" (colapsado).
+        flecha = "<" if self.colapsado else ">"
         texto_flecha = self.font_toggle.render(flecha, True, (255, 255, 255))
         pantalla.blit(texto_flecha, texto_flecha.get_rect(center=self.rect_toggle.center))
 

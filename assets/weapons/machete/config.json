@@ -15,7 +15,7 @@
     "hitbox_ancho_proyectil": 0,
     "hitbox_alto_proyectil": 0,
     "hitbox_ancho_explosion": 130,
-    "hitbox_alto_explosion": 130,
+    "hitbox_alto_explosion": 115,
     "sprite": "assets/weapons/machete/sprite.png",
     "frames": 3,
     "frames_explosion": 1
