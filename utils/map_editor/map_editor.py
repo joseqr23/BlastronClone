@@ -12,7 +12,7 @@ font = pygame.font.SysFont(None, 24)
 
 # Cargar fondo
 try:
-    fondo = pygame.image.load("assets/maps/fondo.png").convert()
+    fondo = pygame.image.load("utils/map_editor/fondo.png").convert()
     fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
 except:
     print("⚠️ No se encontró la imagen 'fondo.png'. Asegúrate de que exista.")
@@ -33,13 +33,13 @@ def draw_text(text, x, y, color=(255, 0, 0)):
     rendered = font.render(text, True, color)
     pantalla.blit(rendered, (x, y))
 
-def save_platforms(filename="utils/platforms/plataformas_generadas.py"):
+def save_platforms(filename="utils/map_editor/plataformas_generadas.py"):
     with open(filename, "w") as f:
         f.write("# Lista de plataformas generadas desde el editor\n")
         f.write("PLATAFORMAS = [\n")
         for plat in platforms:
             x, y, w, h = plat
-            f.write(f"    ({x}, {y}, {w}, {h}),\n")
+            f.write(f"    [{x}, {y}, {w}, {h}],\n")
         f.write("]\n")
     print(f"✅ Plataformas guardadas en {filename}")
 

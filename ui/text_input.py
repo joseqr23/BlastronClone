@@ -1,3 +1,4 @@
+# ui/text_input.py
 import pygame
 
 class TextInput:

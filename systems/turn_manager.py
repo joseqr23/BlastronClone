@@ -1,6 +1,5 @@
+# systems/turn_manager.py
 import time
-
-
 class TurnManager:
     """
     Fases de un turno:
@@ -10,7 +9,7 @@ class TurnManager:
       "cooldown"     -> turno terminado, esperando pasar al siguiente jugador
     """
 
-    def __init__(self, game, duracion_turno=10, post_disparo_duracion=3, cooldown=0):
+    def __init__(self, game, duracion_turno=15, post_disparo_duracion=3, cooldown=0):
         self.game = game
         self.duracion_turno = duracion_turno
         self.post_disparo_duracion = post_disparo_duracion

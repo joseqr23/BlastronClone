@@ -1,16 +1,16 @@
 blastron_clone/
 │
-├── main.py                      # Punto de entrada
-├── settings.py                  # Configuraciones globales
-├── assets/                      # Imágenes, sonidos, música
-│   ├── hud/granada.png; misil.png; nada.png; mine.png
-│   ├── maps/fondo.png
-│   ├── robots/
+├── assets/                     # Imágenes, sonidos, música
+│   ├── hud/granada.png; machete.png; mine.png; misil.png; nada.png; spawn_robot.png; supermisil.png;
+│   ├── maps/                   # Mapas dinamicos, se agrega nueva carpeta con fondo y config y el mapa se genera solo
+│       ├── parque/fondo.png; config.json     
+│       ├── sun/fondo.png; config.json
+│   ├── robots/                 # Robots dinamicos, se agrega nueva carpeta con el nombre del robot y sus respectivos png, se añada automaticamente siempre y cuando tenga portrait.png
 │       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
 │       ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
 │       ├── netali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
 │       ├── robot/death.png; idle.png; jump.png; robot.png; run.png; portrait.png
-│   ├── robots_boss/
+│   ├── robots_boss/            # Funcionalidad esperada para el modo solo > aún no implementado.
 │       ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
 │   ├── sfx/
 │       ├──dano/dano1.mp3;dano2.mp3;dano3.mp3
@@ -37,16 +37,16 @@ blastron_clone/
 │   └── robot_selector.py 
 │
 ├── entities/                    # Jugadores, bots, proyectiles
-│       ├── boss/boss.py
+│       ├── boss/ # No implementado aún
 │       ├── players/robot.py;robot_estatico.py
-│       ├── weapons/proyectil.png 
+│       ├── weapons/proyectil.py # Esto toma la info de los json que se procesaron en weapon_loader.py
 │
 ├── levels/                      # Mapa, objetos del mundo
-│   ├── map_loader.py
+│   ├── map_loader.py   # Toma info de utils/mapa_loader.py, que procesó los json.
 │   └── tile.py
 │
 ├── systems/                     # Lógica de turnos, física, colisiones
-│   ├── aim_indicator.py
+│   ├── aim_indicator.py    # Indicador de mira del robot
 │   ├── collision.py
 │   ├── event_handler.py
 │   ├── hud_manager.py
@@ -61,14 +61,16 @@ blastron_clone/
 │   ├── portrait.py
 │   └── text_input.py
 │
-└── utils/                       # Funciones de ayuda
-    ├── colors.py
-    ├── loader.py
-    ├── map_editor.py
-    ├── paths.py
-    ├── sound_manager.py
-    ├── sprite_reproductor.py
-    └── weapon_manager.py
-    
-
-     
+├── utils/                       # Funciones de ayuda
+│   ├── map_editor/
+│       ├── fondo.png; map_editor.py; plataformas_generadas.py
+│   ├── colors.py
+│   ├── loader.py
+│   ├── mapa_loader.py          # Procesa los json de config.json en los mapas creados
+│   ├── paths.py
+│   ├── sound_manager.py
+│   ├── sprite_reproductor.py
+│   └── weapon_loader.py # Esto toma todos los config.json de weapons y los procese. 
+│   
+├── main.py                      # Punto de entrada
+└── settings.py                  # Configuraciones globales

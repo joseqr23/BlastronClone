@@ -1,4 +1,5 @@
 # Lista de plataformas generadas desde el editor
 PLATAFORMAS = [
-    (192, 210, 127, 80),
+    [185, 223, 40, 16],
+    [687, 191, 27, 15],
 ]

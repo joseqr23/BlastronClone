@@ -1,3 +1,4 @@
+# utils/loader.py
 import pygame
 
 def load_spritesheet(path, num_frames, frame_width, frame_height):

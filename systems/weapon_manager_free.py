@@ -1,3 +1,4 @@
+# systems/weapon_manager_free.py
 """
 IMPORTANTE: este archivo NO decide a quién le hace daño una explosión —
 esa decisión vive ÚNICAMENTE en Proyectil.robots_afectados(). Aquí solo

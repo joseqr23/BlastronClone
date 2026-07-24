@@ -1,3 +1,4 @@
+# ui/portrait.py
 import pygame
 
 class Portrait:

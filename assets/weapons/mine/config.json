@@ -1,7 +1,7 @@
 {
   "nombre": "Mine",
   "comportamiento": "mina",
-  "daño": 100,
+  "daño": 50,
   "ancho_proyectil": 30,
   "alto_proyectil": 30,
   "ancho_explosion": 130,

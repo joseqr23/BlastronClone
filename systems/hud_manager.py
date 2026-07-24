@@ -1,3 +1,4 @@
+# systems/hud_manager.py
 class HUDManager:
     def __init__(self, game):
         self.game = game
