@@ -1,5 +1,6 @@
 Consultar:
-Al poner 3 en frames esto indica que son 3 frames, pero si le coloco por ejemplo 6, puedo agregarle un sprite con 6 frames?
+Al poner 3 en "frames" esto indica que son 3 frames, pero si le coloco por ejemplo 6 como valor, puedo agregarle un sprite con 6 frames? Es decir, hacerlo dinamico en base a la cantidad de frames que yo escriba.
+De igual forma "frames_explosion" mostraran los frames que se usan para explosion, si se tiene 6 frames se usaran 2 o segun se coloque.
 Ejemplo de un config.json:
 {
   "nombre": "SuperMisil",
@@ -7,8 +8,8 @@ Ejemplo de un config.json:
   "daño": 75,
   "ancho_proyectil": 90,
   "alto_proyectil": 90,
-  "ancho_explosion": 180,
-  "alto_explosion": 180,
+  "ancho_explosion": 280,
+  "alto_explosion": 280,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
@@ -16,54 +17,32 @@ Ejemplo de un config.json:
   "margen_dueño_ms": 1500,
   "hitbox_ancho_proyectil": 25,
   "hitbox_alto_proyectil": 25,
-  "hitbox_ancho_explosion": 80,
+  "hitbox_ancho_explosion": 85,
   "hitbox_alto_explosion": 80,
   "sprite": "assets/weapons/supermisil/sprite.png",
   "frames": 3,
-  "frames_explosion": 2
+  "frames_explosion": 2,
+
+  // INFO: NUEVO QUE CONFIGURE, SOLO MODIFICA LA POSICION X Y Y TANTO DEL SPRITE COMO DEL HITBOX EN RELACION AL CENTRO DEL ROBOT QUE ES EL PUNTO DE PARTIDA
+  "posicion_ancho_proyectil": 0,
+  "posicion_alto_proyectil": 0,
+  "posicion_ancho_explosion": 0,
+  "posicion_alto_explosion": -20   // INFO:  EN ESTE CASO EL ALTO REAL DE LA EXPLOSION ES -20 DE LO REAL
 }
 
-
-lo que quiero saber tambien es si se pueden añadir más frames al arma, ya que actualmente son 3 frames, de los cuales el 1 es para el arma al salir disparada o ejecutada, y los 2 ultimos son para explosion.
-Quisiera saber si por ejemplo se puede poner 2 frames de esos 3 en la animacion del arma y solo 1 en explosion, tal vez añadiendolo aqui. 
-  "frames_explosion": 2
->>"frames_proyectil": 2
-(En este caso tendria que respetarse uno, en caso solo hayan 3 frames y se coloque 2 o mas en ambos que sumarian > 4) Pero basicamente la idea es esa, digamos que se aumenta frames a 10, podria yo colocarlo asi:
-  "frames_explosion": 5
-  "frames_proyectil": 5
-
-
-
-
-
-
-Pendiente:
-
-* Configurar una posible opción en config.json
-Para definir la ("posición_x_proyectil" y "posición_y_proyectil" | "posición_x_explosion" y "posición_y_explosion") del arma (ambas opcionales y en 0 por defecto), en donde el centro del robot (donde parte siempre cada arma y explosion) es 0, esto servirá para las armas cuerpo a cuerpo que quiera que solo hagan daño de lado izquierda o derecha y no en un ratio al rededor del robot.
-
-Ejemplo:
-Daño Actual > donde robot es | y las ondas expansivas son [] > el daño nace del centro del robot, golpea en su ratio 
-[   |   ]
-[   |   ]
-[   |   ]
-
-Daño esperado > al modificar posicion x & y > donde robot es | y las ondas expansivas son [] > suponiendo que se ha movido la "posicion_x_explosion" el ratio ahora es igual pero ya no parte del centro del robot, sino de un costado.
-[      ] |
-[      ] |
-[      ] |
-
-- La idea de esto es separar tanto la posicion de arma como de explosion por las siguientes razones:
-    - Arma se reproduce en el primer frame (pero visualmente puede verse desde el centro del robot)
-    - Arma hace daño no desde el centro del robot, sino desde la posicion establecida.
-
+O de considerar necesario hacer algo asi:
+  "frames": 10,
+  "frames_explosion": 5,
+  "frames_proyectil": 5 >> nuevo
+Digo "de ser necesario" ya que el hecho de ya poner 10, y en explosion "5" lo restante siempre iria para el arma.
+Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasartelos.
 
 
 
 
 Pendiente:
 
-* Agregar un contador regresivo para las armas, puede ser en el json, no todas seran ilimitadas, el valor por ejemplo 3, se ira restando y al llegar a 0 ya no habra municion en esa arma.
+* Agregar un contador regresivo para las armas de la cantidad restante a usar, puede ser en el json, no todas seran ilimitadas, el valor por ejemplo 3, se ira restando y al llegar a 0 ya no habra municion en esa arma.
 
 * También se puede añadir en el config.json un valor que sea "cantidad", en el que se vea la cantidad de proyectiles que sale de un disparo, digamos que a parte de granada hay otra que son 3 granadas a la vez, solo se aumenta en 1.
 

@@ -160,7 +160,11 @@ class Proyectil:
     def get_hitbox(self):
         centro_x = self.x + self.width / 2
         centro_y = self.y + self.height / 2
+        direccion = 1 if self._facing_right else -1
+
         if self.estado == "explode":
+            centro_x += self.config.get("posicion_ancho_explosion", 0) * direccion
+            centro_y += self.config.get("posicion_alto_explosion", 0)
             ancho_visual = self.explosion_width or self.width * 2
             alto_visual = self.explosion_height or self.height * 2
             hitbox_ancho = self.config.get(
@@ -172,8 +176,11 @@ class Proyectil:
                 self.config.get("hitbox_alto_proyectil", alto_visual)
             )
         else:
+            centro_x += self.config.get("posicion_ancho_proyectil", 0) * direccion
+            centro_y += self.config.get("posicion_alto_proyectil", 0)
             hitbox_ancho = self.config.get("hitbox_ancho_proyectil", self.width)
             hitbox_alto = self.config.get("hitbox_alto_proyectil", self.height)
+
         rect = pygame.Rect(0, 0, hitbox_ancho, hitbox_alto)
         rect.center = (centro_x, centro_y)
         return rect
@@ -238,6 +245,10 @@ class Proyectil:
     def draw(self, pantalla):
         if not self.frames:
             return
+        direccion = 1 if self._facing_right else -1
+        offset_x = self.config.get("posicion_ancho_proyectil", 0) * direccion
+        offset_y = self.config.get("posicion_alto_proyectil", 0)
+
         if self.estado in ("idle", "warning"):
             idx = 0 if self.estado == "idle" else min(1, len(self.frames) - 1)
             frame = self.frames[idx]
@@ -245,19 +256,16 @@ class Proyectil:
                 angulo = math.degrees(math.atan2(-self.vel_y, self.vel_x))
                 frame_render = frame
                 if self.vel_x < 0:
-                    # Reflejar en vez de rotar el círculo completo: si el vuelo va
-                    # hacia la izquierda, rotar 180°+ de más invierte el arte
-                    # (ej. detalles que solo están abajo del sprite terminan
-                    # arriba). Reflejando primero y rotando solo el ángulo restante,
-                    # el misil se ve igual de "derecho" en cualquier dirección.
                     frame_render = pygame.transform.flip(frame, True, False)
                     angulo += 180
                 imagen = pygame.transform.rotozoom(frame_render, angulo, 1)
-                rect = imagen.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
+                centro_x = self.x + self.width // 2 + offset_x
+                centro_y = self.y + self.height // 2 + offset_y
+                rect = imagen.get_rect(center=(centro_x, centro_y))
                 pantalla.blit(imagen, rect.topleft)
             else:
                 imagen = frame if self._facing_right else pygame.transform.flip(frame, True, False)
-                pantalla.blit(imagen, (int(self.x), int(self.y)))
+                pantalla.blit(imagen, (int(self.x + offset_x), int(self.y + offset_y)))
         elif self.estado == "explode":
             total_frames = len(self.frames)
             count = min(self.frames_explosion_count, total_frames)
@@ -273,13 +281,15 @@ class Proyectil:
             if self.explosion_width and self.explosion_height:
                 ancho_exp, alto_exp = self.explosion_width, self.explosion_height
             else:
-                ancho_exp, alto_exp = self.width * 2, self.height * 2  # comportamiento original
+                ancho_exp, alto_exp = self.width * 2, self.height * 2
             frame = self.frames[idx]
             if self.comportamiento != "impacto" and not self._facing_right:
                 frame = pygame.transform.flip(frame, True, False)
             imagen = pygame.transform.scale(frame, (ancho_exp, alto_exp))
-            centro_x = self.x + self.width / 2
-            centro_y = self.y + self.height / 2
+
+            centro_x = self.x + self.width / 2 + offset_x
+            centro_y = self.y + self.height / 2 + offset_y
+
             rect = imagen.get_rect(center=(centro_x, centro_y))
             pantalla.blit(imagen, rect.topleft)
 

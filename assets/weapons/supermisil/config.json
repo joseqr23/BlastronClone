@@ -4,8 +4,8 @@
   "daño": 75,
   "ancho_proyectil": 90,
   "alto_proyectil": 90,
-  "ancho_explosion": 180,
-  "alto_explosion": 180,
+  "ancho_explosion": 280,
+  "alto_explosion": 280,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
@@ -13,11 +13,16 @@
   "margen_dueño_ms": 1500,
   "hitbox_ancho_proyectil": 25,
   "hitbox_alto_proyectil": 25,
-  "hitbox_ancho_explosion": 80,
+  "hitbox_ancho_explosion": 85,
   "hitbox_alto_explosion": 80,
   "sprite": "assets/weapons/supermisil/sprite.png",
   "frames": 3,
-  "frames_explosion": 2
+  "frames_explosion": 2,
+
+  "posicion_ancho_proyectil": 0,
+  "posicion_alto_proyectil": 0,
+  "posicion_ancho_explosion": 0,
+  "posicion_alto_explosion": -20
 }
 
 

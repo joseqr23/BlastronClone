@@ -1,0 +1,27 @@
+{
+    "nombre": "Katana",
+    "comportamiento": "cuerpo_a_cuerpo",
+    "daño": 70,
+    "ancho_proyectil": 110,
+    "alto_proyectil": 110,
+    "ancho_explosion": 110,
+    "alto_explosion": 110,
+    "gravedad": 0,
+    "friccion_aire": 1,
+    "tiempo_explosion_ms": 150,
+    "advertencia_ms": 120,
+    "margen_dueño_ms": 1350,
+    "tiempo_post_explosion_ms": 250,
+    "hitbox_ancho_proyectil": 0,
+    "hitbox_alto_proyectil": 0,
+    "hitbox_ancho_explosion": 60,
+    "hitbox_alto_explosion": 60,
+    "sprite": "assets/weapons/katana/sprite.png",
+    "frames": 3,
+    "frames_explosion": 1,
+
+    "posicion_ancho_proyectil": 40,
+    "posicion_alto_proyectil": -30,
+    "posicion_ancho_explosion": 35,
+    "posicion_alto_explosion":0
+}

@@ -73,4 +73,4 @@ blastron_clone/
 │   └── weapon_loader.py # Esto toma todos los config.json de weapons y los procese. 
 │   
 ├── main.py                      # Punto de entrada
-└── settings.py                  # Configuraciones globales
+└── settings.py                  # Configuraciones globales > Ancho de pantalla en juego, alto de pantalla en juego, altura de robot, velocidad y salto. 

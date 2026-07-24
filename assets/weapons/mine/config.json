@@ -18,7 +18,7 @@
   "hitbox_alto_explosion": 80,
   "sprite": "assets/weapons/mine/sprite.png",
   "frames": 3,
-  "frames_explosion": 1
+  "frames_explosion": 2
 }
 
 
