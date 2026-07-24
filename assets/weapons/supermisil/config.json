@@ -22,7 +22,11 @@
   "posicion_ancho_proyectil": 0,
   "posicion_alto_proyectil": 0,
   "posicion_ancho_explosion": 0,
-  "posicion_alto_explosion": -20
+  "posicion_alto_explosion": -20,
+
+  "municion": 1,
+  "cantidad": 1,
+  "dispersion_grados": 25
 }
 
 

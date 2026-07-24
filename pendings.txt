@@ -40,22 +40,14 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 
-Pendiente:
-
-* Agregar un contador regresivo para las armas de la cantidad restante a usar, puede ser en el json, no todas seran ilimitadas, el valor por ejemplo 3, se ira restando y al llegar a 0 ya no habra municion en esa arma.
-
-* También se puede añadir en el config.json un valor que sea "cantidad", en el que se vea la cantidad de proyectiles que sale de un disparo, digamos que a parte de granada hay otra que son 3 granadas a la vez, solo se aumenta en 1.
-
-* Agregar un sprite del arma, para que se visualice el arma que sostiene el jugador antes de disparar, esta debe seguir la mira que esta en systems/aim_indicator.py
-    - Puede ser modificar el sprite que cuenta con 3 frames y agregar uno más y usar ese como la arma sostenida o se puede crear uno solo png con 1 frame en la carpeta del arma y usar ese. assets/weapons/misil/weapon.png
-
-
-
 
 
 Pendiente:
 1.- ¿Se puede agregar un efecto expansivo al disparar con cierta arma? 
 Ejemplo: un arma cuerpo a cuerpo que sea un guante de box que al golpear lance al enemigo que se encuentre por el aire (no con tanta fuerza)
+
+2.- Agregar un sprite del arma, para que se visualice el arma que sostiene el jugador antes de disparar, esta debe seguir la mira que esta en systems/aim_indicator.py
+    - Puede ser modificar el sprite que cuenta con 3 frames y agregar uno más y usar ese como la arma sostenida o se puede crear uno solo png con 1 frame en la carpeta del arma y usar ese. assets/weapons/misil/weapon.png
 
 
 Bugs:

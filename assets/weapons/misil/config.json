@@ -17,5 +17,14 @@
   "hitbox_alto_explosion": 40,
   "sprite": "assets/weapons/misil/sprite.png",
   "frames": 3,
-  "frames_explosion": 2
+  "frames_explosion": 2,
+  
+  "posicion_ancho_proyectil": 0,
+  "posicion_alto_proyectil": 0,
+  "posicion_ancho_explosion": 0,
+  "posicion_alto_explosion": 0,
+
+  "municion": 10,
+  "cantidad": 1,
+  "dispersion_grados": 25
 }

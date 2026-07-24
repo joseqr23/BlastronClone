@@ -39,6 +39,11 @@ class HUDArmas:
         no íconos sueltos flotando sobre el mapa.
       - Tooltip con el nombre legible del arma (campo "nombre" de su
         config.json) al pasar el mouse por encima.
+      - Indicador de munición restante (opcional): pasa el weapon_manager
+        del jugador a draw() y se dibuja un numerito en la esquina del
+        botón para cualquier arma con "municion" definida en su
+        config.json. Si no le pasás weapon_manager, no se dibuja nada —
+        cero cambios de comportamiento si no lo usás.
 
     Íconos: busca assets/hud/<arma>.png primero; si no existe, usa el
     primer frame del sprite propio del arma como ícono automático.
@@ -66,6 +71,7 @@ class HUDArmas:
         self.nombres_legibles = {}
         self.font_toggle = pygame.font.SysFont("Arial", 20, bold=True)
         self.font_tooltip = pygame.font.SysFont("Arial", 14, bold=True)
+        self.font_municion = pygame.font.SysFont("Arial", 13, bold=True)
 
         self.crear_botones()
         self.cargar_imagenes()
@@ -180,7 +186,7 @@ class HUDArmas:
     # ------------------------------------------------------------------
     # Dibujo
     # ------------------------------------------------------------------
-    def draw(self, pantalla, font):
+    def draw(self, pantalla, font, weapon_manager=None):
         panel = self.rect_toggle.inflate(6, 6) if self.colapsado else self.rect_panel
         fondo = pygame.Surface((panel.width, panel.height), pygame.SRCALPHA)
         fondo.fill((20, 20, 20, 160))
@@ -213,11 +219,27 @@ class HUDArmas:
                 text = font.render(texto_mostrar, True, (0, 0, 0))
                 text_rect = text.get_rect(center=rect.center)
                 pantalla.blit(text, text_rect)
+
+            if weapon_manager is not None:
+                self._draw_municion(pantalla, arma, rect, weapon_manager)
+
             if rect.collidepoint(mouse_pos):
                 hover = (arma, rect)
 
         if hover is not None:
             self._draw_tooltip(pantalla, *hover)
+
+    def _draw_municion(self, pantalla, arma, rect, weapon_manager):
+        restante = weapon_manager.municion_actual(arma)
+        if restante is None:
+            return  # munición ilimitada, no se muestra nada
+        texto = self.font_municion.render(str(restante), True, (255, 255, 255))
+        fondo_rect = texto.get_rect()
+        fondo_rect.inflate_ip(6, 2)
+        fondo_rect.bottomright = (rect.right - 2, rect.bottom - 2)
+        color_fondo = (150, 0, 0) if restante == 0 else (0, 0, 0)
+        pygame.draw.rect(pantalla, color_fondo, fondo_rect)
+        pantalla.blit(texto, texto.get_rect(center=fondo_rect.center))
 
     def _draw_tooltip(self, pantalla, arma, rect):
         texto = self.nombres_legibles.get(arma, arma.capitalize())
