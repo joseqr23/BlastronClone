@@ -15,21 +15,21 @@
 
   "friccion_rebote": 0.6,
   "radio_proximidad": 25,
-
+  "velocidad_proyectil": 12,
   
-  "_________Tamaño sprites: Arma / Explosion_________": "______________",
+  "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 30,
   "alto_proyectil": 30,
   "ancho_explosion": 130,
   "alto_explosion": 130,
 
-  "_________Tamaño hitbox: Arma / Explosion_________": "______________",
+  "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
   "hitbox_ancho_proyectil": 30,
   "hitbox_alto_proyectil": 30,
   "hitbox_ancho_explosion": 80,
   "hitbox_alto_explosion": 80,
 
-  "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
+  "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 0,
   "posicion_alto_proyectil": 0,
   "posicion_ancho_explosion": 0,
@@ -43,11 +43,10 @@
     
   "ancho_arma_sostenida": 90,
   "alto_arma_sostenida": 90,
-
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
-  "oculta_arma_al_disparar": true,
 
+  "oculta_arma_al_disparar": true,
   "estilo_mira": "apuntar"
 
 
