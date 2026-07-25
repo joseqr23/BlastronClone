@@ -3,7 +3,7 @@
   "nombre": "Escopeta",
   "comportamiento": "impacto",
   "daño": 10,
-  "gravedad": 0.5,
+  "gravedad": 0,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
   "tiempo_post_explosion_ms": 300,
@@ -29,10 +29,10 @@
   "alto_explosion": 5,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
-  "hitbox_ancho_proyectil": 5,
-  "hitbox_alto_proyectil": 5,
-  "hitbox_ancho_explosion": 5,
-  "hitbox_alto_explosion": 5,
+  "hitbox_ancho_proyectil": 8,
+  "hitbox_alto_proyectil": 8,
+  "hitbox_ancho_explosion": 2,
+  "hitbox_alto_explosion": 2,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 0,

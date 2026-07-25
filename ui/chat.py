@@ -16,7 +16,7 @@ class Chat:
         (255, 0, 255),   # Fucsia (extra)
     ]
 
-    def __init__(self, nombre_jugador, game=None, posicion=(10, 410), ancho=300, alto=80):
+    def __init__(self, nombre_jugador, game=None, robot_local=None, posicion=(10, 410), ancho=300, alto=80):
         self.nombre_jugador = nombre_jugador
         self.game = game
         self.posicion = posicion
@@ -33,6 +33,7 @@ class Chat:
         self.cursor_visible = True
         self.last_cursor_toggle = pygame.time.get_ticks()
         self.cursor_interval = 500  # milisegundos
+        self.robot_local = robot_local
 
     def agregar_mensaje(self, texto):
         self.mensajes.append(texto)
@@ -103,6 +104,8 @@ class Chat:
                         # Solo se envía por red si este chat pertenece a una
                         # partida en red (multijugador). En modo libre
                         # self.game es None y el mensaje se queda local.
+                        if self.robot_local is not None:
+                            self.robot_local.mostrar_mensaje(self.input_text.strip())
                         if self.game is not None:
                             self.game.enviar_chat(mensaje_formateado)
                     self.input_text = ""

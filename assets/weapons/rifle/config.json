@@ -3,7 +3,7 @@
   "nombre": "Rifle",
   "comportamiento": "impacto",
   "daño": 6,
-  "gravedad": 0.5,
+  "gravedad": 0,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
   "tiempo_post_explosion_ms": 300,
@@ -12,7 +12,7 @@
   "daña_al_dueño": false,
   "municion": 2,
   "cantidad": 10,
-  "dispersion_grados": 5,
+  "dispersion_grados": 3,
   
   "empuje_ancho": 2,
   "empuje_alto": -2,
@@ -29,8 +29,8 @@
   "alto_explosion": 5,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
-  "hitbox_ancho_proyectil": 2,
-  "hitbox_alto_proyectil": 2,
+  "hitbox_ancho_proyectil": 8,
+  "hitbox_alto_proyectil": 8,
   "hitbox_ancho_explosion": 2,
   "hitbox_alto_explosion": 2,
 
@@ -48,7 +48,6 @@
   
   "ancho_arma_sostenida": 100,
   "alto_arma_sostenida": 100,
-  
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
 

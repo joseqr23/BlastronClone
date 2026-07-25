@@ -14,6 +14,11 @@ class EventHandler:
                 pygame.quit()
                 return False
 
+            # Botones de acceso rápido
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_g and not self.game.chat.activo:
+                    self.game.hud_armas.colapsado = not self.game.hud_armas.colapsado
+
             # Chat
             self.game.chat.handle_event(evento)
 

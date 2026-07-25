@@ -44,7 +44,7 @@ from systems.event_handler import EventHandler
 from ui.chat import Chat
 from systems.turn_manager import TurnManager
 
-
+from utils.colors import ColorManager
 # ----------------------------------------------------------------------
 # Framing de mensajes sobre TCP
 # ----------------------------------------------------------------------
@@ -78,7 +78,8 @@ class MultiplayerGame(BaseGame):
     def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000, duracion_min=3, modo_partida="puntos", mapa_id="parque"):
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje, mapa_id=mapa_id)
         self.modo_partida = modo_partida  # solo "puntos" implementado por ahora
-
+        ColorManager.reset()
+        
         # --- Robot local ---
         self.robot = Robot(
             x=ANCHO // 2 - 30,
@@ -104,7 +105,7 @@ class MultiplayerGame(BaseGame):
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
         self.hud_armas = HUDArmas(list(cargar_armas().keys()))
         self.hud_manager = HUDManager(self)
-        self.chat = Chat(nombre_jugador, game=self)
+        self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
         self.mouse_click_sostenido = False
         self.font = pygame.font.SysFont("Arial", 16)
@@ -220,6 +221,8 @@ class MultiplayerGame(BaseGame):
         self._seq_local += 1
         mouse_pos = pygame.mouse.get_pos()
         origen = self.robot.get_centro()
+        municion_actual = self.weapon_manager.municion_actual(self.robot.arma_equipada)
+        sin_municion = municion_actual is not None and municion_actual <= 0
         self.enviar({
             "tipo": "update",
             "jugador": self.nombre_jugador,
@@ -232,6 +235,7 @@ class MultiplayerGame(BaseGame):
             "direccion": 1 if self.robot.facing_right else -1,
             "health": self.robot.health,
             "arma": self.robot.arma_equipada,
+            "sin_municion": sin_municion,
             "aim_dx": mouse_pos[0] - origen[0],
             "aim_dy": mouse_pos[1] - origen[1],
         })
@@ -315,6 +319,7 @@ class MultiplayerGame(BaseGame):
                 r.target_x, r.target_y = r.x, r.y
                 r.is_dead = (msg.get("estado", "idle") == "death")
                 r.arma_equipada = msg.get("arma")
+                r.sin_municion = msg.get("sin_municion", False)   # <-- nuevo
                 r.aim_dx = msg.get("aim_dx", 0)
                 r.aim_dy = msg.get("aim_dy", 0)
                 self.robots_remotos[jugador] = r
@@ -330,6 +335,7 @@ class MultiplayerGame(BaseGame):
                 r.facing_right = (msg.get("direccion", 1) == 1)
                 r.is_dead = (r.current_animation == "death")
                 r.arma_equipada = msg.get("arma", getattr(r, "arma_equipada", None))
+                r.sin_municion = msg.get("sin_municion", getattr(r, "sin_municion", False))  # <-- nuevo
                 r.aim_dx = msg.get("aim_dx", getattr(r, "aim_dx", 0))
                 r.aim_dy = msg.get("aim_dy", getattr(r, "aim_dy", 0))
                 if r.current_animation == "jump" and anim_anterior != "jump":
@@ -369,7 +375,15 @@ class MultiplayerGame(BaseGame):
         elif tipo == "chat":
             jugador = msg.get("jugador")
             if jugador != self.nombre_jugador:
-                self.chat.agregar_mensaje(msg["mensaje"])
+                mensaje = msg["mensaje"]
+                self.chat.agregar_mensaje(mensaje)
+                # El mensaje llega formateado como "Jugador: texto" (así lo
+                # arma Chat.handle_event) — para la burbuja solo queremos el
+                # texto, sin el prefijo del nombre.
+                texto_burbuja = mensaje.split(": ", 1)[1] if ": " in mensaje else mensaje
+                robot_remoto = self.robots_remotos.get(jugador)
+                if robot_remoto is not None:
+                    robot_remoto.mostrar_mensaje(texto_burbuja)
 
         elif tipo == "timer":
             self.tiempo_restante = msg["restante"]
@@ -580,6 +594,8 @@ class MultiplayerGame(BaseGame):
             for jugador, r in self.robots_remotos.items():
                 arma_remota = getattr(r, "arma_equipada", None)
                 if arma_remota in (None, "nada"):
+                    continue
+                if getattr(r, "sin_municion", False):   # <-- nuevo
                     continue
                 config_r = config_arma(arma_remota)
                 if not config_r:

@@ -27,6 +27,10 @@ class Robot:
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
 
         self.color_nombre = ColorManager.get_color(nombre_jugador)
+
+        self.mensaje_chat = None
+        self.mensaje_chat_expira = 0
+
         # Animaciones dinámicas según robot_name
         base_path = f"assets/robots/{self.nombre_robot}"
         self.animations = {
@@ -191,6 +195,18 @@ class Robot:
         texto_rect = texto_nombre.get_rect(center=(self.x + self.width // 2, self.y - 25))
         pantalla.blit(texto_nombre, texto_rect)
 
+        if self.mensaje_chat and pygame.time.get_ticks() < self.mensaje_chat_expira:
+            fuente_burbuja = pygame.font.SysFont("Arial", 14)
+            texto_render = fuente_burbuja.render(self.mensaje_chat, True, (0, 0, 0))
+            burbuja_rect = texto_render.get_rect()
+            burbuja_rect.inflate_ip(16, 16)
+            burbuja_rect.midbottom = (self.x + self.width // 2, self.y - 35)
+            pygame.draw.rect(pantalla, (255, 255, 255), burbuja_rect, border_radius=10)
+            pygame.draw.rect(pantalla, (0, 0, 0), burbuja_rect, width=2, border_radius=10)
+            pantalla.blit(texto_render, texto_render.get_rect(center=burbuja_rect.center))
+        elif self.mensaje_chat:
+            self.mensaje_chat = None
+
     def draw_death_message(self, pantalla, fuente):
         if self.is_dead:
             fuente_grande = pygame.font.SysFont(None, 40)
@@ -217,3 +233,7 @@ class Robot:
             self.aturdido_hasta = pygame.time.get_ticks() + duracion_ms
         if vel_y:
             self.vel_y = vel_y
+
+    def mostrar_mensaje(self, texto, duracion_ms=4000):
+        self.mensaje_chat = texto
+        self.mensaje_chat_expira = pygame.time.get_ticks() + duracion_ms

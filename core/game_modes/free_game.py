@@ -12,11 +12,12 @@ from systems.weapon_manager_free import WeaponManager # Manejador de armas
 from systems.hud_manager import HUDManager # Manejador de HUD
 
 from utils.weapon_loader import config_arma 
+from utils.colors import ColorManager
 
 class FreeGame(BaseGame):
     def __init__(self, nombre_jugador, personaje):
         super().__init__(nombre_jugador=nombre_jugador)
-
+        ColorManager.reset()
         # Jugador principal
         self.robot = Robot(
             x=ANCHO // 2 - 30,
@@ -24,6 +25,8 @@ class FreeGame(BaseGame):
             nombre_jugador=nombre_jugador,
             nombre_robot=personaje
         )
+
+        self.chat.robot_local = self.robot
 
         self.robots_estaticos = []
         self.aim = AimIndicator(self.robot.get_centro())
