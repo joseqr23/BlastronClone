@@ -155,7 +155,7 @@ class Menu:
 
         # Estado de navegación interna del menú
         self.pantalla_estado = "principal"  # "principal" | "host_config"
-        self.host_duracion_min = 3
+        self.host_duracion_min = 0.1
         self.host_modo_partida = "puntos"
 
     # ------------------------------------------------------------------

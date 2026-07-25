@@ -79,7 +79,7 @@ class MultiplayerGame(BaseGame):
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje, mapa_id=mapa_id)
         self.modo_partida = modo_partida  # solo "puntos" implementado por ahora
         ColorManager.reset()
-        
+
         # --- Robot local ---
         self.robot = Robot(
             x=ANCHO // 2 - 30,
@@ -488,11 +488,8 @@ class MultiplayerGame(BaseGame):
             self._procesar_mensajes_pendientes()
 
             if self.game_over:
-                fin_text = self.font.render("¡Tiempo terminado! Fin de la partida", True, (255, 0, 0))
-                rect = fin_text.get_rect(center=(ANCHO // 2, ALTO // 2))
-                self.pantalla.blit(fin_text, rect)
-                pygame.display.flip()
-                pygame.time.delay(5000)
+                etiqueta = {"puntos": "Puntaje", "muertes": "Muertes"}.get(self.modo_partida, "Puntaje")
+                self.mostrar_pantalla_final(etiqueta=etiqueta)
                 self._cerrar_red()
                 return
 
@@ -639,6 +636,102 @@ class MultiplayerGame(BaseGame):
             ty = getattr(r, "target_y", r.y)
             r.x += (tx - r.x) * factor
             r.y += (ty - r.y) * factor
+
+    def _calcular_podio(self):
+        """Agrupa jugadores por rango, respetando empates (mismo
+        puntaje/métrica = mismo podio). Genérico: no le importa si el
+        número es puntaje, muertes, o cualquier otra cosa que llenes en
+        self.puntajes."""
+        orden = sorted(self.puntajes.items(), key=lambda kv: kv[1], reverse=True)
+        podio = []  # [(rango, [(jugador, valor), ...]), ...]
+        for jugador, valor in orden:
+            if podio and podio[-1][1][0][1] == valor:
+                podio[-1][1].append((jugador, valor))
+            else:
+                rango = len(podio) + 1
+                podio.append((rango, [(jugador, valor)]))
+        return podio
+
+    def _robot_de(self, jugador):
+        if jugador == self.nombre_jugador:
+            return self.robot
+        return self.robots_remotos.get(jugador)
+
+    def mostrar_pantalla_final(self, etiqueta="Puntaje"):
+        podio = self._calcular_podio()
+        fuente_rango = pygame.font.SysFont("Arial", 28, bold=True)
+        fuente_nombre = pygame.font.SysFont("Arial", 18, bold=True)
+        fuente_valor = pygame.font.SysFont("Arial", 16)
+        fuente_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+
+        alturas_podio = {1: 160, 2: 110, 3: 70}
+        altura_extra = 40  # decrece un poco más por cada rango >3
+
+        base_y = ALTO - 60
+        ancho_bloque = 110
+        espacio = 20
+
+        posiciones = []  # (cx, y_superior, alto_bloque, jugador, valor, rango)
+        x_actual = 60
+        for rango, jugadores in podio:
+            alto_bloque = alturas_podio.get(rango, max(30, alturas_podio[3] - (rango - 3) * altura_extra))
+            n = len(jugadores)
+            for i, (jugador, valor) in enumerate(jugadores):
+                cx = x_actual + i * (ancho_bloque + espacio) + ancho_bloque // 2
+                posiciones.append((cx, base_y - alto_bloque, alto_bloque, jugador, valor, rango))
+            ancho_grupo = ancho_bloque * n + espacio * (n - 1)
+            x_actual += ancho_grupo + espacio * 2
+
+        esperando = True
+        reloj_local = pygame.time.Clock()
+        while esperando:
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT or evento.type == pygame.KEYDOWN:
+                    esperando = False
+
+            self.pantalla.fill((30, 30, 40))
+            titulo = fuente_titulo.render("¡Fin de la partida!", True, (255, 215, 0))
+            self.pantalla.blit(titulo, titulo.get_rect(center=(ANCHO // 2, 50)))
+
+            for cx, y_superior, alto_bloque, jugador, valor, rango in posiciones:
+                color_bloque = (
+                    (200, 170, 60) if rango == 1 else
+                    (180, 180, 190) if rango == 2 else
+                    (160, 110, 70) if rango == 3 else
+                    (90, 90, 100)
+                )
+                pygame.draw.rect(self.pantalla, color_bloque, (cx - ancho_bloque // 2, y_superior, ancho_bloque, alto_bloque))
+
+                robot = self._robot_de(jugador)
+                sprite_top = y_superior
+                if robot is not None:
+                    idle_img = robot.animations["idle"][0]
+                    if not robot.facing_right:
+                        idle_img = pygame.transform.flip(idle_img, True, False)
+                    img_rect = idle_img.get_rect(midbottom=(cx, y_superior))
+                    self.pantalla.blit(idle_img, img_rect)
+                    sprite_top = img_rect.top
+
+                nombre_render = fuente_nombre.render(jugador, True, ColorManager.get_color(jugador))
+                self.pantalla.blit(nombre_render, nombre_render.get_rect(center=(cx, sprite_top - 15)))
+
+                # Rango / etiqueta / valor, siempre a la misma altura base
+                # (relativa al piso, no al alto variable del bloque) para
+                # que quede alineado sin importar el podio de cada uno.
+                texto_rango = fuente_rango.render(f"{rango}°", True, (255, 255, 255))
+                self.pantalla.blit(texto_rango, texto_rango.get_rect(center=(cx, base_y + 20)))
+
+                etiqueta_render = fuente_valor.render(f"{etiqueta}:", True, (255, 255, 255))
+                self.pantalla.blit(etiqueta_render, etiqueta_render.get_rect(center=(cx, base_y + 42)))
+
+                valor_render = fuente_valor.render(str(valor), True, (255, 255, 255))
+                self.pantalla.blit(valor_render, valor_render.get_rect(center=(cx, base_y + 64)))
+
+            ayuda = fuente_valor.render("Presiona cualquier tecla para salir", True, (200, 200, 200))
+            self.pantalla.blit(ayuda, ayuda.get_rect(center=(ANCHO // 2, ALTO - 20)))
+
+            pygame.display.flip()
+            reloj_local.tick(30)
 
     def _cerrar_red(self):
         self._listening = False

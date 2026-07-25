@@ -41,7 +41,7 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 Implementar:
-Excelente! funciona perfecto. ahora, quisiera hacer un buen cambio en cuanto a lo que ocurre, como sabes, actualmente en multi_game al finalizar la partida solo aparece un mensaje que dice tiempo terminado
+Ahora, quisiera hacer un buen cambio en cuanto a lo que ocurre, como sabes, actualmente en multi_game al finalizar la partida solo aparece un mensaje que dice tiempo terminado
 
 
             if self.game_over:
