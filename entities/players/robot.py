@@ -94,9 +94,6 @@ class Robot:
         sound_manager.muerte()
 
     def manejar_controles(self, keys):
-        # Mientras dura un empuje (ver aplicar_empuje), se ignora el
-        # movimiento horizontal por teclado para que el impulso no se
-        # pise de inmediato — el salto sigue disponible.
         if pygame.time.get_ticks() < self.aturdido_hasta:
             if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
                 self.vel_y = -self.jump_power
@@ -104,12 +101,20 @@ class Robot:
                 sound_manager.salto()
             return
         self.vel_x = 0
+        # Con un arma equipada, la orientación (facing_right) la controla
+        # la mira (ver el bloque en free_game.py/multi_game.py), no el
+        # movimiento — así se puede caminar hacia atrás mientras se
+        # apunta al lado contrario. Sin arma, se mantiene el
+        # comportamiento de siempre.
+        sin_arma = self.arma_equipada in (None, "nada")
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.vel_x = -self.speed
-            self.facing_right = False
+            if sin_arma:
+                self.facing_right = False
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.vel_x = self.speed
-            self.facing_right = True
+            if sin_arma:
+                self.facing_right = True
         if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
             self.vel_y = -self.jump_power
             self.on_ground = False

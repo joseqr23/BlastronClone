@@ -463,6 +463,10 @@ class MultiplayerGame(BaseGame):
     # ------------------------------------------------------------------
     def run(self):
         while True:
+            if not self.robot.is_dead and self.robot.arma_equipada not in [None, "nada"]:
+                mouse_pos = pygame.mouse.get_pos()
+                self.robot.facing_right = mouse_pos[0] >= self.robot.get_centro()[0]
+
             if not self.event_handler.handle_events():
                 self._cerrar_red()
                 return
@@ -552,7 +556,9 @@ class MultiplayerGame(BaseGame):
                 self.aim.update(mouse_pos)
                 self.aim.draw(self.pantalla)
                 config = config_arma(self.robot.arma_equipada)
-                if config:
+                municion = self.weapon_manager.municion_actual(self.robot.arma_equipada)
+                sin_municion = municion is not None and municion <= 0
+                if config and not sin_municion:
                     oculta_al_disparar = config.get("oculta_arma_al_disparar")
                     if oculta_al_disparar is None:
                         oculta_al_disparar = (config.get("comportamiento") == "cuerpo_a_cuerpo")
