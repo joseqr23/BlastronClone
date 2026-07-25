@@ -44,7 +44,7 @@
     "ancho_arma_sostenida": 90,
     "alto_arma_sostenida": 90,
 
-    "posicion_ancho_arma_sostenida": 30,
+    "posicion_ancho_arma_sostenida": 20,
     "posicion_alto_arma_sostenida": 0,
     "oculta_arma_al_disparar": true
 

@@ -10,7 +10,7 @@
   "margen_dueño_ms": 1000,
 
   "daña_al_dueño": false,
-  "municion": 10,
+  "municion": 2,
   "cantidad": 8,
   "dispersion_grados": 25,
 

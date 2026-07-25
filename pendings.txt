@@ -39,6 +39,31 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 
+Pendiente: CON PRIORIDAD
+
+* Hay un problema, y es que al atacar con un arma cuerpo a cuerpo, esta unicamente ataca en direccion a donde mira el robot, cosa que esta bien, ya que le da mas realismo.
+PERO, si el robot esta volteado hacia la izquierda y la mira del arma apunta hacia la derecha igual ataca hacia la izquierda.
+Como repito, es correcto que el robot ataque hacia ese lado, pero podria voltearse a atacar si la mira esta a su lado contrario?
+O en todo caso implementar que la posicion del robot no sea solo por cuando camina, sino para donde esta la mira, es decir que la posicion de la mira sea el indicador de a donde debe mirar el robot.
+Esto haria que sea posible que el robot camine hacia atras (digamos la derecha mirando hacia la izquierda), pero es valido, muchos juegos lo tienen asi. 
+
+
+* Se puede agregar la velocidad del proyectil?  <<< PUEDE SER > AGREGAR VALOR DE VELOCIDAD DE PROYECTIL EN JSON Y CAMBIAR MIRA EN AIM_INDICATOR
+TE PONGO UN CASO:
+ocurre que por ejemplo la escopeta la copie de misil, pero esta no deberia tener efecto, es decir, 
+por ejemplo el misil lo calculo con fuerza y distancia y si apunto ligeramente elevado este va hasta cierta parte del cielo y luego empieza a caer, 
+pero una escopeta debe independientemente del "efecto" o fuerza que se le aplique dispararse a maxima velocidad, sus balas no deben tener efecto, deben salir disparadas a toda velocidad.
+ENTIENDO QUE AIM_INDICATOR CALCULA LA VELOCIDAD SEGUN LA MIRA QUE TENGO, EN ESE CASO SE PODRIA CONFIGURAR UNA MIRA DIFERENTE? TAL VEZ QUE SE BASE EN UN VALOR DEL CONFIG.JSON
+EJEMPLO:
+"mira_arma": "apuntar" <<< por defecto (esta seria la que actualmente tienen todas las armas)
+"mira_arma": "disparo" <<<< esto seria para armas tipo escopeta, pistola que salen disparadas y no se detienen, no tienen efecto tampoco.
+"mira_arma": "golpe" <<<<< esto seria para armas cuerpo a cuerpo, se deberia copiar la misma logica de "apuntar", pero con una mira diferente para darle otro tono, seria algo solo visual.
+
+
+
+* Corregir colores en robots para que sea más dinamico
+
+
 Pendiente:
 1.- ¿Se puede agregar un efecto expansivo al disparar con cierta arma? 
 Ejemplo: un arma cuerpo a cuerpo que sea un guante de box que al golpear lance al enemigo que se encuentre por el aire (no con tanta fuerza)
@@ -66,9 +91,10 @@ Mi hoja de ruta sería:
 
 ✅ Música + efectos. <<<<<<<<<<<<<<< OK 
 ✅ Mejorar menú. <<<<<<<<<<<<<<< OK 
-✅ Sistema dinámico de armas.
+✅ Sistema dinámico de armas. <<<<<<<<<<<<<<< OK
+✅ Mapas. <<<<<<<<<<<<<<< OK
+✅ Agregar 5–10 armas nuevas. <<<<<<<<<<<<<<< OK
 
-✅ Mapas.
-✅ Agregar 5–10 armas nuevas.
-✅ Nuevos modos de juego.
+✅ Agregar armas aereas
+✅ Nuevos modos de juego. LAST MAN STANDING CON 1000 DE VIDA | POR MUERTES
 ✅ Bots.
