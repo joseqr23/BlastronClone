@@ -32,7 +32,7 @@ import queue
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
 from entities.weapons.proyectil import Proyectil
-from utils.weapon_loader import cargar_armas
+from utils.weapon_loader import cargar_armas, config_arma
 from utils.sound_manager import sound_manager
 from core.game_modes.base_game import BaseGame
 from systems.collision import check_collisions, check_collisions_laterales_esquinas
@@ -98,6 +98,7 @@ class MultiplayerGame(BaseGame):
 
         # --- HUD, armas y chat ---
         self.aim = AimIndicator(self.robot.get_centro())
+        self.aim_remoto = AimIndicator((0, 0))  # instancia aparte, solo para dibujar armas de robots remotos — nunca se usa para disparar
         self.weapon_manager = WeaponManager(self)
         self.puntajes[self.nombre_jugador] = 0
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
@@ -217,6 +218,8 @@ class MultiplayerGame(BaseGame):
 
     def enviar_estado(self):
         self._seq_local += 1
+        mouse_pos = pygame.mouse.get_pos()
+        origen = self.robot.get_centro()
         self.enviar({
             "tipo": "update",
             "jugador": self.nombre_jugador,
@@ -228,6 +231,9 @@ class MultiplayerGame(BaseGame):
             "estado": self.robot.current_animation,
             "direccion": 1 if self.robot.facing_right else -1,
             "health": self.robot.health,
+            "arma": self.robot.arma_equipada,
+            "aim_dx": mouse_pos[0] - origen[0],
+            "aim_dy": mouse_pos[1] - origen[1],
         })
 
     def enviar_chat(self, mensaje):
@@ -308,6 +314,9 @@ class MultiplayerGame(BaseGame):
                 )
                 r.target_x, r.target_y = r.x, r.y
                 r.is_dead = (msg.get("estado", "idle") == "death")
+                r.arma_equipada = msg.get("arma")
+                r.aim_dx = msg.get("aim_dx", 0)
+                r.aim_dy = msg.get("aim_dy", 0)
                 self.robots_remotos[jugador] = r
                 if jugador not in self.puntajes:
                     self.puntajes[jugador] = 0
@@ -320,6 +329,9 @@ class MultiplayerGame(BaseGame):
                 r.current_animation = msg.get("estado", "idle")
                 r.facing_right = (msg.get("direccion", 1) == 1)
                 r.is_dead = (r.current_animation == "death")
+                r.arma_equipada = msg.get("arma", getattr(r, "arma_equipada", None))
+                r.aim_dx = msg.get("aim_dx", getattr(r, "aim_dx", 0))
+                r.aim_dy = msg.get("aim_dy", getattr(r, "aim_dy", 0))
                 if r.current_animation == "jump" and anim_anterior != "jump":
                     sound_manager.salto()
             if "health" in msg:
@@ -534,6 +546,51 @@ class MultiplayerGame(BaseGame):
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 self.aim.draw(self.pantalla)
+                config = config_arma(self.robot.arma_equipada)
+                if config:
+                    oculta_al_disparar = config.get("oculta_arma_al_disparar")
+                    if oculta_al_disparar is None:
+                        oculta_al_disparar = (config.get("comportamiento") == "cuerpo_a_cuerpo")
+                    tiene_proyectil_activo = oculta_al_disparar and any(
+                        getattr(p, "owner", None) == self.robot.nombre_jugador
+                        and getattr(p, "estado", None) != "done"
+                        for p in self.proyectiles
+                    )
+                    if not tiene_proyectil_activo:
+                        self.aim.draw_arma_sostenida(
+                            self.pantalla, config.get("_weapon_img"), mouse_pos,
+                            posicion_x=config.get("posicion_ancho_arma_sostenida", 0),
+                            posicion_y=config.get("posicion_alto_arma_sostenida", 0),
+                        )
+
+            # --- Arma sostenida de robots remotos, sincronizada por red ---
+            for jugador, r in self.robots_remotos.items():
+                arma_remota = getattr(r, "arma_equipada", None)
+                if arma_remota in (None, "nada"):
+                    continue
+                config_r = config_arma(arma_remota)
+                if not config_r:
+                    continue
+                oculta_al_disparar_r = config_r.get("oculta_arma_al_disparar")
+                if oculta_al_disparar_r is None:
+                    oculta_al_disparar_r = (config_r.get("comportamiento") == "cuerpo_a_cuerpo")
+                tiene_proyectil_activo = oculta_al_disparar_r and any(
+                    getattr(p, "owner", None) == jugador and getattr(p, "estado", None) != "done"
+                    for p in self.proyectiles
+                )
+                if tiene_proyectil_activo:
+                    continue
+                origen_r = r.get_centro()
+                mouse_virtual = (
+                    origen_r[0] + getattr(r, "aim_dx", 0),
+                    origen_r[1] + getattr(r, "aim_dy", 0),
+                )
+                self.aim_remoto.origen = origen_r
+                self.aim_remoto.draw_arma_sostenida(
+                    self.pantalla, config_r.get("_weapon_img"), mouse_virtual,
+                    posicion_x=config_r.get("posicion_ancho_arma_sostenida", 0),
+                    posicion_y=config_r.get("posicion_alto_arma_sostenida", 0),
+                )
             self.hud_manager.draw(self.pantalla)
             self.chat.draw(self.pantalla)
             self.timer_hud.draw(self.pantalla)

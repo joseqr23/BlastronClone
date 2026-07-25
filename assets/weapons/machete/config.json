@@ -27,5 +27,13 @@
 
     "municion": 5,
     "cantidad": 1,
-    "dispersion_grados": 25
+    "dispersion_grados": 25,
+
+    "ancho_arma_sostenida": 0,
+    "alto_arma_sostenida": 0,
+    "posicion_ancho_arma_sostenida": 0,
+    "posicion_alto_arma_sostenida": 0,
+    "oculta_arma_al_disparar": true,
+
+    "daña_al_dueño": false
 }

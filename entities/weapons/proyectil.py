@@ -125,8 +125,15 @@ class Proyectil:
         return self.config.get("daño", 50)
 
     def excluye_dueño(self):
-        """True si esta arma NUNCA debe hacerle daño a su propio dueño,
-        sin importar el tiempo transcurrido ni si se solapan los hitbox."""
+        """True si esta arma NUNCA debe hacerle daño a su propio dueño.
+        Se puede definir explícitamente en el JSON del arma con
+        "daña_al_dueño" (bool): true = SÍ puede dañar al dueño, false =
+        nunca lo daña. Si el campo no está presente, se mantiene el
+        comportamiento de siempre: solo "cuerpo_a_cuerpo" excluye al
+        dueño."""
+        override = self.config.get("daña_al_dueño")
+        if override is not None:
+            return not override
         return self.comportamiento == "cuerpo_a_cuerpo"
 
     def robots_afectados(self, candidatos):

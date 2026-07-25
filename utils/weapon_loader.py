@@ -54,6 +54,10 @@ Campos de config.json:
     frames                          (int)  cantidad de frames en el spritesheet
                                            (por convención: 0=idle, 1=warning,
                                            2=explode — igual que granada/misil)
+
+    weapon.png
+                                    (opcional) imagen del arma sostenida por el jugador. Si no se define,
+                                    se dibuja el proyectil en la mano del jugador en vez de un arma.
 """
 import os
 import json
@@ -122,6 +126,21 @@ def cargar_armas(forzar_recarga=False):
         except Exception as e:
             print(f"[Armas] No se pudo cargar el sprite de '{nombre}' ({sprite_path}): {e}")
             config["_frames_img"] = []
+        
+        weapon_path = os.path.join(carpeta, "weapon.png")
+        if os.path.isfile(weapon_path):
+            try:
+                img = pygame.image.load(weapon_path).convert_alpha()
+                ancho_arma = config.get("ancho_arma_sostenida", img.get_width())
+                alto_arma = config.get("alto_arma_sostenida", img.get_height())
+                if (img.get_width(), img.get_height()) != (ancho_arma, alto_arma):
+                    img = pygame.transform.smoothscale(img, (ancho_arma, alto_arma))
+                config["_weapon_img"] = img
+            except Exception as e:
+                print(f"[Armas] No se pudo cargar weapon.png de '{nombre}': {e}")
+                config["_weapon_img"] = None
+        else:
+            config["_weapon_img"] = None
 
         armas[nombre] = config
 

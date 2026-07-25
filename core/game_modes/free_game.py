@@ -1,3 +1,4 @@
+# core/game_modes/free_game.py
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot # Robots
@@ -10,6 +11,7 @@ from systems.event_handler import EventHandler # Manejador de eventos
 from systems.weapon_manager_free import WeaponManager # Manejador de armas
 from systems.hud_manager import HUDManager # Manejador de HUD
 
+from utils.weapon_loader import config_arma 
 
 class FreeGame(BaseGame):
     def __init__(self, nombre_jugador, personaje):
@@ -77,6 +79,22 @@ class FreeGame(BaseGame):
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 self.aim.draw(self.pantalla)
+                config = config_arma(self.robot.arma_equipada)
+                if config:
+                    oculta_al_disparar = config.get("oculta_arma_al_disparar")
+                    if oculta_al_disparar is None:
+                        oculta_al_disparar = (config.get("comportamiento") == "cuerpo_a_cuerpo")
+                    tiene_proyectil_activo = oculta_al_disparar and any(
+                        getattr(p, "owner", None) == self.robot.nombre_jugador
+                        and getattr(p, "estado", None) != "done"
+                        for p in self.proyectiles
+                    )
+                    if not tiene_proyectil_activo:
+                        self.aim.draw_arma_sostenida(
+                            self.pantalla, config.get("_weapon_img"), mouse_pos,
+                            posicion_x=config.get("posicion_ancho_arma_sostenida", 0),
+                            posicion_y=config.get("posicion_alto_arma_sostenida", 0),
+                        )
 
             # HUDs
             self.hud_manager.draw(self.pantalla)

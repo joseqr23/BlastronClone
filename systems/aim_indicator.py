@@ -88,3 +88,37 @@ class AimIndicator:
             punta[1] - tamaño_punta * math.sin(angulo + math.pi / 6)
         )
         pygame.draw.polygon(pantalla, color, [punta, izquierda, derecha])
+
+    def draw_arma_sostenida(self, pantalla, imagen, mouse_pos, posicion_x=0, posicion_y=0):
+        """Dibuja weapon.png (si el arma equipada tiene uno) rotado hacia
+        el mouse y reflejado si apunta a la izquierda. posicion_x/y
+        definen un punto de anclaje relativo al robot CUANDO EL ARMA
+        APUNTA HORIZONTAL (ángulo 0) — posicion_x se espeja según hacia
+        qué lado apunta, posicion_y no. Ese offset se rota junto con el
+        ángulo real de apuntado, para que el punto de anclaje se
+        mantenga "pegado" al arma en vez de quedarse fijo en una
+        dirección mientras la imagen gira (lo que la hacía verse
+        flotando al apuntar hacia arriba/abajo). Usa la dirección
+        COMPLETA hacia el mouse (no la recortada por max_fuerza como la
+        flecha). Si imagen es None, no dibuja nada."""
+        if imagen is None:
+            return
+        dx = mouse_pos[0] - self.origen[0]
+        dy = mouse_pos[1] - self.origen[1]
+        angulo = math.degrees(math.atan2(-dy, dx))
+        direccion = 1 if dx >= 0 else -1
+        frame = imagen
+        if dx < 0:
+            frame = pygame.transform.flip(imagen, True, False)
+            angulo += 180
+        imagen_rotada = pygame.transform.rotozoom(frame, angulo, 1)
+
+        angulo_rad = math.radians(angulo)
+        ox = posicion_x * direccion
+        oy = posicion_y
+        offset_x = ox * math.cos(angulo_rad) + oy * math.sin(angulo_rad)
+        offset_y = -ox * math.sin(angulo_rad) + oy * math.cos(angulo_rad)
+
+        centro = (self.origen[0] + offset_x, self.origen[1] + offset_y)
+        rect = imagen_rotada.get_rect(center=centro)
+        pantalla.blit(imagen_rotada, rect.topleft)
