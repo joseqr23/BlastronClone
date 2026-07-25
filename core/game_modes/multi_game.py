@@ -553,6 +553,7 @@ class MultiplayerGame(BaseGame):
                         oculta_al_disparar = (config.get("comportamiento") == "cuerpo_a_cuerpo")
                     tiene_proyectil_activo = oculta_al_disparar and any(
                         getattr(p, "owner", None) == self.robot.nombre_jugador
+                        and getattr(p, "tipo", None) == self.robot.arma_equipada
                         and getattr(p, "estado", None) != "done"
                         for p in self.proyectiles
                     )
@@ -575,7 +576,9 @@ class MultiplayerGame(BaseGame):
                 if oculta_al_disparar_r is None:
                     oculta_al_disparar_r = (config_r.get("comportamiento") == "cuerpo_a_cuerpo")
                 tiene_proyectil_activo = oculta_al_disparar_r and any(
-                    getattr(p, "owner", None) == jugador and getattr(p, "estado", None) != "done"
+                    getattr(p, "owner", None) == jugador
+                    and getattr(p, "tipo", None) == arma_remota
+                    and getattr(p, "estado", None) != "done"
                     for p in self.proyectiles
                 )
                 if tiene_proyectil_activo:

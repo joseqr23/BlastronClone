@@ -86,6 +86,7 @@ class FreeGame(BaseGame):
                         oculta_al_disparar = (config.get("comportamiento") == "cuerpo_a_cuerpo")
                     tiene_proyectil_activo = oculta_al_disparar and any(
                         getattr(p, "owner", None) == self.robot.nombre_jugador
+                        and getattr(p, "tipo", None) == self.robot.arma_equipada
                         and getattr(p, "estado", None) != "done"
                         for p in self.proyectiles
                     )
