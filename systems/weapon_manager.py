@@ -38,6 +38,7 @@ explosión, daño). Cliente: no simula nada, solo dibuja lo que el host
 le manda por 'proy_sync' (ver multi_game.py).
 """
 import math
+import pygame
 from entities.weapons.proyectil import Proyectil
 from utils.weapon_loader import config_arma
 from utils.sound_manager import sound_manager
@@ -50,6 +51,7 @@ class WeaponManager:
         # tienen "municion" definida en su config.json. Persiste durante
         # toda la partida (no se reinicia entre turnos).
         self.municion_restante = {}
+        self.disparos_pendientes = []  # ráfaga escalonada — ver crear_proyectil_host / update
 
     # ------------------------------------------------------------------
     # Munición
@@ -140,29 +142,41 @@ class WeaponManager:
             self.game.enviar(msg)
 
     def crear_proyectil_host(self, msg):
-        """Solo el host llama esto (directo al disparar localmente, o al
-        recibir un 'disparo' de un cliente). Crea TODOS los proyectiles
-        del disparo (uno o varios si "cantidad" > 1) y arranca la fase
-        post_disparo del turno una sola vez."""
         game = self.game
         if not game.host:
             return
         jugador = msg["jugador"]
         arma = msg["arma"]
-        if not config_arma(arma):
+        config = config_arma(arma)
+        if not config:
             print(f"[WeaponManager] Arma desconocida: '{arma}'")
             return
 
-        for disparo in msg.get("disparos", []):
-            pid = game._next_proy_id()
-            p = Proyectil(
-                arma, disparo["x"], disparo["y"], disparo["dir_x"], disparo["dir_y"],
-                owner=jugador, facing_right=msg.get("facing_right"),
-            )
-            p.proj_id = pid
-            game.proyectiles.append(p)
+        disparos = msg.get("disparos", [])
+        intervalo = config.get("intervalo_disparos_ms", 0)
 
-        sound_manager.disparo(arma)
+        if intervalo > 0 and len(disparos) > 1:
+            ahora = pygame.time.get_ticks()
+            for i, disparo in enumerate(disparos):
+                self.disparos_pendientes.append({
+                    "tiempo": ahora + i * intervalo,
+                    "arma": arma,
+                    "x": disparo["x"], "y": disparo["y"],
+                    "vel_x": disparo["dir_x"], "vel_y": disparo["dir_y"],
+                    "owner": jugador,
+                    "facing_right": msg.get("facing_right"),
+                })
+        else:
+            for disparo in disparos:
+                pid = game._next_proy_id()
+                p = Proyectil(
+                    arma, disparo["x"], disparo["y"], disparo["dir_x"], disparo["dir_y"],
+                    owner=jugador, facing_right=msg.get("facing_right"),
+                )
+                p.proj_id = pid
+                game.proyectiles.append(p)
+            sound_manager.disparo(arma)
+
         game.turn_manager.registrar_disparo()
 
     # ------------------------------------------------------------------
@@ -170,9 +184,28 @@ class WeaponManager:
     # ------------------------------------------------------------------
     def update(self):
         if self.game.host:
+            self._procesar_disparos_pendientes()
             self._update_proyectiles()
         # El cliente no simula física de proyectiles: su estado llega por
         # red vía "proy_sync" y se aplica directo en multi_game.py.
+
+    def _procesar_disparos_pendientes(self):
+        if not self.disparos_pendientes:
+            return
+        ahora = pygame.time.get_ticks()
+        listos = [d for d in self.disparos_pendientes if d["tiempo"] <= ahora]
+        if not listos:
+            return
+        self.disparos_pendientes = [d for d in self.disparos_pendientes if d["tiempo"] > ahora]
+        for d in listos:
+            pid = self.game._next_proy_id()
+            p = Proyectil(
+                d["arma"], d["x"], d["y"], d["vel_x"], d["vel_y"],
+                owner=d["owner"], facing_right=d["facing_right"],
+            )
+            p.proj_id = pid
+            self.game.proyectiles.append(p)
+            sound_manager.disparo(d["arma"])
 
     def draw(self, pantalla):
         for p in self.game.proyectiles:

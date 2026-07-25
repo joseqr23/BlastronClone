@@ -1,8 +1,8 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Escopeta",
+  "nombre": "Rifle",
   "comportamiento": "impacto",
-  "daño": 10,
+  "daño": 6,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
@@ -11,15 +11,15 @@
   
   "daña_al_dueño": false,
   "municion": 2,
-  "cantidad": 8,
-  "dispersion_grados": 15,
+  "cantidad": 10,
+  "dispersion_grados": 5,
   
-  "empuje_ancho": 12,
-  "empuje_alto": -6,
+  "empuje_ancho": 2,
+  "empuje_alto": -2,
   
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
-  "velocidad_proyectil": 35,
-  "intervalo_disparos_ms": 0,
+  "velocidad_proyectil": 45,
+  "intervalo_disparos_ms": 80,
 
 
   "_________Tamaño sprites: Arma / Explosion_________": "______________",
@@ -29,10 +29,10 @@
   "alto_explosion": 5,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "______________",
-  "hitbox_ancho_proyectil": 5,
-  "hitbox_alto_proyectil": 5,
-  "hitbox_ancho_explosion": 5,
-  "hitbox_alto_explosion": 5,
+  "hitbox_ancho_proyectil": 2,
+  "hitbox_alto_proyectil": 2,
+  "hitbox_ancho_explosion": 2,
+  "hitbox_alto_explosion": 2,
 
   "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
   "posicion_ancho_proyectil": 0,
@@ -42,7 +42,7 @@
 
 
   "_________Dibujado de sprite_________": "______________",
-  "sprite": "assets/weapons/misil/sprite.png",
+  "sprite": "assets/weapons/rifle/sprite.png",
   "frames": 3,
   "frames_explosion": 2,
   

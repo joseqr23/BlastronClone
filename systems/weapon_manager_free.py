@@ -14,6 +14,7 @@ Campos opcionales de config.json que maneja este archivo:
   dispersion_grados   (float) ancho total del abanico (por defecto 18°).
 """
 import math
+import pygame
 from entities.weapons.proyectil import Proyectil
 from utils.weapon_loader import config_arma
 from utils.sound_manager import sound_manager
@@ -25,7 +26,8 @@ class WeaponManager:
         # {arma_id: cantidad_restante} — solo para armas con "municion"
         # definida en su config.json.
         self.municion_restante = {}
-
+        self.disparos_pendientes = []  # ráfaga escalonada — ver crear_proyectil_host / update
+        
     # ------------------------------------------------------------------
     # Munición
     # ------------------------------------------------------------------
@@ -77,7 +79,6 @@ class WeaponManager:
         config = config_arma(arma)
         if not config:
             return
-
         if not self.tiene_municion(arma, config):
             print(f"[DEBUG] Sin munición para '{arma}'.")
             return
@@ -86,18 +87,48 @@ class WeaponManager:
         alto = config.get("alto_proyectil", 40)
         self.consumir_municion(arma, config)
 
-        for origen, vel_x, vel_y in self._generar_disparos(config, ancho, alto):
-            p = Proyectil(
-                arma, origen[0], origen[1], vel_x, vel_y,
-                owner=self.game.robot.nombre_jugador,
-                facing_right=self.game.robot.facing_right,
-            )
-            self.game.proyectiles.append(p)
+        disparos = self._generar_disparos(config, ancho, alto)
+        intervalo = config.get("intervalo_disparos_ms", 0)
 
-        sound_manager.disparo(arma)
+        if intervalo > 0 and len(disparos) > 1:
+            ahora = pygame.time.get_ticks()
+            for i, (origen, vel_x, vel_y) in enumerate(disparos):
+                self.disparos_pendientes.append({
+                    "tiempo": ahora + i * intervalo,
+                    "arma": arma,
+                    "origen": origen, "vel_x": vel_x, "vel_y": vel_y,
+                    "facing_right": self.game.robot.facing_right,
+                })
+        else:
+            for origen, vel_x, vel_y in disparos:
+                p = Proyectil(
+                    arma, origen[0], origen[1], vel_x, vel_y,
+                    owner=self.game.robot.nombre_jugador,
+                    facing_right=self.game.robot.facing_right,
+                )
+                self.game.proyectiles.append(p)
+            sound_manager.disparo(arma)
 
     def update(self):
+        self._procesar_disparos_pendientes()
         self._update_proyectiles()
+
+    def _procesar_disparos_pendientes(self):
+        if not self.disparos_pendientes:
+            return
+        ahora = pygame.time.get_ticks()
+        listos = [d for d in self.disparos_pendientes if d["tiempo"] <= ahora]
+        if not listos:
+            return
+        self.disparos_pendientes = [d for d in self.disparos_pendientes if d["tiempo"] > ahora]
+        for d in listos:
+            p = Proyectil(
+                d["arma"], d["origen"][0], d["origen"][1], d["vel_x"], d["vel_y"],
+                owner=self.game.robot.nombre_jugador,
+                facing_right=d["facing_right"],
+            )
+            self.game.proyectiles.append(p)
+            sound_manager.disparo(d["arma"])
 
     def draw(self, pantalla):
         for p in self.game.proyectiles:

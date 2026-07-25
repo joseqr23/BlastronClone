@@ -99,27 +99,32 @@ class AimIndicator:
         )
         pygame.draw.polygon(pantalla, color, [punta, izquierda, derecha])
 
-    def _draw_golpe(self, pantalla, longitud=45, color=(255, 120, 0)):
-        """Mira alternativa para cuerpo a cuerpo: línea corta y FIJA en
-        la dirección de apuntado (no depende de cuánto arrastres el
-        mouse, a diferencia de 'apuntar') — solo cosmético, no cambia
-        nada de la física del golpe."""
+    def _draw_golpe(self, pantalla, longitud=60, tamaño=15, grosor=4, color=(255, 255, 255)):
+        """Mira alternativa para cuerpo a cuerpo: un recuadro tipo mira
+        de cámara '[ ]' ubicado a una distancia fija en la dirección de
+        apuntado, en vez de la flecha con gradiente de fuerza. Puramente
+        cosmético — no cambia nada de la física del golpe."""
         angulo = self.get_angulo()
-        punta = (
-            self.origen[0] + math.cos(angulo) * longitud,
-            self.origen[1] + math.sin(angulo) * longitud,
-        )
-        pygame.draw.line(pantalla, color, self.origen, punta, 8)
-        tamaño_punta = 10
-        izquierda = (
-            punta[0] - tamaño_punta * math.cos(angulo - math.pi / 6),
-            punta[1] - tamaño_punta * math.sin(angulo - math.pi / 6)
-        )
-        derecha = (
-            punta[0] - tamaño_punta * math.cos(angulo + math.pi / 6),
-            punta[1] - tamaño_punta * math.sin(angulo + math.pi / 6)
-        )
-        pygame.draw.polygon(pantalla, color, [punta, izquierda, derecha])
+        cx = self.origen[0] + math.cos(angulo) * longitud
+        cy = self.origen[1] + math.sin(angulo) * longitud
+
+        mitad = tamaño / 2
+        x0, y0 = cx - mitad, cy - mitad
+        x1, y1 = cx + mitad, cy + mitad
+        brazo = tamaño * 0.35
+
+        # Esquina superior izquierda
+        pygame.draw.line(pantalla, color, (x0, y0), (x0 + brazo, y0), grosor)
+        pygame.draw.line(pantalla, color, (x0, y0), (x0, y0 + brazo), grosor)
+        # Esquina superior derecha
+        pygame.draw.line(pantalla, color, (x1, y0), (x1 - brazo, y0), grosor)
+        pygame.draw.line(pantalla, color, (x1, y0), (x1, y0 + brazo), grosor)
+        # Esquina inferior izquierda
+        pygame.draw.line(pantalla, color, (x0, y1), (x0 + brazo, y1), grosor)
+        pygame.draw.line(pantalla, color, (x0, y1), (x0, y1 - brazo), grosor)
+        # Esquina inferior derecha
+        pygame.draw.line(pantalla, color, (x1, y1), (x1 - brazo, y1), grosor)
+        pygame.draw.line(pantalla, color, (x1, y1), (x1, y1 - brazo), grosor)
 
     def draw_arma_sostenida(self, pantalla, imagen, mouse_pos, posicion_x=0, posicion_y=0):
         """Dibuja weapon.png (si el arma equipada tiene uno) rotado hacia
