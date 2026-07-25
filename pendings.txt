@@ -39,18 +39,6 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 
-
-Ok, justo que mencionaste la escopeta, si quiero hacer una tengo un problema.
-Digamos que quiero copiar lo mismo que misil, evidentemente no seria daño en area, pero podria reducir los pixeles de la explosion/hitbox a lo minimo posible y aumentar las balas para simular los perdigones (esto ya esta implementado.)
-Pero visualmente no seria una escopeta, actualmente solo tengo el proyectil, pero no el arma, es decir, si es misil, sale el misil disparado, si es granada, sale la granada disparada.
-Yo ya cuento con un aim_indicator, no se podria añadir por ejemplo en assets/weapons/escppeta/config.json;sprite.png; >> weapon.png << esto como nuevo?
-Que sea un solo frame de pixeles dinamicos igual que el arma, mirando por ejemplo hacia la derecha en la imagen, pero que siga el aim indicator como un png que solo sigue hacia donde se apunta (si mira a la derercha apunta normal si es izquierda hace un mirror) 
-¿Te parece esa idea? > yo considero que es muy factible y no se si realmente tenga complejidad, basicamente es sobreponer un png por debajo o por encima del aim indicator (actualmente es una flecha simple (podria incluso mejorar)) partiendo desde el centro del robot, el png no debe hacerse mas pequeño si la mira de aim la hago mas pequeña, simplemente debe seguir la direccion de apuntado y la orientacion.
-Tal vez para definir el tamaño real de ese sprite se puede agregar en el json "weapon_size" o "tamaño_arma_sostenida".
-Este es mi aim_indicator.py
-
-
-
 Pendiente:
 1.- ¿Se puede agregar un efecto expansivo al disparar con cierta arma? 
 Ejemplo: un arma cuerpo a cuerpo que sea un guante de box que al golpear lance al enemigo que se encuentre por el aire (no con tanta fuerza)

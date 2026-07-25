@@ -22,11 +22,11 @@ blastron_clone/
 │       │       ├──mine/disparo.mp3;explosion.mp3
 │       └──musica.mp3
 │   ├── ui/icons/free_game.png; solo_game.png; multi_game.png
-│   └── weapons/
-│       ├── granada/sprite.png; config.json 
-│       ├── misil/sprite.png; config.json
-│       ├── mine/sprite.png; config.json
-│       ├── supermisil/sprite.png; config.json
+│   └── weapons/    # Si tiene weapon.png, el arma se dibujara sostenida en su brazo
+│       ├── granada/sprite.png; config.json; weapon.png
+│       ├── misil/sprite.png; config.json; weapon.png
+│       ├── mine/sprite.png; config.json; weapon.png
+│       ├── supermisil/sprite.png; config.json; weapon.png
 │
 ├── core/                        # Núcleo del motor
 │   ├── game_modes/

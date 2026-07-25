@@ -1,40 +1,53 @@
 {
+  "_________Propiedades de arma_________": "______________",
   "nombre": "Granada",
   "comportamiento": "rebote",
   "daño": 75,
+  "gravedad": 0.5,
+  "friccion_aire": 0.99,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 500,
+  
+  "daña_al_dueño": true,
+  "municion": 10,
+  "cantidad": 1,
+  "dispersion_grados": 25,
+
+  "friccion_rebote": 0.6,
+
+
+  "_________Tamaño sprites: Arma / Explosion_________": "______________",
   "ancho_proyectil": 20,
   "alto_proyectil": 20,
   "ancho_explosion": 80,
   "alto_explosion": 80,
-  "gravedad": 0.5,
-  "friccion_aire": 0.99,
-  "friccion_rebote": 0.6,
-  "tiempo_explosion_ms": 3000,
-  "tiempo_post_explosion_ms": 500,
+    
+  "_________Tamaño hitbox: Arma / Explosion_________": "______________",
   "hitbox_ancho_proyectil": 20,
   "hitbox_alto_proyectil": 20,
   "hitbox_ancho_explosion": 50,
   "hitbox_alto_explosion": 50,
-  "sprite": "assets/weapons/granada/sprite.png",
-  "frames": 3,
-  "frames_explosion": 1,
 
+  "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
   "posicion_ancho_proyectil": 0,
   "posicion_alto_proyectil": 0,
   "posicion_ancho_explosion": 0,
   "posicion_alto_explosion": 0,
 
-  "municion": 10,
-  "cantidad": 1,
-  "dispersion_grados": 25,
 
-  "ancho_arma_sostenida": 0,
-  "alto_arma_sostenida": 0,
+  "_________Dibujado de sprites_________": "______________",
+  "sprite": "assets/weapons/granada/sprite.png",
+  "frames": 3,
+  "frames_explosion": 1,
+
+  "ancho_arma_sostenida": 40,
+  "alto_arma_sostenida": 40,
+  
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
-  "oculta_arma_al_disparar": true,
+  "oculta_arma_al_disparar": true
 
-  "daña_al_dueño": true
+
 }
 
 

@@ -1,40 +1,52 @@
 {
+  "_________Propiedades de arma_________": "______________",
   "nombre": "SuperMisil",
   "comportamiento": "impacto",
   "daño": 75,
-  "ancho_proyectil": 90,
-  "alto_proyectil": 90,
-  "ancho_explosion": 280,
-  "alto_explosion": 280,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
   "tiempo_post_explosion_ms": 300,
   "margen_dueño_ms": 1500,
+
+  "daña_al_dueño": true,
+  "municion": 2,
+  "cantidad": 1,
+  "dispersion_grados": 25,
+
+
+  "_________Tamaño sprites: Arma / Explosion_________": "______________",
+  "ancho_proyectil": 90,
+  "alto_proyectil": 90,
+  "ancho_explosion": 280,
+  "alto_explosion": 280,
+
+  "_________Tamaño hitbox: Arma / Explosion_________": "______________",
   "hitbox_ancho_proyectil": 25,
   "hitbox_alto_proyectil": 25,
   "hitbox_ancho_explosion": 85,
   "hitbox_alto_explosion": 80,
-  "sprite": "assets/weapons/supermisil/sprite.png",
-  "frames": 3,
-  "frames_explosion": 2,
 
+  "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
   "posicion_ancho_proyectil": 0,
   "posicion_alto_proyectil": 0,
   "posicion_ancho_explosion": 0,
   "posicion_alto_explosion": -20,
 
-  "municion": 1,
-  "cantidad": 1,
-  "dispersion_grados": 25,
 
-  "ancho_arma_sostenida": 0,
-  "alto_arma_sostenida": 0,
+  "_________Dibujado de sprite_________": "______________",
+  "sprite": "assets/weapons/supermisil/sprite.png",
+  "frames": 3,
+  "frames_explosion": 2,
+
+  "ancho_arma_sostenida": 100,
+  "alto_arma_sostenida": 100,
+
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
-  "oculta_arma_al_disparar": false,
+  "oculta_arma_al_disparar": false
 
-  "daña_al_dueño": true
+
 }
 
 
