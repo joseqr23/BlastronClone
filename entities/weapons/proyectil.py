@@ -237,13 +237,16 @@ class Proyectil:
 
             # Orientación visual: se actualiza mientras haya velocidad
             # horizontal real; se congela en el último valor conocido
-            # cuando vel_x llega a 0 (reposo). "cuerpo_a_cuerpo" nunca
-            # tiene vel_x != 0, así que conserva para siempre el valor
-            # que se le pasó al crearlo.
-            if self.vel_x > 0:
-                self._facing_right = True
-            elif self.vel_x < 0:
-                self._facing_right = False
+            # cuando vel_x llega a 0 (reposo). "cuerpo_a_cuerpo" NUNCA
+            # tiene velocidad de vuelo real (su vel_x es solo un resto
+            # del ángulo del mouse al crearse, no la dirección del
+            # golpe), así que se excluye aquí y conserva para siempre el
+            # facing_right explícito que se le pasó al crearlo.
+            if self.comportamiento != "cuerpo_a_cuerpo":
+                if self.vel_x > 0:
+                    self._facing_right = True
+                elif self.vel_x < 0:
+                    self._facing_right = False
 
         if self.explotado and ahora >= self.tiempo_eliminar:
             self.estado = "done"

@@ -119,7 +119,8 @@ class Menu:
         self.mapa_scroll_offset = 0
         self._mapa_items_por_pagina = 1
         self.rect_mapa = {}
-
+        self.rect_mapa_flecha_izq = None
+        self.rect_mapa_flecha_der = None
 
         # 🔹 Cargar automáticamente todos los robots que tengan portrait.png
         self.personajes = []
@@ -139,6 +140,8 @@ class Menu:
         self.rect_opciones = []
         self.rect_host = None
         self.rect_cliente = None
+        self.rect_confirmar_cliente = None
+        self.rect_confirmar_libre = None
         self.cursor_actual = None
 
         # Rects interactivos — pantalla de configuración de host
@@ -159,6 +162,27 @@ class Menu:
     def _mostrar_bloqueo(self, texto):
         self._mensaje_bloqueo = texto
         self._mensaje_bloqueo_timer = pygame.time.get_ticks()
+
+    # ------------------------------------------------------------------
+    def _construir_seleccion_simple(self, modo_actual):
+        """Selección para modos que no necesitan configuración extra (por
+        ahora: Modo Libre). Compartida entre Enter y el botón de confirmar."""
+        return {
+            "modo": modo_actual,
+            "nombre": self.text_input.get_text() or "Jugador",
+            "personaje": self.personajes[self.personaje_idx],
+        }
+
+    def _construir_seleccion_cliente(self, input_ip):
+        """Selección para unirse como cliente. Compartida entre Enter y el
+        botón 'Conectar'."""
+        return {
+            "modo": "Modo Multijugador",
+            "nombre": self.text_input.get_text() or "Jugador",
+            "personaje": self.personajes[self.personaje_idx],
+            "host": False,
+            "server_ip": input_ip.get_text(),
+        }
 
     # ------------------------------------------------------------------
     def run(self):
@@ -205,16 +229,10 @@ class Menu:
                             elif modo_actual == "Modo Multijugador" and modo_multijugador_opcion == 0:
                                 # Host: ir a la pantalla de configuración en vez de arrancar directo
                                 self.pantalla_estado = "host_config"
+                            elif modo_actual == "Modo Multijugador":
+                                return self._construir_seleccion_cliente(input_ip)
                             else:
-                                seleccion = {
-                                    "modo": modo_actual,
-                                    "nombre": self.text_input.get_text() or "Jugador",
-                                    "personaje": self.personajes[self.personaje_idx],
-                                }
-                                if modo_actual == "Modo Multijugador":
-                                    seleccion["host"] = False
-                                    seleccion["server_ip"] = input_ip.get_text()
-                                return seleccion
+                                return self._construir_seleccion_simple(modo_actual)
 
                     if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                         if self.rect_flecha_izq and self.rect_flecha_izq.collidepoint(mouse_pos):
@@ -237,6 +255,11 @@ class Menu:
                                 self.pantalla_estado = "host_config"
                             elif self.rect_cliente and self.rect_cliente.collidepoint(mouse_pos):
                                 modo_multijugador_opcion = 1
+                            elif self.rect_confirmar_cliente and self.rect_confirmar_cliente.collidepoint(mouse_pos):
+                                return self._construir_seleccion_cliente(input_ip)
+                        elif self.opciones[self.opcion_seleccionada] == "Modo Libre":
+                            if self.rect_confirmar_libre and self.rect_confirmar_libre.collidepoint(mouse_pos):
+                                return self._construir_seleccion_simple("Modo Libre")
 
                 # ============================================================
                 # PANTALLA DE CONFIGURACIÓN DE HOST
@@ -252,15 +275,10 @@ class Menu:
                         if self.rect_volver and self.rect_volver.collidepoint(mouse_pos):
                             self.pantalla_estado = "principal"
 
-
                         if self.rect_mapa_flecha_izq and self.rect_mapa_flecha_izq.collidepoint(mouse_pos):
                             self.mapa_scroll_offset = max(0, self.mapa_scroll_offset - self._mapa_items_por_pagina)
                         elif self.rect_mapa_flecha_der and self.rect_mapa_flecha_der.collidepoint(mouse_pos):
                             self.mapa_scroll_offset += self._mapa_items_por_pagina
-                        for mapa_id, rect in self.rect_mapa.items():
-                            if rect.collidepoint(mouse_pos):
-                                self.host_mapa_id = mapa_id
-
                         for mapa_id, rect in self.rect_mapa.items():
                             if rect.collidepoint(mouse_pos):
                                 self.host_mapa_id = mapa_id
@@ -316,6 +334,13 @@ class Menu:
     # ------------------------------------------------------------------
     def _draw_pantalla_principal(self, mouse_pos, modo_multijugador_opcion, input_ip):
         cursor_hover = False
+        # Rects de los botones de confirmar: se recalculan solo si el
+        # panel correspondiente se dibuja este frame (más abajo). Si no
+        # se dibujan, quedan en None para que no respondan a clics
+        # "fantasma" de un panel que ya no está visible.
+        self.rect_confirmar_cliente = None
+        self.rect_confirmar_libre = None
+
         margen_x = 60
         content_w = self.ancho - margen_x * 2
 
@@ -471,10 +496,44 @@ class Menu:
                     self.pantalla.blit(lbl_ip, (panel_rect.x + 16, panel_rect.y + 54))
                     input_ip.rect.topleft = (panel_rect.x + 130, panel_rect.y + 50)
                     input_ip.rect.height = 30
+                    input_ip.rect.width = 180
                     input_ip.color_border = COL_INPUT_BORDER_ACTIVE if input_ip.active else COL_INPUT_BORDER
                     pygame.draw.rect(self.pantalla, COL_INPUT_BG, input_ip.rect, border_radius=6)
                     pygame.draw.rect(self.pantalla, input_ip.color_border, input_ip.rect, width=2, border_radius=6)
                     self._draw_text_input_contents(input_ip)
+
+                    self.rect_confirmar_cliente = pygame.Rect(input_ip.rect.right + 14, input_ip.rect.y - 2, 120, 34)
+                    hover_conf = self.rect_confirmar_cliente.collidepoint(mouse_pos)
+                    _draw_panel(self.pantalla, self.rect_confirmar_cliente,
+                                color=COL_ACCENT if hover_conf else COL_ACCENT_DIM,
+                                border=COL_ACCENT, radius=8, border_w=2)
+                    txt_conf = self.font_pill.render("Conectar", True, (25, 20, 15))
+                    self.pantalla.blit(txt_conf, txt_conf.get_rect(center=self.rect_confirmar_cliente.center))
+                    if hover_conf:
+                        cursor_hover = True
+
+                modos_y = panel_rect.bottom + 14
+
+            # ---- Panel de confirmación embebido dentro de la opción Modo Libre ----
+            elif opcion == "Modo Libre" and seleccionado:
+                panel_y = rect_op.bottom + 8
+                panel_rect = pygame.Rect(rect_op.x + 20, panel_y, rect_op.width - 40, 56)
+                _draw_panel(self.pantalla, panel_rect, color=(26, 30, 41), border=COL_CARD_BORDER,
+                            radius=10, border_w=1)
+
+                self.rect_confirmar_libre = pygame.Rect(0, 0, 190, 34)
+                self.rect_confirmar_libre.center = (panel_rect.x + 115, panel_rect.centery)
+                hover_libre = self.rect_confirmar_libre.collidepoint(mouse_pos)
+                _draw_panel(self.pantalla, self.rect_confirmar_libre,
+                            color=COL_ACCENT if hover_libre else COL_ACCENT_DIM,
+                            border=COL_ACCENT, radius=8, border_w=2)
+                txt_libre = self.font_pill.render("Confirmar y jugar", True, (25, 20, 15))
+                self.pantalla.blit(txt_libre, txt_libre.get_rect(center=self.rect_confirmar_libre.center))
+                if hover_libre:
+                    cursor_hover = True
+
+                hint_libre = self.font_opcion_desc.render("o presiona Enter", True, COL_TEXT_DIM)
+                self.pantalla.blit(hint_libre, (self.rect_confirmar_libre.right + 14, self.rect_confirmar_libre.centery - 8))
 
                 modos_y = panel_rect.bottom + 14
             else:

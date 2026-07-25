@@ -353,6 +353,10 @@ class MultiplayerGame(BaseGame):
             elif jugador in self.robots_remotos:
                 self.robots_remotos[jugador].take_damage(cantidad)
 
+        elif tipo == "empuje":
+            if msg.get("jugador") == self.nombre_jugador:
+                self.robot.aplicar_empuje(msg.get("vel_x", 0), msg.get("vel_y", 0))
+
         elif tipo == "score":
             atacante = msg["atacante"]
             puntos = msg["puntos"]
@@ -504,7 +508,8 @@ class MultiplayerGame(BaseGame):
                         self.enviar({"tipo": "turno_fin", "jugador": self.nombre_jugador})
             else:
                 self.robot.update([])
-                self.robot.vel_x = 0
+                if pygame.time.get_ticks() >= self.robot.aturdido_hasta:
+                    self.robot.vel_x = 0
 
             # --- Colisiones del robot local contra el mapa ---
             check_collisions(self.robot, self.tiles)

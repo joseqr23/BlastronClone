@@ -43,8 +43,12 @@ Pendiente:
 1.- ¿Se puede agregar un efecto expansivo al disparar con cierta arma? 
 Ejemplo: un arma cuerpo a cuerpo que sea un guante de box que al golpear lance al enemigo que se encuentre por el aire (no con tanta fuerza)
 
-2.- Agregar un sprite del arma, para que se visualice el arma que sostiene el jugador antes de disparar, esta debe seguir la mira que esta en systems/aim_indicator.py
-    - Puede ser modificar el sprite que cuenta con 3 frames y agregar uno más y usar ese como la arma sostenida o se puede crear uno solo png con 1 frame en la carpeta del arma y usar ese. assets/weapons/misil/weapon.png
+
+2.- Mejorar detalles de hud para que se vea mas amigable y no tan tipo "carton" incluido el cursor
+3.- Intentar hacer grande la pantalla 
+4.- Agregar supplies, o ayudas
+5.- Implementar nueva funcion en proyectil.py de ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor pero tipo una mira de arma y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
+
 
 
 Bugs:

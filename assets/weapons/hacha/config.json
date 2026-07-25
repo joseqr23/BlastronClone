@@ -15,7 +15,9 @@
   "dispersion_grados": 25,
 
   "advertencia_ms": 120,
-
+  
+  "empuje_ancho": 3,
+  "empuje_alto": -2,
   
   "_________Tamaño sprites: Arma / Explosion_________": "______________",
   "ancho_proyectil": 90,
@@ -26,8 +28,8 @@
   "_________Tamaño hitbox: Arma / Explosion_________": "______________",
   "hitbox_ancho_proyectil": 0,
   "hitbox_alto_proyectil": 0,
-  "hitbox_ancho_explosion": 60,
-  "hitbox_alto_explosion": 60,
+  "hitbox_ancho_explosion": 50,
+  "hitbox_alto_explosion": 50,
 
   "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
   "posicion_ancho_proyectil": 40,
@@ -47,5 +49,6 @@
   "posicion_ancho_arma_sostenida": 30,
   "posicion_alto_arma_sostenida": 0,
   "oculta_arma_al_disparar": true
+
 
 }

@@ -86,7 +86,11 @@ class WeaponManager:
         self.consumir_municion(arma, config)
 
         for origen, vel_x, vel_y in self._generar_disparos(config, ancho, alto):
-            p = Proyectil(arma, origen[0], origen[1], vel_x, vel_y, owner=self.game.robot.nombre_jugador)
+            p = Proyectil(
+                arma, origen[0], origen[1], vel_x, vel_y,
+                owner=self.game.robot.nombre_jugador,
+                facing_right=self.game.robot.facing_right,
+            )
             self.game.proyectiles.append(p)
 
         sound_manager.disparo(arma)
@@ -115,6 +119,7 @@ class WeaponManager:
             # Proyectil decide TODO sobre a quién dañar. Aquí solo se aplica.
             for robot in p.robots_afectados(candidatos):
                 robot.take_damage(daño)
+                self._aplicar_empuje(p, robot)
                 puntos = daño
                 if robot.health <= 0:
                     puntos *= 2
@@ -123,3 +128,11 @@ class WeaponManager:
 
             if p.estado == "done":
                 self.game.proyectiles.remove(p)
+                
+    def _aplicar_empuje(self, p, robot):
+        empuje_ancho = p.config.get("empuje_ancho", 0)
+        empuje_alto = p.config.get("empuje_alto", 0)
+        if not empuje_ancho and not empuje_alto:
+            return
+        direccion = 1 if getattr(p, "_facing_right", True) else -1
+        robot.aplicar_empuje(empuje_ancho * direccion, empuje_alto)

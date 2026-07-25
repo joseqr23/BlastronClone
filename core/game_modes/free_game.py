@@ -50,7 +50,7 @@ class FreeGame(BaseGame):
                 self.robot.take_damage(50)
 
             for r in self.robots_estaticos:
-                r.update(self.tiles)
+                r.update(self.tiles, self.tiles_laterales)
 
             # limpiar robots muertos
             self.robots_estaticos = [r for r in self.robots_estaticos if not r.debe_eliminarse()]

@@ -1,5 +1,5 @@
 from entities.players.robot import Robot
-from systems.collision import check_collisions
+from systems.collision import check_collisions, check_collisions_laterales_esquinas
 from utils.loader import load_spritesheet
 import pygame
 
@@ -8,7 +8,7 @@ class RobotEstatico(Robot):
         super().__init__(x, y, nombre_jugador, nombre_robot)
         self.es_jugador = False
 
-    def update(self, tiles, armas=None, keys=None):
+    def update(self, tiles, tiles_laterales=None, armas=None, keys=None):
         if self.is_dead:
             # Mostrar la animación de muerte sin reiniciar
             self.current_animation = "death"
@@ -23,9 +23,12 @@ class RobotEstatico(Robot):
                 self.image = pygame.transform.flip(self.image, True, False)
             return
         else:
-            self.vel_x = 0  # No se mueve horizontalmente
+            if pygame.time.get_ticks() >= self.aturdido_hasta:
+                self.vel_x = 0  # No se mueve horizontalmente, salvo durante un empuje
             self.aplicar_fisica()
             check_collisions(self, tiles)  # Colisión con plataformas
+            if tiles_laterales:
+                check_collisions_laterales_esquinas(self, tiles_laterales)  # No se sale del mapa
 
             # --- Colisión con armas ---
             if armas:

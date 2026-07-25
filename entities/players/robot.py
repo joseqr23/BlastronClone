@@ -63,6 +63,7 @@ class Robot:
         self.current_animation = "idle"
         self.frame_index = 0
         self.frame_timer = 0
+        self.aturdido_hasta = 0
         # Reaparecer en posición aleatoria
         min_x = 100
         max_x = 800
@@ -93,6 +94,15 @@ class Robot:
         sound_manager.muerte()
 
     def manejar_controles(self, keys):
+        # Mientras dura un empuje (ver aplicar_empuje), se ignora el
+        # movimiento horizontal por teclado para que el impulso no se
+        # pise de inmediato — el salto sigue disponible.
+        if pygame.time.get_ticks() < self.aturdido_hasta:
+            if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and self.on_ground:
+                self.vel_y = -self.jump_power
+                self.on_ground = False
+                sound_manager.salto()
+            return
         self.vel_x = 0
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.vel_x = -self.speed
@@ -109,6 +119,10 @@ class Robot:
         self.x += self.vel_x
         self.vel_y += self.gravity
         self.y += self.vel_y
+        # Fricción del empuje: mientras dura el aturdimiento, decae el
+        # impulso horizontal en vez de cortarlo en seco al terminar.
+        if pygame.time.get_ticks() < self.aturdido_hasta:
+            self.vel_x *= 0.9
 
     def actualizar_animacion(self):
         if not self.on_ground:
@@ -187,3 +201,14 @@ class Robot:
         nuevo_ancho = 20
         nuevo_x = rect.x + (rect.width - nuevo_ancho) // 2
         return pygame.Rect(nuevo_x, rect.y, nuevo_ancho, rect.height)
+    
+    def aplicar_empuje(self, vel_x=0, vel_y=0, duracion_ms=250):
+        """Impulso externo (knockback) — usado por weapon_manager al
+        golpear con un arma que define empuje_ancho/empuje_alto en su
+        config.json. duracion_ms controla cuánto tiempo el teclado deja
+        de pisar el vel_x horizontal (ver manejar_controles)."""
+        if vel_x:
+            self.vel_x = vel_x
+            self.aturdido_hasta = pygame.time.get_ticks() + duracion_ms
+        if vel_y:
+            self.vel_y = vel_y

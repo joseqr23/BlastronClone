@@ -26,8 +26,8 @@
     "_________Tamaño hitbox: Arma / Explosion_________": "______________",
     "hitbox_ancho_proyectil": 0,
     "hitbox_alto_proyectil": 0,
-    "hitbox_ancho_explosion": 65,
-    "hitbox_alto_explosion": 65,
+    "hitbox_ancho_explosion": 70,
+    "hitbox_alto_explosion": 70,
 
     "_________Tamaño posicion: X & Y de Arma / Explosion_________": "______________",
     "posicion_ancho_proyectil": -8,
@@ -41,8 +41,8 @@
     "frames": 3,
     "frames_explosion": 1,
 
-    "ancho_arma_sostenida": 100,
-    "alto_arma_sostenida": 100,
+    "ancho_arma_sostenida": 90,
+    "alto_arma_sostenida": 90,
 
     "posicion_ancho_arma_sostenida": 30,
     "posicion_alto_arma_sostenida": 0,

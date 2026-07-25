@@ -120,6 +120,7 @@ class WeaponManager:
             "tipo": "disparo",
             "jugador": self.game.nombre_jugador,
             "arma": arma,
+            "facing_right": self.game.robot.facing_right,
             "disparos": [
                 {"x": origen[0], "y": origen[1], "dir_x": vx, "dir_y": vy}
                 for origen, vx, vy in disparos
@@ -153,7 +154,10 @@ class WeaponManager:
 
         for disparo in msg.get("disparos", []):
             pid = game._next_proy_id()
-            p = Proyectil(arma, disparo["x"], disparo["y"], disparo["dir_x"], disparo["dir_y"], owner=jugador)
+            p = Proyectil(
+                arma, disparo["x"], disparo["y"], disparo["dir_x"], disparo["dir_y"],
+                owner=jugador, facing_right=msg.get("facing_right"),
+            )
             p.proj_id = pid
             game.proyectiles.append(p)
 
@@ -200,6 +204,7 @@ class WeaponManager:
                 if robot.health - daño <= 0:
                     puntos = daño * 2
                 self.aplicar_dano(robot, daño)
+                self._aplicar_empuje(p, robot)
                 # No dar puntos si el dueño del proyectil es la misma
                 # víctima (auto-daño, cuando sí está permitido).
                 if not es_dueño:
@@ -226,3 +231,27 @@ class WeaponManager:
             "cantidad": cantidad,
             "quien": self.game.nombre_jugador,
         })
+
+    def _aplicar_empuje(self, p, robot):
+        """Empuje/knockback opcional al golpear. config.json opcional:
+        empuje_ancho (se espeja según hacia dónde miraba el arma al
+        golpear) y empuje_alto (negativo = hacia arriba). Si la víctima
+        es un jugador remoto, el host no controla su física real (solo
+        interpola una copia visual) — se le avisa por red para que su
+        propio cliente aplique el empuje a su robot real."""
+        empuje_ancho = p.config.get("empuje_ancho", 0)
+        empuje_alto = p.config.get("empuje_alto", 0)
+        if not empuje_ancho and not empuje_alto:
+            return
+        direccion = 1 if getattr(p, "_facing_right", True) else -1
+        vel_x = empuje_ancho * direccion
+        vel_y = empuje_alto
+        if robot is self.game.robot:
+            robot.aplicar_empuje(vel_x, vel_y)
+        else:
+            self.game.enviar({
+                "tipo": "empuje",
+                "jugador": robot.nombre_jugador,
+                "vel_x": vel_x,
+                "vel_y": vel_y,
+            })
