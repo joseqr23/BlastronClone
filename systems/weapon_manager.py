@@ -82,7 +82,8 @@ class WeaponManager:
         proyectil que debe salir de este disparo. Con "cantidad" > 1 se
         reparten en abanico (mismo origen, ángulos repartidos alrededor
         de la dirección apuntada) rotando el vector de velocidad."""
-        origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto)
+        velocidad_fija = config.get("velocidad_proyectil")
+        origen, vel_x, vel_y = self.game.aim.get_datos_disparo(ancho, alto, velocidad_fija=velocidad_fija)
         cantidad = max(1, config.get("cantidad", 1))
         if cantidad == 1:
             return [(origen, vel_x, vel_y)]

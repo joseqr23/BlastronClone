@@ -48,7 +48,9 @@
   
   "posicion_ancho_arma_sostenida": 30,
   "posicion_alto_arma_sostenida": 0,
-  "oculta_arma_al_disparar": true
+  "oculta_arma_al_disparar": true,
+
+  "estilo_mira": "golpe"
 
 
 }

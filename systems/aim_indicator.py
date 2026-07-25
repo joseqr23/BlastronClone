@@ -29,7 +29,7 @@ class AimIndicator:
         """Devuelve la punta de la flecha"""
         return (self.origen[0] + self.direccion[0], self.origen[1] + self.direccion[1])
 
-    def get_datos_disparo(self, ancho_proyectil=0, alto_proyectil=0, distancia_spawn=0):
+    def get_datos_disparo(self, ancho_proyectil=0, alto_proyectil=0,  distancia_spawn=0, velocidad_fija=None):
         """
         Devuelve:
         - posición inicial (ajustada para que el centro del proyectil coincida
@@ -45,40 +45,72 @@ class AimIndicator:
         vuelan (cuerpo a cuerpo), pasa un valor > 0 para que el arma
         aparezca a un costado del jugador según hacia dónde apunte, en vez
         de quedarse centrada en él.
+
+        velocidad_fija: si se define (no None), la velocidad de salida
+        del proyectil es CONSTANTE con ese valor, ignorando cuánto
+        arrastraste el mouse (fuerza) — solo se usa el ÁNGULO de
+        apuntado para la dirección. Pensado para armas tipo escopeta,
+        que deben salir siempre a máxima velocidad sin importar el
+        "estirón" del aim.
         """
         angulo = self.get_angulo()
-        velocidad = self.get_fuerza() / self.max_fuerza * 25
+        if velocidad_fija is not None:
+            velocidad = velocidad_fija
+        else:
+            velocidad = self.get_fuerza() / self.max_fuerza * 25
         vel_x = math.cos(angulo) * velocidad
         vel_y = math.sin(angulo) * velocidad
 
         centro_x = self.origen[0] + math.cos(angulo) * distancia_spawn
         centro_y = self.origen[1] + math.sin(angulo) * distancia_spawn
 
-        # Ajuste para que el proyectil esté centrado visualmente
         origen_ajustado = (
             centro_x - ancho_proyectil / 2,
             centro_y - alto_proyectil / 2
         )
         return origen_ajustado, vel_x, vel_y
 
-    def draw(self, pantalla):
+    def draw(self, pantalla, estilo="apuntar"):
+        if estilo == "golpe":
+            self._draw_golpe(pantalla)
+            return
+
         punta = self.get_punta()
         distancia = self.get_fuerza()
 
-        # Color invertido: rojo = poca fuerza, verde = mucha fuerza
         porcentaje = distancia / self.max_fuerza
         color = (
-            int(255 * (1 - porcentaje)),  # Rojo fuerte si fuerza baja
-            int(255 * porcentaje),        # Verde fuerte si fuerza alta
+            int(255 * (1 - porcentaje)),
+            int(255 * porcentaje),
             0
         )
 
-        # Línea principal
         pygame.draw.line(pantalla, color, self.origen, punta, 6)
 
-        # Punta de flecha
         angulo = self.get_angulo()
         tamaño_punta = 12
+        izquierda = (
+            punta[0] - tamaño_punta * math.cos(angulo - math.pi / 6),
+            punta[1] - tamaño_punta * math.sin(angulo - math.pi / 6)
+        )
+        derecha = (
+            punta[0] - tamaño_punta * math.cos(angulo + math.pi / 6),
+            punta[1] - tamaño_punta * math.sin(angulo + math.pi / 6)
+        )
+        pygame.draw.polygon(pantalla, color, [punta, izquierda, derecha])
+
+    def _draw_golpe(self, pantalla, longitud=45, color=(255, 120, 0)):
+        """Mira alternativa para cuerpo a cuerpo: línea corta y FIJA en
+        la dirección de apuntado (no depende de cuánto arrastres el
+        mouse, a diferencia de 'apuntar') — solo cosmético, no cambia
+        nada de la física del golpe."""
+        angulo = self.get_angulo()
+        punta = (
+            self.origen[0] + math.cos(angulo) * longitud,
+            self.origen[1] + math.sin(angulo) * longitud,
+        )
+        pygame.draw.line(pantalla, color, self.origen, punta, 8)
+        tamaño_punta = 10
         izquierda = (
             punta[0] - tamaño_punta * math.cos(angulo - math.pi / 6),
             punta[1] - tamaño_punta * math.sin(angulo - math.pi / 6)

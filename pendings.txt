@@ -41,13 +41,6 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 Pendiente: CON PRIORIDAD
 
-* Hay un problema, y es que al atacar con un arma cuerpo a cuerpo, esta unicamente ataca en direccion a donde mira el robot, cosa que esta bien, ya que le da mas realismo.
-PERO, si el robot esta volteado hacia la izquierda y la mira del arma apunta hacia la derecha igual ataca hacia la izquierda.
-Como repito, es correcto que el robot ataque hacia ese lado, pero podria voltearse a atacar si la mira esta a su lado contrario?
-O en todo caso implementar que la posicion del robot no sea solo por cuando camina, sino para donde esta la mira, es decir que la posicion de la mira sea el indicador de a donde debe mirar el robot.
-Esto haria que sea posible que el robot camine hacia atras (digamos la derecha mirando hacia la izquierda), pero es valido, muchos juegos lo tienen asi. 
-
-
 * Se puede agregar la velocidad del proyectil?  <<< PUEDE SER > AGREGAR VALOR DE VELOCIDAD DE PROYECTIL EN JSON Y CAMBIAR MIRA EN AIM_INDICATOR
 TE PONGO UN CASO:
 ocurre que por ejemplo la escopeta la copie de misil, pero esta no deberia tener efecto, es decir, 

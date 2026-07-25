@@ -12,11 +12,13 @@
   "daña_al_dueño": false,
   "municion": 2,
   "cantidad": 8,
-  "dispersion_grados": 25,
+  "dispersion_grados": 15,
 
   "empuje_ancho": 12,
   "empuje_alto": -6,
 
+  "velocidad_proyectil": 35,
+  "intervalo_disparos_ms": 0,
 
   "_________Tamaño sprites: Arma / Explosion_________": "______________",
   "ancho_proyectil": 5,
@@ -47,8 +49,9 @@
   
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
-  "oculta_arma_al_disparar": false
+  "oculta_arma_al_disparar": false,
 
+  "estilo_mira": "apuntar"
 
 
 }
