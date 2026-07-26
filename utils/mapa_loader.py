@@ -46,6 +46,9 @@ def cargar_mapas(forzar_recarga=False):
         config.setdefault("id", nombre)
         config.setdefault("nombre", nombre.title())
         config["_fondo_path"] = fondo_path
+        musica_path = os.path.join(carpeta, "musica.mp3")
+        if os.path.isfile(musica_path):
+            config["_musica_path"] = musica_path
         mapas[nombre] = config
     _CACHE = mapas
     return mapas

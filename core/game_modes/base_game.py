@@ -17,9 +17,12 @@ class BaseGame:
         self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         pygame.display.set_caption("Blastron Clone")
         self.reloj = pygame.time.Clock()
-        # Mapa — ver cargar_mapa() más abajo. En multijugador, el cliente
-        # arranca con el mapa por defecto y lo reemplaza en cuanto el
-        # host le confirma cuál está usando (ver multi_game.py).
+        self.sound_manager = sound_manager
+        # Mapa — ver cargar_mapa() más abajo (también arranca la música
+        # de ese mapa). En multijugador, el cliente arranca con el mapa
+        # por defecto y lo reemplaza en cuanto el host le confirma cuál
+        # está usando (ver multi_game.py) — cargar_mapa() se vuelve a
+        # llamar ahí también, así que la música cambia junto con el mapa.
         self.cargar_mapa(mapa_id)
         # Armas — catálogo dinámico (assets/weapons/<arma>/config.json) y
         # una única lista de proyectiles activos, sin importar de qué
@@ -31,8 +34,6 @@ class BaseGame:
         self.font = pygame.font.SysFont('Arial', 20)
         self.puntajes = {}
         self.chat = Chat(nombre_jugador=self.nombre_jugador)
-        self.sound_manager = sound_manager
-        self.sound_manager.iniciar_musica()
 
     def cargar_mapa(self, mapa_id):
         """Carga (o recarga) tiles/laterales/fondo según mapa_id. Se
@@ -47,6 +48,12 @@ class BaseGame:
         ruta_fondo = config_del_mapa.get("_fondo_path", "assets/maps/fondo.png")
         self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
+
+        # Música del mapa: si la carpeta trae su propia musica.mp3, se
+        # usa esa; si no, cae a la genérica de siempre.
+        ruta_musica = config_del_mapa.get("_musica_path", "assets/sfx/musica.mp3")
+        self.sound_manager.iniciar_musica(ruta_musica)
+
 
     def run(self):
         raise NotImplementedError("Debes implementar este método en la subclase.")

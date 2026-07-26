@@ -43,7 +43,7 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 1.- Añadir municion infinita en modo libre y un boton para regresar al menu tambien
-
+2.- Añadir un boton de mute o mutear con tecla M
 
 
 Pendiente:
