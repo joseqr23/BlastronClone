@@ -2,6 +2,7 @@
 ANCHO = 1000
 ALTO = 494
 
+
 # Suelo
 ALTURA_SUELO = 70
 

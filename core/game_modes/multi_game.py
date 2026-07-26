@@ -28,6 +28,7 @@ import struct
 import json
 import time
 import queue
+import math
 
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot
@@ -489,9 +490,9 @@ class MultiplayerGame(BaseGame):
 
             if self.game_over:
                 etiqueta = {"puntos": "Puntaje", "muertes": "Muertes"}.get(self.modo_partida, "Puntaje")
-                self.mostrar_pantalla_final(etiqueta=etiqueta)
+                volver_al_menu = self.mostrar_pantalla_final(etiqueta=etiqueta)
                 self._cerrar_red()
-                return
+                return "menu" if volver_al_menu else None
 
             if self.host and not self.partida_iniciada:
                 keys = pygame.key.get_pressed()
@@ -657,21 +658,44 @@ class MultiplayerGame(BaseGame):
             return self.robot
         return self.robots_remotos.get(jugador)
 
+    def _dibujar_brillo_primer_lugar(self, cx, y_centro, tiempo_ms):
+        """Efecto de brillo pulsante + chispitas alrededor del 1er
+        lugar. Puramente visual."""
+        radio_base = 70
+        pulso = 0.5 + 0.5 * math.sin(tiempo_ms / 200)
+        radio = int(radio_base + pulso * 15)
+        glow = pygame.Surface((radio * 2, radio * 2), pygame.SRCALPHA)
+        alpha = int(60 + pulso * 60)
+        pygame.draw.circle(glow, (255, 230, 120, alpha), (radio, radio), radio)
+        self.pantalla.blit(glow, (cx - radio, y_centro - radio), special_flags=pygame.BLEND_RGBA_ADD)
+
+        offsets = [(-50, -30), (45, -50), (60, 10), (-55, 20), (10, -70)]
+        for i, (ox, oy) in enumerate(offsets):
+            fase = (tiempo_ms / 300) + i * 1.3
+            brillo = 0.5 + 0.5 * math.sin(fase)
+            if brillo < 0.4:
+                continue
+            tam = 3 + int(brillo * 4)
+            px, py = cx + ox, y_centro + oy
+            pygame.draw.line(self.pantalla, (255, 255, 200), (px - tam, py), (px + tam, py), 2)
+            pygame.draw.line(self.pantalla, (255, 255, 200), (px, py - tam), (px, py + tam), 2)
+
     def mostrar_pantalla_final(self, etiqueta="Puntaje"):
         podio = self._calcular_podio()
         fuente_rango = pygame.font.SysFont("Arial", 28, bold=True)
         fuente_nombre = pygame.font.SysFont("Arial", 18, bold=True)
         fuente_valor = pygame.font.SysFont("Arial", 16)
         fuente_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+        fuente_boton = pygame.font.SysFont("Arial", 18, bold=True)
 
         alturas_podio = {1: 160, 2: 110, 3: 70}
-        altura_extra = 40  # decrece un poco más por cada rango >3
+        altura_extra = 40
 
         base_y = ALTO - 60
         ancho_bloque = 110
         espacio = 20
 
-        posiciones = []  # (cx, y_superior, alto_bloque, jugador, valor, rango)
+        posiciones = []
         x_actual = 60
         for rango, jugadores in podio:
             alto_bloque = alturas_podio.get(rango, max(30, alturas_podio[3] - (rango - 3) * altura_extra))
@@ -682,18 +706,36 @@ class MultiplayerGame(BaseGame):
             ancho_grupo = ancho_bloque * n + espacio * (n - 1)
             x_actual += ancho_grupo + espacio * 2
 
+        boton_rect = pygame.Rect(ANCHO - 200, 15, 180, 45)
+        frame_timer_inicio = pygame.time.get_ticks()
+        duracion_frame_ms = 150
+
         esperando = True
+        volver_al_menu = True
         reloj_local = pygame.time.Clock()
         while esperando:
+            mouse_pos = pygame.mouse.get_pos()
             for evento in pygame.event.get():
-                if evento.type == pygame.QUIT or evento.type == pygame.KEYDOWN:
+                if evento.type == pygame.QUIT:
                     esperando = False
+                    volver_al_menu = False
+                elif evento.type == pygame.KEYDOWN and evento.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                    esperando = False
+                elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                    if boton_rect.collidepoint(evento.pos):
+                        esperando = False
+
+            tiempo_ms = pygame.time.get_ticks()
+            frame_idx = (tiempo_ms - frame_timer_inicio) // duracion_frame_ms
 
             self.pantalla.fill((30, 30, 40))
             titulo = fuente_titulo.render("¡Fin de la partida!", True, (255, 215, 0))
             self.pantalla.blit(titulo, titulo.get_rect(center=(ANCHO // 2, 50)))
 
             for cx, y_superior, alto_bloque, jugador, valor, rango in posiciones:
+                if rango == 1:
+                    self._dibujar_brillo_primer_lugar(cx, y_superior - 45, tiempo_ms)
+
                 color_bloque = (
                     (200, 170, 60) if rango == 1 else
                     (180, 180, 190) if rango == 2 else
@@ -705,7 +747,14 @@ class MultiplayerGame(BaseGame):
                 robot = self._robot_de(jugador)
                 sprite_top = y_superior
                 if robot is not None:
-                    idle_img = robot.animations["idle"][0]
+                    if rango == 1:
+                        anim = robot.animations.get("celebration", robot.animations["idle"])
+                    elif rango == 2:
+                        anim = robot.animations["idle"]
+                    else:
+                        anim = robot.animations.get("defeated", robot.animations["idle"])
+                    idx = int(frame_idx) % len(anim)
+                    idle_img = anim[idx]
                     if not robot.facing_right:
                         idle_img = pygame.transform.flip(idle_img, True, False)
                     img_rect = idle_img.get_rect(midbottom=(cx, y_superior))
@@ -715,24 +764,21 @@ class MultiplayerGame(BaseGame):
                 nombre_render = fuente_nombre.render(jugador, True, ColorManager.get_color(jugador))
                 self.pantalla.blit(nombre_render, nombre_render.get_rect(center=(cx, sprite_top - 15)))
 
-                # Rango / etiqueta / valor, siempre a la misma altura base
-                # (relativa al piso, no al alto variable del bloque) para
-                # que quede alineado sin importar el podio de cada uno.
                 texto_rango = fuente_rango.render(f"{rango}°", True, (255, 255, 255))
                 self.pantalla.blit(texto_rango, texto_rango.get_rect(center=(cx, base_y + 20)))
+                info_render = fuente_valor.render(f"{etiqueta}: {valor}", True, (255, 255, 255))
+                self.pantalla.blit(info_render, info_render.get_rect(center=(cx, base_y + 42)))
 
-                etiqueta_render = fuente_valor.render(f"{etiqueta}:", True, (255, 255, 255))
-                self.pantalla.blit(etiqueta_render, etiqueta_render.get_rect(center=(cx, base_y + 42)))
-
-                valor_render = fuente_valor.render(str(valor), True, (255, 255, 255))
-                self.pantalla.blit(valor_render, valor_render.get_rect(center=(cx, base_y + 64)))
-
-            ayuda = fuente_valor.render("Presiona cualquier tecla para salir", True, (200, 200, 200))
-            self.pantalla.blit(ayuda, ayuda.get_rect(center=(ANCHO // 2, ALTO - 20)))
+            hover = boton_rect.collidepoint(mouse_pos)
+            color_boton = (90, 140, 220) if hover else (60, 100, 180)
+            pygame.draw.rect(self.pantalla, color_boton, boton_rect, border_radius=8)
+            pygame.draw.rect(self.pantalla, (255, 255, 255), boton_rect, width=2, border_radius=8)
+            texto_boton = fuente_boton.render("Volver al menú", True, (255, 255, 255))
+            self.pantalla.blit(texto_boton, texto_boton.get_rect(center=boton_rect.center))
 
             pygame.display.flip()
             reloj_local.tick(30)
-
+        return volver_al_menu
     def _cerrar_red(self):
         self._listening = False
         try:

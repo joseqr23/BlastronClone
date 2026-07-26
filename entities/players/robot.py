@@ -39,6 +39,17 @@ class Robot:
             "jump": load_spritesheet(f"{base_path}/jump.png", 1, self.width, self.height),
             "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
         }
+        # Opcionales — si el robot aún no tiene estos sprites, cae a
+        # "idle" sin romper nada (solo se usan en la pantalla de podio).
+        try:
+            self.animations["celebration"] = load_spritesheet(f"{base_path}/celebration.png", 6, self.width, self.height)
+        except Exception:
+            self.animations["celebration"] = self.animations["idle"]
+        try:
+            self.animations["defeated"] = load_spritesheet(f"{base_path}/defeated.png", 6, self.width, self.height)
+        except Exception:
+            self.animations["defeated"] = self.animations["idle"]
+            
         # Inicializa la imagen para que nunca sea None
         self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))
         if self.image is None:

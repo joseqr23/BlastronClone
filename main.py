@@ -40,17 +40,7 @@ def main():
     except pygame.error:
         pass
 
-    screen = pygame.display.set_mode(
-        (SCREEN_WIDTH, SCREEN_HEIGHT),
-        pygame.SCALED | pygame.RESIZABLE
-    )
     pygame.display.set_caption(CAPTION)
-
-    menu = Menu(screen)
-    seleccion = menu.run()
-    if not seleccion:
-        pygame.quit()
-        sys.exit()
 
     modo_map = {
         "Modo Solo": "solo",
@@ -58,34 +48,43 @@ def main():
         "Modo Libre": "free"
     }
 
-    modo = modo_map.get(seleccion.get("modo"))
-    nombre_jugador = seleccion.get("nombre") or "Jugador"
-    personaje = seleccion.get("personaje") or "robot"
+    while True:
+        screen = pygame.display.set_mode(
+            (SCREEN_WIDTH, SCREEN_HEIGHT),
+            pygame.RESIZABLE
+        )
+        menu = Menu(screen)
+        seleccion = menu.run()
+        if not seleccion:
+            break
 
-    # --- Selección de Game según modo ---
-    if modo == "solo":
-        from core.game_modes.solo_game import SoloGame as Game
-        juego = Game(nombre_jugador, personaje)
-    elif modo == "multiplayer":
-        from core.game_modes.multi_game import MultiplayerGame as Game
-        host = seleccion.get("host", True)
-        server_ip = seleccion.get("server_ip", "127.0.0.1")
-        duracion_min = seleccion.get("duracion_min", 3)
-        modo_partida = seleccion.get("modo_partida", "puntos")
-        mapa_id = seleccion.get("mapa", "parque")
-        juego = Game(nombre_jugador, personaje, host, server_ip,
-                    duracion_min=duracion_min, modo_partida=modo_partida, mapa_id=mapa_id)
-    elif modo == "free":
-        from core.game_modes.free_game import FreeGame as Game
-        juego = Game(nombre_jugador, personaje)
-    else:
-        pygame.quit()
-        sys.exit()
+        modo = modo_map.get(seleccion.get("modo"))
+        nombre_jugador = seleccion.get("nombre") or "Jugador"
+        personaje = seleccion.get("personaje") or "robot"
 
-    try:
-        juego.run()
-    finally:
-        pygame.quit()
+        if modo == "solo":
+            from core.game_modes.solo_game import SoloGame as Game
+            juego = Game(nombre_jugador, personaje)
+        elif modo == "multiplayer":
+            from core.game_modes.multi_game import MultiplayerGame as Game
+            host = seleccion.get("host", True)
+            server_ip = seleccion.get("server_ip", "127.0.0.1")
+            duracion_min = seleccion.get("duracion_min", 3)
+            modo_partida = seleccion.get("modo_partida", "puntos")
+            mapa_id = seleccion.get("mapa", "parque")
+            juego = Game(nombre_jugador, personaje, host, server_ip,
+                        duracion_min=duracion_min, modo_partida=modo_partida, mapa_id=mapa_id)
+        elif modo == "free":
+            from core.game_modes.free_game import FreeGame as Game
+            juego = Game(nombre_jugador, personaje)
+        else:
+            break
+
+        resultado = juego.run()
+        if resultado != "menu":
+            break
+
+    pygame.quit()
 
 if __name__ == "__main__":
     _patch_resource_loaders()
