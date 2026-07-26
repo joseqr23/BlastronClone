@@ -122,7 +122,14 @@ class TurnManager:
         self.iniciar_cooldown()
 
     def siguiente_turno(self):
-        self.turno_actual = (self.turno_actual + 1) % len(self.jugadores)
+        if not self.jugadores:
+            return
+        siguiente = (self.turno_actual + 1) % len(self.jugadores)
+        intentos = 0
+        while intentos < len(self.jugadores) and not self._esta_vivo(self.jugadores[siguiente]):
+            siguiente = (siguiente + 1) % len(self.jugadores)
+            intentos += 1
+        self.turno_actual = siguiente
         self.fase = "turno"
         self.en_cooldown = False
         self.disparo_hecho = False
@@ -144,3 +151,18 @@ class TurnManager:
             "fase": self.fase,
             "tiempo": self.tiempo_restante(),
         })
+
+    def _esta_vivo(self, jugador):
+        modo = getattr(self.game, "modo", None)
+        if modo is None or getattr(modo, "permite_reaparecer", True):
+            # En modos con respawn (puntos, muertes), "muerto" es un
+            # estado temporal — nunca se salta un turno por esto, para
+            # no robarle el turno a alguien que revive en 2 segundos.
+            return True
+        # Solo en modos sin respawn (ej. lms) la muerte es definitiva:
+        # ahí sí tiene sentido saltarse a quien ya fue eliminado.
+        if jugador == self.game.nombre_jugador:
+            robot = self.game.robot
+        else:
+            robot = self.game.robots_remotos.get(jugador)
+        return robot is not None and not robot.is_dead

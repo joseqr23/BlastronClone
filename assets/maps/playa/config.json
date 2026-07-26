@@ -38,5 +38,11 @@
   "laterales": [
     [1020, -15, 6, 432],
     [-55, -12, 27, 423]
+  ],
+  "plataformas_y_laterlaes_impenetrables": [
+
+  ],
+  "plataformas_y_laterlaes_dañinas": [
+
   ]
 }

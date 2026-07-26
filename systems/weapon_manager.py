@@ -105,6 +105,8 @@ class WeaponManager:
         if tm.jugador_actual() != self.game.nombre_jugador or not tm.puede_disparar():
             print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno o ya disparó.")
             return
+        if self.game.robot.is_dead:
+            return
 
         arma = self.game.robot.arma_equipada
         config = config_arma(arma)
@@ -235,14 +237,15 @@ class WeaponManager:
             for robot in p.robots_afectados(candidatos):
                 es_dueño = getattr(p, "owner", None) == robot.nombre_jugador
                 puntos = daño
-                if robot.health - daño <= 0:
+                moria = (robot.health - daño <= 0) and not robot.is_dead
+                if moria:
                     puntos = daño * 2
                 self.aplicar_dano(robot, daño)
                 self._aplicar_empuje(p, robot)
-                # No dar puntos si el dueño del proyectil es la misma
-                # víctima (auto-daño, cuando sí está permitido).
                 if not es_dueño:
                     self.game.enviar_evento_puntaje(p.owner, puntos, robot)
+                if moria:
+                    self.game.enviar_evento_muerte(p.owner, robot)
                 p.danados.add(robot)
                 if robot is self.game.robot:
                     print(f"[{p.tipo.upper()}] Host aplica {daño} a {self.game.nombre_jugador} por {p.tipo} de {p.owner}")

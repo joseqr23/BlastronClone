@@ -56,8 +56,8 @@ class Menu:
     # Modos de partida disponibles en la config de Host: (clave, etiqueta, disponible)
     MODOS_PARTIDA = [
         ("puntos", "POR PUNTOS", True),
-        ("muertes", "POR MUERTES", False),
-        ("lms", "LAST MAN STANDING", False),
+        ("muertes", "POR MUERTES", True),
+        ("lms", "LAST MAN STANDING", True),
     ]
     DURACIONES = [3, 5, 10]
 

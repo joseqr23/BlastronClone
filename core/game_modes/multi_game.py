@@ -46,6 +46,7 @@ from ui.chat import Chat
 from systems.turn_manager import TurnManager
 
 from utils.colors import ColorManager
+from systems.modos_partida import crear_modo
 # ----------------------------------------------------------------------
 # Framing de mensajes sobre TCP
 # ----------------------------------------------------------------------
@@ -79,6 +80,8 @@ class MultiplayerGame(BaseGame):
     def __init__(self, nombre_jugador, personaje, host=True, server_ip="127.0.0.1", port=5000, duracion_min=3, modo_partida="puntos", mapa_id="parque"):
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje, mapa_id=mapa_id)
         self.modo_partida = modo_partida  # solo "puntos" implementado por ahora
+        self.modo = crear_modo(modo_partida, self)
+        self.vida_maxima = self.modo.vida_maxima
         ColorManager.reset()
 
         # --- Robot local ---
@@ -86,7 +89,9 @@ class MultiplayerGame(BaseGame):
             x=ANCHO // 2 - 30,
             y=ALTO - 90 - ALTURA_SUELO,
             nombre_jugador=nombre_jugador,
-            nombre_robot=personaje
+            nombre_robot=personaje,
+            vida_maxima=self.vida_maxima,
+            puede_reaparecer=self.modo.permite_reaparecer,
         )
 
         # --- Robots remotos ---
@@ -141,11 +146,11 @@ class MultiplayerGame(BaseGame):
         self.tiempo_restante = self.tiempo_total
         self.ultimo_tick = time.time()
         self.game_over = False
-        self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
+        self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30)) # Posición y tamaño de HUD Timer
 
         # Turnos
         self.turn_manager = TurnManager(self)
-        self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2 - 80, 60))
+        self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2, 72)) # Posición y tamaño de HUD Turnos
         self.turnos_iniciados = False
         self.partida_iniciada = False
 
@@ -179,7 +184,11 @@ class MultiplayerGame(BaseGame):
             # Aviso inmediato del mapa en uso — así el cliente lo recarga
             # antes de que empiece a chocar contra tiles que no tiene.
             try:
-                _send_framed(conn, {"tipo": "mapa_init", "mapa_id": self.mapa_id})
+                _send_framed(conn, {
+                    "tipo": "mapa_init",
+                    "mapa_id": self.mapa_id,
+                    "modo_partida": self.modo_partida,
+                })
             except Exception:
                 pass
             threading.Thread(target=self._recibir_de_socket, args=(conn,), daemon=True).start()
@@ -267,6 +276,17 @@ class MultiplayerGame(BaseGame):
             "victima_dead": victima.health <= 0,
         })
 
+    def enviar_evento_muerte(self, atacante, victima):
+        """Solo debe llamarse desde el host (autoridad de daño)."""
+        if not self.host:
+            return
+        self.modo.registrar_muerte(victima, atacante)
+        self.enviar({
+            "tipo": "muerte",
+            "atacante": atacante,
+            "victima": victima.nombre_jugador,
+        })
+
     def _next_proy_id(self):
         self._proy_id_counter += 1
         return self._proy_id_counter
@@ -323,6 +343,8 @@ class MultiplayerGame(BaseGame):
                     nombre_jugador=jugador,
                     nombre_robot=msg.get("personaje", "default"),
                     es_remoto=True,
+                    vida_maxima=self.vida_maxima,
+                    puede_reaparecer=self.modo.permite_reaparecer,
                 )
                 r.target_x, r.target_y = r.x, r.y
                 r.is_dead = (msg.get("estado", "idle") == "death")
@@ -380,6 +402,17 @@ class MultiplayerGame(BaseGame):
             if victima_dead:
                 self.chat.agregar_mensaje(f"{victima} fue detonado por {atacante}!")
 
+        elif tipo == "muerte":
+            atacante = msg["atacante"]
+            victima_nombre = msg["victima"]
+            victima = None
+            if victima_nombre == self.nombre_jugador:
+                victima = self.robot
+            elif victima_nombre in self.robots_remotos:
+                victima = self.robots_remotos[victima_nombre]
+            if victima is not None:
+                self.modo.registrar_muerte(victima, atacante)
+
         elif tipo == "chat":
             jugador = msg.get("jugador")
             if jugador != self.nombre_jugador:
@@ -406,6 +439,18 @@ class MultiplayerGame(BaseGame):
                 nuevo_mapa = msg.get("mapa_id", "parque")
                 if nuevo_mapa != self.mapa_id:
                     self.cargar_mapa(nuevo_mapa)
+                nuevo_modo = msg.get("modo_partida")
+                if nuevo_modo and nuevo_modo != self.modo_partida:
+                    self.modo_partida = nuevo_modo
+                    self.modo = crear_modo(nuevo_modo, self)
+                    self.vida_maxima = self.modo.vida_maxima
+                    self.robot.vida_maxima = self.vida_maxima
+                    self.robot.health = self.vida_maxima
+                    self.robot.puede_reaparecer = self.modo.permite_reaparecer
+                    for r in self.robots_remotos.values():
+                        r.vida_maxima = self.vida_maxima
+                        r.health = self.vida_maxima
+                        r.puede_reaparecer = self.modo.permite_reaparecer
 
         elif tipo == "turno_sync":
             jugador = msg["jugador"]
@@ -496,8 +541,7 @@ class MultiplayerGame(BaseGame):
             self._procesar_mensajes_pendientes()
 
             if self.game_over:
-                etiqueta = {"puntos": "Puntaje", "muertes": "Muertes"}.get(self.modo_partida, "Puntaje")
-                volver_al_menu = self.mostrar_pantalla_final(etiqueta=etiqueta)
+                volver_al_menu = self.mostrar_pantalla_final(etiqueta=self.modo.etiqueta_podio())
                 self._cerrar_red()
                 return "menu" if volver_al_menu else None
 
@@ -562,6 +606,10 @@ class MultiplayerGame(BaseGame):
                         self.tiempo_restante = 0
                         self.game_over = True
                     self.enviar({"tipo": "timer", "restante": self.tiempo_restante})
+                if not self.game_over and self.modo.partida_terminada():
+                    self.tiempo_restante = 0
+                    self.game_over = True
+                    self.enviar({"tipo": "timer", "restante": 0})
 
             # --- Render ---
             self.draw_scene()
@@ -655,20 +703,21 @@ class MultiplayerGame(BaseGame):
             r.y += (ty - r.y) * factor
 
     def _calcular_podio(self):
-        """Agrupa jugadores por rango, respetando empates (mismo
-        puntaje/métrica = mismo podio). Genérico: no le importa si el
-        número es puntaje, muertes, o cualquier otra cosa que llenes en
-        self.puntajes."""
-        orden = sorted(self.puntajes.items(), key=lambda kv: kv[1], reverse=True)
-        podio = []  # [(rango, [(jugador, valor), ...]), ...]
-        for jugador, valor in orden:
-            if podio and podio[-1][1][0][1] == valor:
-                podio[-1][1].append((jugador, valor))
-            else:
-                rango = len(podio) + 1
-                podio.append((rango, [(jugador, valor)]))
-        return podio
-
+        # """Agrupa jugadores por rango, respetando empates (mismo
+        # puntaje/métrica = mismo podio). Genérico: no le importa si el
+        # número es puntaje, muertes, o cualquier otra cosa que llenes en
+        # self.puntajes."""
+        # orden = sorted(self.puntajes.items(), key=lambda kv: kv[1], reverse=True)
+        # podio = []  # [(rango, [(jugador, valor), ...]), ...]
+        # for jugador, valor in orden:
+        #     if podio and podio[-1][1][0][1] == valor:
+        #         podio[-1][1].append((jugador, valor))
+        #     else:
+        #         rango = len(podio) + 1
+        #         podio.append((rango, [(jugador, valor)]))
+        # return podio
+        return self.modo.podio()
+    
     def _robot_de(self, jugador):
         if jugador == self.nombre_jugador:
             return self.robot

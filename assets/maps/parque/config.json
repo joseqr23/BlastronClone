@@ -1,7 +1,7 @@
 {
   "nombre": "Parque",
   "plataformas": [
-            [0, 415, 325, 100], 
+    [0, 415, 325, 100], 
     [760, 415, 290, 100], 
     [330, 410, 6, 100], 
     [350, 415, 6, 100], 
@@ -37,5 +37,11 @@
   "laterales": [
     [1020, -15, 6, 432],
     [-55, -12, 27, 423]
+  ],
+  "plataformas_y_laterlaes_impenetrables": [
+
+  ],
+  "plataformas_y_laterlaes_dañinas": [
+
   ]
 }

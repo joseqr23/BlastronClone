@@ -1,3 +1,5 @@
+# core/game_modes/base_game.py
+
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from levels.map_loader import load_static_map, load_static_map_laterales

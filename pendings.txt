@@ -45,8 +45,51 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 Pendiente:
 
 1.- Agregar modo por muertes y last man standing >>> multi_Game.py esta un poco saturado, tal vez lo ideal seria separar logica para modos multijugador
-2.- 
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+Pendiente URGENTE:
+IMPLEMENTADO TANTO LAST MAN STANDING COMO POR MUERTES, PERO MUCHOS BUGS.
+1.- En muertes:
+    - La vida no esta sincronizada entre host y clientes, los puntajes deberian ser por muertes, no por "puntos de daño del arma"> es decir el hud debe ser por muertes. 1, 2, 3 etc
+2.- En last man standing
+    - No se esta respetando los 1000 de vida, y al morir, los robots reaparecen, cuando deberian simplemente ya no aparecer hasta que quede solo 1 y ese sea el ganador.
+      En el hud se podria colocar la vida restante de cada robot disminuyendo desde 1000, de paso calcular el ganador asi, el primero en morir obtiene el ultimo lugar y asi sucesivamente.
+      O incluso hacer una lista por orden de muerte, colocar al final al unico vivo y revertirla.
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Pendiente plataformas:
+Hola, actualmente tengo mis mapas de manera dinamica para que si agrego en 
+assets/maps/parque/config.json;fondo.png;musica.mp3 <<< este se genera de manera automatica, en el config solo guardo unicamente las cordenadas  tanto de las plataformas (lo que pisa el robot/ diseño de mapa) como los laterales, que son unicamente los que estan en los bordes de los mapas. estos tienen las siguientes configuraciones:
+1.- Plataformas: el robot puede saltar sobre ellas y pisarlas ahi tiene un comportamiento solido, pero si salta de lado o desde arriba NO, las traspasa, las plataformas estan pensadas para que el robot unicamente las pise y pueda saltar sobre ellas de una en otra. Aqui justamente hay un "bug" que es natural por decirlo asi, y es que si creo una plataforma con mucho ancho y altura, y el robot pasa sobre ella, este automaticamente se teletransportara hacia la parte superior de la plataforma, digo que esta bien porque si agrego una restriccion de que sea una pared, ya no podra saltar sobre estas.
+Con respecto a las armas es totalmente distinto, ningun arma puede traspasar ninguna plataforma creada, ni de arriba, ni de abajo, ni de los lados, funciona como una pared total, y si se le lanza un objeto que tiene rebote, como una granada, esta rebotara, no se detendra de golpe, sino que rebotara, sin importar la fuerza u otra cosa.
+2.- Laterales: los laterales basicamente hacen lo contrario, detienen a los robots para que no traspasen el mapa, pero a las armas no, las armas traspasan totalmente los laterales, pero detiene a los robots como una pared tambien.
+Ten en cuenta algo: 
+Si pusiera como pared las plataformas, los robots al topar la pared automaticamente se teletransportarian a lo mas alto de esa pared.
+Lo que quiero es implementar lo siguiente:
+1.-  "plataformas_y_laterlaes_impenetrables" > Esto basicamente como su nombre lo dice, serian paredes que impidan tanto el traspaso de armas (caso de chocar rebotarian) (ya esta implementado en plataforma) & impedir el traspaso de robots al tocar la pared se chocan, no se teletransortan ni traspasan (ya esta implementado en laterales) 
+2.-  "plataformas_y_laterlaes_dañinas" > Esto unicamente son plataformas que hacen daño, el daño mismo se puede definir en otro atributo, como por ejemplo:
+"plataformas_y_laterlaes_dañinas_daño", esta pensado mas que nada para cuando el robot caiga al precipicio o toque una zona del mapa que no debe.
+
+
+
+
+
+
+2.- Agregar "efecto shake" a ciertos mapas y armas.
 3.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
+
+
+
+
+
+
+
+
+
 
 
 2.- Intentar hacer grande la pantalla 

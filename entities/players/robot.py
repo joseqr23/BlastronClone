@@ -16,12 +16,14 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False):
+    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
         self.nombre_robot = nombre_robot
         self.es_remoto = es_remoto
+        self.vida_maxima = vida_maxima
+        self.puede_reaparecer = puede_reaparecer
         self.width = 60
         self.height = 90
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
@@ -72,7 +74,7 @@ class Robot:
         self.jump_power = 15
         self.gravity = 1
         self.speed = 2.5
-        self.health = 200
+        self.health = self.vida_maxima
         self.is_dead = False
         self.dead_timer = 0
         self.current_animation = "idle"
@@ -171,7 +173,7 @@ class Robot:
                 if self.frame_index < len(self.animations["death"]) - 1:
                     self.frame_index += 1
             # Reinicia tras 2 segundos muerto
-            if pygame.time.get_ticks() - self.dead_timer > 2000:
+            if self.puede_reaparecer and pygame.time.get_ticks() - self.dead_timer > 2000:
                 self.reset()
             self.image = self.animations["death"][self.frame_index]
             if not self.facing_right:
@@ -198,7 +200,7 @@ class Robot:
         # Barra de vida
         bar_width = 60
         bar_height = 10
-        health_ratio = max(self.health / 200, 0)
+        health_ratio = max(self.health / self.vida_maxima, 0)
         health_color = (200, 0, 0) if self.health < 60 else (0, 200, 0)
         pygame.draw.rect(pantalla, (50, 50, 50), (self.x, self.y - 15, bar_width, bar_height))
         pygame.draw.rect(pantalla, health_color, (self.x, self.y - 15, bar_width * health_ratio, bar_height))
@@ -218,12 +220,56 @@ class Robot:
         elif self.mensaje_chat:
             self.mensaje_chat = None
 
-    def draw_death_message(self, pantalla, fuente):
-        if self.is_dead:
-            fuente_grande = pygame.font.SysFont(None, 40)
-            texto = fuente_grande.render(f"¡{self.nombre_jugador} ha sido detonado!", True, (255, 0, 0))
-            rect = texto.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 200))
-            pantalla.blit(texto, rect)
+    def draw_death_message(self, pantalla, fuente, duracion_ms=3000):
+        if not self.is_dead:
+            return
+        transcurrido = pygame.time.get_ticks() - self.dead_timer
+        if transcurrido >= duracion_ms:
+            return
+
+        fuente_grande = pygame.font.SysFont(None, 40, bold=True) # Tamaño de mensaje "Ha sido detonado"
+        texto = f"¡{self.nombre_jugador} ha sido detonado!"
+
+        # Fade-in rápido (200ms) y fade-out al final (500ms)
+        fade_in = min(1.0, transcurrido / 200)
+        restante = duracion_ms - transcurrido
+        fade_out = min(1.0, restante / 500)
+        alpha = int(255 * min(fade_in, fade_out))
+
+        color_texto = (255, 60, 60)
+        color_borde = (0, 0, 0)
+
+        render_texto = fuente_grande.render(texto, True, color_texto)
+        render_borde = fuente_grande.render(texto, True, color_borde)
+
+        ancho, alto = render_texto.get_size()
+        padding_x, padding_y = 24, 14
+        superficie = pygame.Surface((ancho + padding_x * 2, alto + padding_y * 2), pygame.SRCALPHA)
+
+        # Fondo oscuro translúcido con borde rojo — se lee bien sobre
+        # cualquier fondo de mapa.
+        pygame.draw.rect(superficie, (20, 20, 20, 160), superficie.get_rect(), border_radius=12)
+        pygame.draw.rect(superficie, (255, 60, 60, 200), superficie.get_rect(), width=2, border_radius=12)
+
+        centro = (superficie.get_width() // 2, superficie.get_height() // 2)
+        grosor = 2
+        for dx in (-grosor, 0, grosor):
+            for dy in (-grosor, 0, grosor):
+                if dx == 0 and dy == 0:
+                    continue
+                superficie.blit(render_borde, render_borde.get_rect(center=(centro[0] + dx, centro[1] + dy)))
+        superficie.blit(render_texto, render_texto.get_rect(center=centro))
+
+        superficie.set_alpha(alpha)
+
+        # Pequeño "pop" de escala al aparecer
+        escala = 0.85 + 0.15 * fade_in
+        if escala != 1.0:
+            nuevo_tam = (max(1, int(superficie.get_width() * escala)), max(1, int(superficie.get_height() * escala)))
+            superficie = pygame.transform.smoothscale(superficie, nuevo_tam)
+
+        rect = superficie.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 0)) # >> -0 << es para la posicion del mensaje "ha sido detonado"   
+        pantalla.blit(superficie, rect)
 
     def get_centro(self):
         return (self.x + self.width // 2, self.y + self.height // 2)

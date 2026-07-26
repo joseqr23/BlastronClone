@@ -3,7 +3,7 @@ import pygame
 from entities.players.robot import Robot
 from utils.weapon_loader import cargar_armas
 from settings import ANCHO
-
+import math
 
 def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
     """Dibuja una corona simple (sin depender de ninguna imagen) junto al
@@ -299,9 +299,9 @@ class HUDPuntajes:
 
 
 class HUDPuntajesMultiplayer:
-    """Marcador de puntajes para el modo multijugador. Ordenado de mayor a
-    menor; el primer lugar siempre lleva una corona al lado del nombre."""
-
+    """Marcador para multijugador. Ordenado de mayor a menor según lo que
+    defina el modo de partida activo (puntaje, muertes, o vida restante
+    en last man standing); el primer lugar lleva corona."""
     def __init__(self, game, posicion=(10, 10)):
         self.game = game
         self.pos = posicion
@@ -309,31 +309,31 @@ class HUDPuntajesMultiplayer:
         self.font_title = pygame.font.SysFont("Arial", 20, bold=True)
 
     def _entradas(self):
+        valores = self.game.modo.valores_actuales()
         entradas = []
-        for jugador, score in self.game.puntajes.items():
+        for jugador, valor in valores.items():
             if self.game.robot and self.game.robot.nombre_jugador == jugador:
                 robot = self.game.robot
             else:
                 robot = self.game.robots_remotos.get(jugador)
             color = getattr(robot, "color_nombre", (0, 0, 0)) if robot else (0, 0, 0)
-            entradas.append((jugador, score, color))
+            entradas.append((jugador, valor, color))
         entradas.sort(key=lambda e: e[1], reverse=True)
         return entradas
 
     def draw(self, pantalla):
         x, y = self.pos
-        titulo = self.font_title.render("Puntuación", True, (0, 0, 0))
+        titulo = self.font_title.render(self.game.modo.etiqueta_actual(), True, (0, 0, 0))
         pantalla.blit(titulo, (x, y))
         y += 25
-        for i, (jugador, score, color) in enumerate(self._entradas()):
+        for i, (jugador, valor, color) in enumerate(self._entradas()):
             text_x = x
             if i == 0:
                 _draw_crown(pantalla, x, y - 2)
                 text_x = x + 20
-            texto = self.font.render(f"{jugador}: {score}", True, color)
+            texto = self.font.render(f"{jugador}: {valor}", True, color)
             pantalla.blit(texto, (text_x, y))
             y += 20
-
 
 class HUDTimer:
     def __init__(self, game, duracion=180, posicion=(400, 10)):
@@ -342,21 +342,72 @@ class HUDTimer:
         self.posicion = posicion
         self.font = pygame.font.SysFont("Arial", 26, bold=True)
 
+    def _dibujar_reloj(self, superficie, cx, cy, radio, color):
+        pygame.draw.circle(superficie, color, (cx, cy), radio, width=2)
+        # Manecillas puramente decorativas (no marcan la hora real).
+        pygame.draw.line(superficie, color, (cx, cy), (cx, cy - radio + 3), 2)
+        pygame.draw.line(superficie, color, (cx, cy), (cx + radio - 5, cy), 2)
+
     def draw(self, pantalla):
         restante = max(0, self.game.tiempo_restante)
         minutos = restante // 60
         segundos = restante % 60
         texto = f"{minutos:02}:{segundos:02}"
+
         if restante <= 10:
-            color = (255, 0, 0)
+            color = (255, 60, 60)
         elif restante <= 30:
             color = (255, 165, 0)
         else:
-            color = (0, 0, 0)
-        render = self.font.render(texto, True, color)
-        rect = render.get_rect(center=self.posicion)
-        pantalla.blit(render, rect)
+            color = (255, 255, 255)
 
+        # Pulso de urgencia en los últimos 10 segundos
+        escala = 1.0
+        if restante <= 10:
+            pulso = 0.5 + 0.5 * math.sin(pygame.time.get_ticks() / 150)
+            escala = 1.0 + pulso * 0.12
+
+        render_texto = self.font.render(texto, True, color)
+        render_borde = self.font.render(texto, True, (0, 0, 0))
+
+        radio_reloj = 14
+        espacio_icono = radio_reloj * 2 + 10
+        ancho_txt, alto_txt = render_texto.get_size()
+        padding_x, padding_y = 16, 10
+        ancho_total = espacio_icono + ancho_txt + padding_x * 2
+        alto_total = max(alto_txt, radio_reloj * 2) + padding_y * 2
+
+        superficie = pygame.Surface((ancho_total, alto_total), pygame.SRCALPHA)
+        panel_rect = superficie.get_rect()
+        pygame.draw.rect(superficie, (20, 20, 20, 170), panel_rect, border_radius=14)
+        pygame.draw.rect(superficie, (*color, 220), panel_rect, width=2, border_radius=14)
+
+        cy = alto_total // 2
+        self._dibujar_reloj(superficie, padding_x + radio_reloj, cy, radio_reloj, color)
+
+        texto_x = padding_x + espacio_icono
+        centro_texto = (texto_x + ancho_txt // 2, cy)
+        grosor = 2
+        for dx in (-grosor, 0, grosor):
+            for dy in (-grosor, 0, grosor):
+                if dx == 0 and dy == 0:
+                    continue
+                superficie.blit(render_borde, render_borde.get_rect(center=(centro_texto[0] + dx, centro_texto[1] + dy)))
+        superficie.blit(render_texto, render_texto.get_rect(center=centro_texto))
+
+        # Barra de progreso fina abajo, con la fracción de tiempo restante.
+        fraccion = restante / self.duracion if self.duracion else 0
+        barra_y = alto_total - 6
+        barra_ancho = ancho_total - padding_x
+        pygame.draw.rect(superficie, (255, 255, 255, 40), (padding_x // 2, barra_y, barra_ancho, 4), border_radius=2)
+        pygame.draw.rect(superficie, (*color, 220), (padding_x // 2, barra_y, int(barra_ancho * fraccion), 4), border_radius=2)
+
+        if escala != 1.0:
+            nuevo_tam = (max(1, int(ancho_total * escala)), max(1, int(alto_total * escala)))
+            superficie = pygame.transform.smoothscale(superficie, nuevo_tam)
+
+        rect = superficie.get_rect(center=self.posicion)
+        pantalla.blit(superficie, rect)
 
 class HUDTurnos:
     """
@@ -371,22 +422,37 @@ class HUDTurnos:
         self.font = pygame.font.SysFont("Arial", 20, bold=True)
         self.pos = posicion
 
+    def _dibujar_con_borde(self, pantalla, texto, centro, color, color_borde=(0, 0, 0), grosor=2):
+        render_borde = self.font.render(texto, True, color_borde)
+        render = self.font.render(texto, True, color)
+        rect = render.get_rect(center=centro)
+        for dx in (-grosor, 0, grosor):
+            for dy in (-grosor, 0, grosor):
+                if dx == 0 and dy == 0:
+                    continue
+                pantalla.blit(render_borde, render_borde.get_rect(center=(centro[0] + dx, centro[1] + dy)))
+        pantalla.blit(render, rect)
+
     def draw(self, pantalla):
-        x, y = self.pos
         jugador = self.tm.jugador_actual()
         if not jugador:
             return
         tiempo = max(0, self.tm.tiempo_restante())
         fase = getattr(self.tm, "fase", "turno")
-        if fase == "post_disparo":
-            color = (255, 140, 0)
-            sufijo = ""
-        elif fase == "cooldown":
-            color = (200, 100, 100)
-            sufijo = ""
+        es_mi_turno = jugador == getattr(self.tm.game, "nombre_jugador", None)
+
+        if es_mi_turno:
+            color = (255, 255, 255)
+            texto = f"Tu turno ({tiempo})"
         else:
-            color = (255, 200, 0)
-            sufijo = ""
-        texto = f"Turno de {jugador} ({tiempo}){sufijo}"
-        render = self.font.render(texto, True, color)
-        pantalla.blit(render, (x, y))
+            if fase == "post_disparo":
+                color = (237, 65, 20)
+            elif fase == "cooldown":
+                color = (237, 65, 20)
+            else:
+                color = (200, 192, 10)
+            texto = f"Turno de {jugador} ({tiempo})"
+
+        self._dibujar_con_borde(pantalla, texto, self.pos, color)
+
+
