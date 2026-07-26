@@ -301,12 +301,13 @@ class HUDPuntajes:
 class HUDPuntajesMultiplayer:
     """Marcador para multijugador. Ordenado de mayor a menor según lo que
     defina el modo de partida activo (puntaje, muertes, o vida restante
-    en last man standing); el primer lugar lleva corona."""
+    en last man standing); el primer lugar lleva corona, y tu propia
+    fila queda resaltada."""
     def __init__(self, game, posicion=(10, 10)):
         self.game = game
         self.pos = posicion
-        self.font = pygame.font.SysFont("Arial", 17, bold=True)
-        self.font_title = pygame.font.SysFont("Arial", 20, bold=True)
+        self.font = pygame.font.SysFont("Arial", 16, bold=True)
+        self.font_title = pygame.font.SysFont("Arial", 19, bold=True)
 
     def _entradas(self):
         valores = self.game.modo.valores_actuales()
@@ -316,24 +317,62 @@ class HUDPuntajesMultiplayer:
                 robot = self.game.robot
             else:
                 robot = self.game.robots_remotos.get(jugador)
-            color = getattr(robot, "color_nombre", (0, 0, 0)) if robot else (0, 0, 0)
+            color = getattr(robot, "color_nombre", (255, 255, 255)) if robot else (255, 255, 255)
             entradas.append((jugador, valor, color))
         entradas.sort(key=lambda e: e[1], reverse=True)
         return entradas
 
+    def _texto_con_borde(self, superficie, texto, pos, color, fuente):
+        render_borde = fuente.render(texto, True, (0, 0, 0))
+        render = fuente.render(texto, True, color)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+                superficie.blit(render_borde, (pos[0] + dx, pos[1] + dy))
+        superficie.blit(render, pos)
+
     def draw(self, pantalla):
-        x, y = self.pos
-        titulo = self.font_title.render(self.game.modo.etiqueta_actual(), True, (0, 0, 0))
-        pantalla.blit(titulo, (x, y))
-        y += 25
-        for i, (jugador, valor, color) in enumerate(self._entradas()):
-            text_x = x
+        entradas = self._entradas()
+        if not entradas:
+            return
+
+        max_valor = max((abs(v) for _, v, _ in entradas), default=1) or 1
+        alto_fila = 26
+        ancho_panel = 220
+        alto_panel = 34 + alto_fila * len(entradas) + 8
+
+        superficie = pygame.Surface((ancho_panel, alto_panel), pygame.SRCALPHA)
+        pygame.draw.rect(superficie, (20, 20, 20, 160), superficie.get_rect(), border_radius=12)
+        pygame.draw.rect(superficie, (255, 215, 0, 200), superficie.get_rect(), width=2, border_radius=12)
+
+        self._texto_con_borde(superficie, self.game.modo.etiqueta_actual(), (14, 8), (255, 255, 255), self.font_title)
+
+        y = 34
+        for i, (jugador, valor, color) in enumerate(entradas):
+            es_yo = jugador == self.game.nombre_jugador
+            fila_rect = pygame.Rect(6, y, ancho_panel - 12, alto_fila - 4)
+            if es_yo:
+                pygame.draw.rect(superficie, (255, 255, 255, 35), fila_rect, border_radius=8)
+
+            text_x = 12
             if i == 0:
-                _draw_crown(pantalla, x, y - 2)
-                text_x = x + 20
-            texto = self.font.render(f"{jugador}: {valor}", True, color)
-            pantalla.blit(texto, (text_x, y))
-            y += 20
+                _draw_crown(superficie, text_x, y - 1)
+                text_x += 20
+
+            nombre = f"{jugador}{' (Tú)' if es_yo else ''}"
+            self._texto_con_borde(superficie, f"{nombre}: {valor}", (text_x, y), color, self.font)
+
+            # Mini barra proporcional al valor más alto de la lista
+            barra_y = y + alto_fila - 8
+            barra_ancho_total = ancho_panel - text_x - 12
+            fraccion = min(1.0, abs(valor) / max_valor)
+            pygame.draw.rect(superficie, (255, 255, 255, 40), (text_x, barra_y, barra_ancho_total, 4), border_radius=2)
+            pygame.draw.rect(superficie, (*color, 220), (text_x, barra_y, int(barra_ancho_total * fraccion), 4), border_radius=2)
+
+            y += alto_fila
+
+        pantalla.blit(superficie, self.pos)
 
 class HUDTimer:
     def __init__(self, game, duracion=180, posicion=(400, 10)):
