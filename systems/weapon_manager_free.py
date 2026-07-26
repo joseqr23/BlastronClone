@@ -32,24 +32,30 @@ class WeaponManager:
     # Munición
     # ------------------------------------------------------------------
     def tiene_municion(self, arma, config):
-        limite = config.get("municion")
-        if limite is None:
-            return True
-        restante = self.municion_restante.setdefault(arma, limite)
-        return restante > 0
+        # limite = config.get("municion")
+        # if limite is None:
+        #     return True
+        # restante = self.municion_restante.setdefault(arma, limite)
+        # return restante > 0
+        return True  # Modo libre: munición infinita para probar armas sin restricciones.
 
     def consumir_municion(self, arma, config):
-        if config.get("municion") is None:
-            return
-        actual = self.municion_restante.get(arma, config.get("municion"))
-        self.municion_restante[arma] = max(0, actual - 1)
+        # if config.get("municion") is None:
+        #     return
+        # actual = self.municion_restante.get(arma, config.get("municion"))
+        # self.municion_restante[arma] = max(0, actual - 1)
+        return  # No se descuenta nada en modo libre.
 
     def municion_actual(self, arma):
-        """Usado por el HUD. None = munición ilimitada (no mostrar nada)."""
-        config = config_arma(arma)
-        if not config or config.get("municion") is None:
-            return None
-        return self.municion_restante.get(arma, config.get("municion"))
+        # """Usado por el HUD. None = munición ilimitada (no mostrar nada)."""
+        # config = config_arma(arma)
+        # if not config or config.get("municion") is None:
+        #     return None
+        # return self.municion_restante.get(arma, config.get("municion"))
+        return None  # Sin límite — el HUD no debería mostrar contador aquí.
+
+
+
 
     # ------------------------------------------------------------------
     # Disparo

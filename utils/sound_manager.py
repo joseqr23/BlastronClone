@@ -107,6 +107,21 @@ class SoundManager:
         except Exception:
             pass
 
+    # Mutea música
+    def alternar_mute(self):
+        """Alterna silencio general: pausa/reanuda la música de fondo Y
+        evita que se reproduzcan nuevos efectos mientras esté muteado
+        (los que ya sonaron, terminan solos)."""
+        self.habilitado = not self.habilitado
+        try:
+            if not self.habilitado:
+                pygame.mixer.music.pause()
+            else:
+                pygame.mixer.music.unpause()
+        except Exception:
+            pass
+        return self.habilitado
+
 
 # Instancia única compartida por todo el juego.
 sound_manager = SoundManager()

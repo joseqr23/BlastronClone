@@ -108,6 +108,13 @@ class MultiplayerGame(BaseGame):
         self.hud_manager = HUDManager(self)
         self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
+        
+        # Mutear
+        self.volver_al_menu = False
+        self.rect_volver_menu = None
+        self.rect_mute = None
+        self.fuente_botones = pygame.font.SysFont("Arial", 10, bold=True)
+
         self.mouse_click_sostenido = False
         self.font = pygame.font.SysFont("Arial", 16)
 
@@ -627,6 +634,15 @@ class MultiplayerGame(BaseGame):
             self.robot.draw_death_message(self.pantalla, self.fuente_muerte)
             for r in self.robots_remotos.values():
                 r.draw_death_message(self.pantalla, self.fuente_muerte)
+
+            self.rect_mute = pygame.Rect(ANCHO - 100, ALTO - 30, 90, 22)
+            muteado = not self.sound_manager.habilitado
+            color_mute = (150, 60, 60) if muteado else (60, 150, 90)
+            pygame.draw.rect(self.pantalla, color_mute, self.rect_mute, border_radius=8)
+            pygame.draw.rect(self.pantalla, (255, 255, 255), self.rect_mute, width=2, border_radius=8)
+            texto_mute = self.fuente_botones.render("Muteado (M)" if muteado else "Sonido (M)", True, (255, 255, 255))
+            self.pantalla.blit(texto_mute, texto_mute.get_rect(center=self.rect_mute.center))
+
 
             pygame.display.flip()
             self.reloj.tick(60)

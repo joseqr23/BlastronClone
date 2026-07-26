@@ -18,6 +18,11 @@ class EventHandler:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_g and not self.game.chat.activo:
                     self.game.hud_armas.colapsado = not self.game.hud_armas.colapsado
+                elif evento.key == pygame.K_m and not self.game.chat.activo:
+                    self.game.sound_manager.alternar_mute()
+                elif evento.key == pygame.K_ESCAPE and not self.game.chat.activo:
+                    if hasattr(self.game, "volver_al_menu"):
+                        self.game.volver_al_menu = True
 
             # Chat
             self.game.chat.handle_event(evento)
@@ -31,9 +36,17 @@ class EventHandler:
                 else:
                     self.game.robot.arma_equipada = arma_seleccionada
 
-            # Disparo
+            # Click: botones propios de la pantalla (volver al menú,
+            # mute) tienen prioridad sobre el disparo, para que hacerles
+            # click no dispare el arma equipada por accidente.
             if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                if not self.game.mouse_click_sostenido:
+                rect_menu = getattr(self.game, "rect_volver_menu", None)
+                rect_mute = getattr(self.game, "rect_mute", None)
+                if rect_menu and rect_menu.collidepoint(evento.pos):
+                    self.game.volver_al_menu = True
+                elif rect_mute and rect_mute.collidepoint(evento.pos):
+                    self.game.sound_manager.alternar_mute()
+                elif not self.game.mouse_click_sostenido:
                     clic_sobre_hud = self.game.hud_armas.punto_sobre_hud(evento.pos)
                     if not clic_sobre_hud and self.game.robot.arma_equipada not in [None, 'nada']:
                         self.game.weapon_manager.disparar()

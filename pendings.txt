@@ -42,14 +42,11 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 
-1.- Añadir municion infinita en modo libre y un boton para regresar al menu tambien
-2.- Añadir un boton de mute o mutear con tecla M
-
-
 Pendiente:
-1.- Corregir colores en robots para que sea más dinamico, pasa que al iniciar una partida, los colores son actualmente aleatorios, los define (robot.py).
-Y a veces dos jugadores diferentes tienen el mismo color, cosa que es un error, porque se supone debe ser el diferenciador, tener en cuenta que el color tambien lo usa chat.py
 
+1.- Agregar modo por muertes y last man standing >>> multi_Game.py esta un poco saturado, tal vez lo ideal seria separar logica para modos multijugador
+2.- 
+3.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
 
 
 2.- Intentar hacer grande la pantalla 
