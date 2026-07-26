@@ -27,7 +27,7 @@
   "hitbox_ancho_proyectil": 0,
   "hitbox_alto_proyectil": 0,
   "hitbox_ancho_explosion": 60,
-  "hitbox_alto_explosion": 60,
+  "hitbox_alto_explosion": 80,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 40,

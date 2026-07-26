@@ -39,6 +39,15 @@ Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasar
 
 
 
+Pendiente con prioridad:
+1.- Separa Menu.py en archivos ya que actualemente tiene más de 700 lineas y mezcla tres responsabilidades distintas (estado/lógica de navegación, dibujo de pantalla principal, dibujo de configuración de host).
+Posibles:
+Puede ser separarlo en algún momento en
+ui/menu_principal.py 
+ui/menu_host_config.py 
+(o simplemente mover los métodos _draw_* a funciones sueltas que reciban self como parámetro)
+La recomendacion que me digass la aplicaré.
+
 
 
 Pendiente:
