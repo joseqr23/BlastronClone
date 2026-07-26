@@ -4,6 +4,7 @@ import traceback
 import pygame
 from utils.paths import resource_path
 from ui.menu import Menu
+from utils.sound_manager import sound_manager
 
 try:
     from settings import SCREEN_WIDTH, SCREEN_HEIGHT, CAPTION, FPS
@@ -53,6 +54,7 @@ def main():
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             pygame.RESIZABLE
         )
+        sound_manager.iniciar_musica("assets/sfx/inicio.mp3")
         menu = Menu(screen)
         seleccion = menu.run()
         if not seleccion:

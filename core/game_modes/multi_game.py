@@ -681,6 +681,7 @@ class MultiplayerGame(BaseGame):
             pygame.draw.line(self.pantalla, (255, 255, 200), (px, py - tam), (px, py + tam), 2)
 
     def mostrar_pantalla_final(self, etiqueta="Puntaje"):
+        self.sound_manager.iniciar_musica("assets/sfx/resultado.mp3")
         podio = self._calcular_podio()
         fuente_rango = pygame.font.SysFont("Arial", 28, bold=True)
         fuente_nombre = pygame.font.SysFont("Arial", 18, bold=True)
