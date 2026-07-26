@@ -2,7 +2,10 @@
 
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
-from levels.map_loader import load_static_map, load_static_map_laterales
+from levels.map_loader import (
+    load_static_map, load_static_map_laterales,
+    load_static_map_impenetrables, load_static_map_dañinas, cargar_dano_zonas_dañinas,
+)
 from ui.hud import HUDArmas, HUDPuntajes
 from ui.chat import Chat
 from systems.aim_indicator import AimIndicator
@@ -46,6 +49,9 @@ class BaseGame:
         self.mapa_id = mapa_id
         self.tiles = load_static_map(mapa_id)
         self.tiles_laterales = load_static_map_laterales(mapa_id)
+        self.tiles_impenetrables = load_static_map_impenetrables(mapa_id)
+        self.tiles_dañinas = load_static_map_dañinas(mapa_id)
+        self.dano_zonas = cargar_dano_zonas_dañinas(mapa_id)
         config_del_mapa = config_mapa(mapa_id) or {}
         ruta_fondo = config_del_mapa.get("_fondo_path", "assets/maps/fondo.png")
         self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
@@ -65,6 +71,10 @@ class BaseGame:
         for tile in self.tiles:
             tile.draw(self.pantalla)
         for tile in self.tiles_laterales:
+            tile.draw(self.pantalla)
+        for tile in self.tiles_impenetrables:
+            tile.draw(self.pantalla)    
+        for tile in self.tiles_dañinas:
             tile.draw(self.pantalla)
 
     def handle_events(self, event):

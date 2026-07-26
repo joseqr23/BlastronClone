@@ -268,7 +268,7 @@ class Robot:
             nuevo_tam = (max(1, int(superficie.get_width() * escala)), max(1, int(superficie.get_height() * escala)))
             superficie = pygame.transform.smoothscale(superficie, nuevo_tam)
 
-        rect = superficie.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 0)) # >> -0 << es para la posicion del mensaje "ha sido detonado"   
+        rect = superficie.get_rect(center=(pantalla.get_width() // 2, pantalla.get_height() // 2 - 20)) # >> -0 << es para la posicion del mensaje "ha sido detonado"   
         pantalla.blit(superficie, rect)
 
     def get_centro(self):

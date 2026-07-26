@@ -38,10 +38,12 @@
     [1020, -15, 6, 432],
     [-55, -12, 27, 423]
   ],
-  "plataformas_y_laterlaes_impenetrables": [
-
+    "plataformas_y_laterales_impenetrables": [
+    [394, 431, 276, 30],
+    [668, 432, 68, 10],
+    [705, 424, 73, 13]
   ],
-  "plataformas_y_laterlaes_dañinas": [
-
-  ]
+  "plataformas_y_laterales_dañinas": [
+  ],
+  "plataformas_y_laterales_dañinas_daño": 0
 }

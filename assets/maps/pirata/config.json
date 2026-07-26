@@ -2,13 +2,10 @@
   "nombre": "Pirata",
   "plataformas": [
     [1, 446, 996, 47],
-    [106, 387, 110, 15],
     [1, 274, 99, 15],
     [76, 325, 122, 11],
-    [0, 365, 70, 11],
     [55, 154, 38, 16],
     [56, 91, 194, 21],
-    [833, 379, 166, 16],
     [877, 289, 127, 17],
     [889, 199, 21, 10],
     [883, 240, 34, 11],
@@ -18,16 +15,22 @@
     [835, 67, 48, 12],
     [3, 231, 30, 10],
     [6, 184, 21, 12]
+
   ],
   "laterales": [
     [1020, -15, 6, 432],
     [-55, -12, 27, 423]
     
   ],
-  "plataformas_y_laterlaes_impenetrables": [
+  "plataformas_y_laterales_impenetrables": [
+    [191, 385, 27, 124],
+    [818, 400, 29, 104],
+    [-2, 367, 227, 18],
+    [817, 391, 183, 19]
+    
+  ],
+  "plataformas_y_laterales_dañinas": [
 
   ],
-  "plataformas_y_laterlaes_dañinas": [
-
-  ]
+  "plataformas_y_laterales_dañinas_daño": 1000
 }

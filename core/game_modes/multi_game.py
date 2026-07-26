@@ -36,7 +36,7 @@ from entities.weapons.proyectil import Proyectil
 from utils.weapon_loader import cargar_armas, config_arma
 from utils.sound_manager import sound_manager
 from core.game_modes.base_game import BaseGame
-from systems.collision import check_collisions, check_collisions_laterales_esquinas
+from systems.collision import check_collisions, check_collisions_laterales_esquinas, check_zonas_dañinas, check_colision_bloque_solido # Colisiones
 from systems.aim_indicator import AimIndicator
 from systems.weapon_manager import WeaponManager
 from systems.hud_manager import HUDManager
@@ -582,12 +582,21 @@ class MultiplayerGame(BaseGame):
             check_collisions(self.robot, self.tiles)
             check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)
 
+            check_colision_bloque_solido(self.robot, self.tiles_impenetrables)
+
             # --- Enviar estado local ---
             self.enviar_estado()
 
             # --- Robots remotos actualizados ANTES de usarlos para colisión ---
             self.robots_estaticos = list(self.robots_remotos.values())
 
+            if self.host:
+                for robot in [self.robot] + self.robots_estaticos:
+                    check_zonas_dañinas(
+                        robot, self.tiles_dañinas, self.dano_zonas,
+                        aplicar_dano_callback=self.weapon_manager.aplicar_dano,
+                    )
+                    
             # --- Armas: física real solo en host; en cliente no hace nada ---
             self.weapon_manager.update()
             self._sync_proyectiles()

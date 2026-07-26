@@ -2,7 +2,7 @@
 import pygame
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from entities.players.robot import Robot # Robots
-from systems.collision import check_collisions, check_collisions_laterales_esquinas # Colisiones
+from systems.collision import check_collisions, check_collisions_laterales_esquinas, check_zonas_dañinas, check_colision_bloque_solido # Colisiones
 from systems.aim_indicator import AimIndicator # Mira de armas
 from core.game_modes.base_game import BaseGame # Base de juego
 from ui.hud import HUDPuntajes # Hud
@@ -71,6 +71,9 @@ class FreeGame(BaseGame):
             # colisiones
             check_collisions(self.robot, self.tiles)
             check_collisions_laterales_esquinas(self.robot, self.tiles_laterales)
+
+            check_colision_bloque_solido(self.robot, self.tiles_impenetrables)
+            check_zonas_dañinas(self.robot, self.tiles_dañinas, self.dano_zonas)
 
             # armas
             self.weapon_manager.update()

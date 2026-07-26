@@ -367,33 +367,55 @@ COMPORTAMIENTOS = {
 # Física de rebote — misma lógica que tenía Granada, ahora reutilizable
 # por cualquier arma con comportamiento="rebote".
 # ----------------------------------------------------------------------
+def _lado_de_menor_solape(rect, tile_rect):
+    """Determina por qué lado 'entró' rect en tile_rect calculando cuál de
+    los 4 solapamientos posibles es el MENOR (técnica AABB "Minimum
+    Translation Vector") — ese es el lado real de contacto, sin importar
+    si el tile es alto y delgado (pared) o ancho y corto (plataforma)."""
+    solape_izquierda = rect.right - tile_rect.left
+    solape_derecha = tile_rect.right - rect.left
+    solape_arriba = rect.bottom - tile_rect.top
+    solape_abajo = tile_rect.bottom - rect.top
+
+    opciones = (
+        ("izquierda", solape_izquierda),
+        ("derecha", solape_derecha),
+        ("arriba", solape_arriba),
+        ("abajo", solape_abajo),
+    )
+    return min(opciones, key=lambda o: o[1])
+
 def _rebote_con_tiles(p, tiles):
-    rect = p.get_hitbox()
     umbral_suave = 1.0
     for tile in tiles:
-        if rect.colliderect(tile.rect):
-            velocidad_actual = max(abs(p.vel_x), abs(p.vel_y))
-            factor_rebote = p.friccion_rebote * 0.3 if velocidad_actual < umbral_suave else p.friccion_rebote
-            if p.vel_y >= 0 and rect.bottom <= tile.rect.bottom:
-                p.y = tile.rect.top - p.height
-                p.vel_y *= -factor_rebote
-            elif p.vel_y < 0 and rect.top <= tile.rect.bottom and rect.top >= tile.rect.bottom - 10:
-                p.y = tile.rect.bottom
-                p.vel_y *= -factor_rebote
-            elif abs(rect.right - tile.rect.left) < 10 and p.vel_x > 0:
-                p.x = tile.rect.left - p.width
-                p.vel_x *= -factor_rebote
-            elif abs(rect.left - tile.rect.right) < 10 and p.vel_x < 0:
-                p.x = tile.rect.right
-                p.vel_x *= -factor_rebote
-            if abs(p.vel_x) < 0.1:
-                p.vel_x = 0
-            elif abs(p.vel_x) < 0.5:
-                p.vel_x *= 0.5
-            if abs(p.vel_y) < 0.1:
-                p.vel_y = 0
-            elif abs(p.vel_y) < 0.5:
-                p.vel_y *= 0.5
+        rect = p.get_hitbox()          # ← recalculado en cada tile, no una sola vez
+        if not rect.colliderect(tile.rect):
+            continue
+        velocidad_actual = max(abs(p.vel_x), abs(p.vel_y))
+        factor_rebote = p.friccion_rebote * 0.3 if velocidad_actual < umbral_suave else p.friccion_rebote
+
+        lado, _ = _lado_de_menor_solape(rect, tile.rect)
+        if lado == "arriba":
+            p.y = tile.rect.top - p.height
+            p.vel_y *= -factor_rebote
+        elif lado == "abajo":
+            p.y = tile.rect.bottom
+            p.vel_y *= -factor_rebote
+        elif lado == "izquierda":
+            p.x = tile.rect.left - p.width
+            p.vel_x *= -factor_rebote
+        elif lado == "derecha":
+            p.x = tile.rect.right
+            p.vel_x *= -factor_rebote
+
+        if abs(p.vel_x) < 0.1:
+            p.vel_x = 0
+        elif abs(p.vel_x) < 0.5:
+            p.vel_x *= 0.5
+        if abs(p.vel_y) < 0.1:
+            p.vel_y = 0
+        elif abs(p.vel_y) < 0.5:
+            p.vel_y *= 0.5
 
 
 def _rebote_con_robot(p, robot):
@@ -432,15 +454,21 @@ def _rebote_con_robot(p, robot):
 # Proyectil.update, que corta el resto de la física una vez True).
 # ----------------------------------------------------------------------
 def _asentar_en_tiles(p, tiles):
-    rect = p.get_hitbox()
     for tile in tiles:
-        if rect.colliderect(tile.rect):
-            if p.vel_y >= 0:
-                p.y = tile.rect.top - p.height
-            p.vel_x = 0
-            p.vel_y = 0
-            p._detenida = True
-            return
+        rect = p.get_hitbox()          # ← recalculado en cada tile
+        if not rect.colliderect(tile.rect):
+            continue
+        lado, _ = _lado_de_menor_solape(rect, tile.rect)
+        if lado == "arriba" and p.vel_y >= 0:
+            p.y = tile.rect.top - p.height
+        elif lado == "izquierda":
+            p.x = tile.rect.left - p.width
+        elif lado == "derecha":
+            p.x = tile.rect.right
+        p.vel_x = 0
+        p.vel_y = 0
+        p._detenida = True
+        return
 
 
 def _revisar_proximidad(p, robots):

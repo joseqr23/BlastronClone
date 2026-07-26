@@ -229,7 +229,7 @@ class WeaponManager:
             candidatos = self._robots_para_colision(getattr(p, "owner", None))
             # La colisión/rebote/impacto contra tiles y TODOS los robots
             # ya ocurre dentro de p.update(), sub-paso por sub-paso.
-            p.update(self.game.tiles, candidatos)
+            p.update(self.game.tiles + self.game.tiles_impenetrables, candidatos)
             daño = p.daño
 
             # Proyectil decide TODO sobre a quién dañar (colisión,
