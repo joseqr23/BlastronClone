@@ -1,6 +1,7 @@
 # core/game_modes/base_game.py
 
 import pygame
+import random
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from levels.map_loader import (
     load_static_map, load_static_map_laterales,
@@ -23,6 +24,7 @@ class BaseGame:
         pygame.display.set_caption("Blastron Clone")
         self.reloj = pygame.time.Clock()
         self.sound_manager = sound_manager
+        self.superficie_mundo = pygame.Surface((ANCHO, ALTO)).convert()
         # Mapa — ver cargar_mapa() más abajo (también arranca la música
         # de ese mapa). En multijugador, el cliente arranca con el mapa
         # por defecto y lo reemplaza en cuanto el host le confirma cuál
@@ -66,16 +68,17 @@ class BaseGame:
     def run(self):
         raise NotImplementedError("Debes implementar este método en la subclase.")
 
-    def draw_scene(self):
-        self.pantalla.blit(self.fondo, (0, 0))
+    def draw_scene(self, superficie=None):
+        superficie = superficie or self.pantalla
+        superficie.blit(self.fondo, (0, 0))
         for tile in self.tiles:
-            tile.draw(self.pantalla)
+            tile.draw(superficie)
         for tile in self.tiles_laterales:
-            tile.draw(self.pantalla)
+            tile.draw(superficie)
         for tile in self.tiles_impenetrables:
-            tile.draw(self.pantalla)    
+            tile.draw(superficie)
         for tile in self.tiles_dañinas:
-            tile.draw(self.pantalla)
+            tile.draw(superficie)
 
     def handle_events(self, event):
         self.chat.handle_event(event)
@@ -83,3 +86,22 @@ class BaseGame:
     def draw_ui(self):
         self.hud_armas.draw(self.pantalla)
         self.chat.draw(self.pantalla)
+
+    def activar_shake(self, intensidad, duracion_ms):
+        ahora = pygame.time.get_ticks()
+        fin_actual = getattr(self, "_shake_inicio", 0) + getattr(self, "_shake_duracion", 0)
+        if ahora + duracion_ms > fin_actual:
+            self._shake_inicio = ahora
+            self._shake_duracion = duracion_ms
+            self._shake_intensidad = intensidad
+
+    def _offset_shake(self):
+        ahora = pygame.time.get_ticks()
+        inicio = getattr(self, "_shake_inicio", 0)
+        duracion = getattr(self, "_shake_duracion", 0)
+        transcurrido = ahora - inicio
+        if duracion <= 0 or transcurrido >= duracion:
+            return (0, 0)
+        progreso = 1 - (transcurrido / duracion)
+        mag = self._shake_intensidad * progreso
+        return (random.uniform(-mag, mag), random.uniform(-mag, mag))

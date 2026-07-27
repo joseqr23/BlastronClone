@@ -52,7 +52,15 @@ La recomendacion que me digass la aplicaré.
 
 Pendiente:
 
-1.- Agregar "efecto shake" a ciertos mapas y armas.
+
+1.- Agregar selector de mapa en free mode
+
+ 1.- Agregar "efecto shake" a ciertos mapas y armas. 
+que tan dificil es ? de momento no lo hare en mapa, mi idea es en un futuro agregar tal vez un video de fondo o gif para darle mas " realismo" o efectos tipo lluvia (solo seria un gif o video sobre puesto encima de la pantalla, tambien con efecto de rallo que tal vez genere un destello para darle mas realismo y en mapas asi o en mapas que son barcos, deberian estar en constante movimiento.)
+
+
+
+Pero quiero saber ahora mismo si se puede con las armas?
 2.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
 
 3.- Intentar hacer grande la pantalla 

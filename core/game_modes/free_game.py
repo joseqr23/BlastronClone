@@ -79,15 +79,16 @@ class FreeGame(BaseGame):
             self.weapon_manager.update()
 
             # --- Render ---
-            self.draw_scene()
+            superficie = self.superficie_mundo
+            self.draw_scene(superficie)
 
             # personajes
-            self.robot.draw(self.pantalla)
+            self.robot.draw(superficie)
             for r in self.robots_estaticos:
-                r.draw(self.pantalla)
+                r.draw(superficie)
 
             # armas
-            self.weapon_manager.draw(self.pantalla)
+            self.weapon_manager.draw(superficie)
 
             # indicador de mira
             if self.robot.arma_equipada not in [None, 'nada']:
@@ -96,7 +97,7 @@ class FreeGame(BaseGame):
                 self.aim.update(mouse_pos)
                 config = config_arma(self.robot.arma_equipada)
                 estilo_mira = config.get("estilo_mira", "apuntar") if config else "apuntar"
-                self.aim.draw(self.pantalla, estilo=estilo_mira)
+                self.aim.draw(superficie, estilo=estilo_mira)
                 municion = self.weapon_manager.municion_actual(self.robot.arma_equipada)
                 sin_municion = municion is not None and municion <= 0
                 if config and not sin_municion:
@@ -111,12 +112,15 @@ class FreeGame(BaseGame):
                     )
                     if not tiene_proyectil_activo:
                         self.aim.draw_arma_sostenida(
-                            self.pantalla, config.get("_weapon_img"), mouse_pos,
+                            superficie, config.get("_weapon_img"), mouse_pos,
                             posicion_x=config.get("posicion_ancho_arma_sostenida", 0),
                             posicion_y=config.get("posicion_alto_arma_sostenida", 0),
                         )
 
-            # HUDs
+            offset = self._offset_shake()
+            self.pantalla.blit(superficie, offset)
+
+            # HUDs (sin shake)
             self.hud_manager.draw(self.pantalla)
 
             # Mensajes de muerte
@@ -127,9 +131,7 @@ class FreeGame(BaseGame):
             # Chat
             self.chat.draw(self.pantalla)
 
-            # Botones de esquina: volver al menú y mute (abajo a la
-            # derecha, para no taparse con el HUD de armas que vive
-            # arriba a la derecha)
+            # Botones de esquina: volver al menú y mute
             self.rect_volver_menu = pygame.Rect(ANCHO - 100, ALTO - 60, 90, 22)
             pygame.draw.rect(self.pantalla, (60, 100, 180), self.rect_volver_menu, border_radius=8)
             pygame.draw.rect(self.pantalla, (255, 255, 255), self.rect_volver_menu, width=2, border_radius=8)

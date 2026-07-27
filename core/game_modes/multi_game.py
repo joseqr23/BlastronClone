@@ -522,6 +522,10 @@ class MultiplayerGame(BaseGame):
             proxy._facing_right = item.get("facing_right", proxy._facing_right)
             if proxy.explotado and not explotado_antes:
                 sound_manager.explosion(item["tipo"])
+                self.activar_shake(
+                    proxy.config.get("sacudida_intensidad", 0),
+                    proxy.config.get("sacudida_duracion_ms", 0),
+                )
 
         self.proyectiles = [p for p in self.proyectiles if getattr(p, "proj_id", None) in ids_recibidos]
 
@@ -621,18 +625,19 @@ class MultiplayerGame(BaseGame):
                     self.enviar({"tipo": "timer", "restante": 0})
 
             # --- Render ---
-            self.draw_scene()
-            self.robot.draw(self.pantalla)
+            superficie = self.superficie_mundo
+            self.draw_scene(superficie)
+            self.robot.draw(superficie)
             for r in self.robots_remotos.values():
-                r.draw(self.pantalla)
-            self.weapon_manager.draw(self.pantalla)
+                r.draw(superficie)
+            self.weapon_manager.draw(superficie)
             if self.robot.arma_equipada not in [None, "nada"]:
                 mouse_pos = pygame.mouse.get_pos()
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 config = config_arma(self.robot.arma_equipada)
                 estilo_mira = config.get("estilo_mira", "apuntar") if config else "apuntar"
-                self.aim.draw(self.pantalla, estilo=estilo_mira)
+                self.aim.draw(superficie, estilo=estilo_mira)
                 municion = self.weapon_manager.municion_actual(self.robot.arma_equipada)
                 sin_municion = municion is not None and municion <= 0
                 if config and not sin_municion:
@@ -647,7 +652,7 @@ class MultiplayerGame(BaseGame):
                     )
                     if not tiene_proyectil_activo:
                         self.aim.draw_arma_sostenida(
-                            self.pantalla, config.get("_weapon_img"), mouse_pos,
+                            superficie, config.get("_weapon_img"), mouse_pos,
                             posicion_x=config.get("posicion_ancho_arma_sostenida", 0),
                             posicion_y=config.get("posicion_alto_arma_sostenida", 0),
                         )
@@ -657,7 +662,7 @@ class MultiplayerGame(BaseGame):
                 arma_remota = getattr(r, "arma_equipada", None)
                 if arma_remota in (None, "nada"):
                     continue
-                if getattr(r, "sin_municion", False):   # <-- nuevo
+                if getattr(r, "sin_municion", False):
                     continue
                 config_r = config_arma(arma_remota)
                 if not config_r:
@@ -680,10 +685,14 @@ class MultiplayerGame(BaseGame):
                 )
                 self.aim_remoto.origen = origen_r
                 self.aim_remoto.draw_arma_sostenida(
-                    self.pantalla, config_r.get("_weapon_img"), mouse_virtual,
+                    superficie, config_r.get("_weapon_img"), mouse_virtual,
                     posicion_x=config_r.get("posicion_ancho_arma_sostenida", 0),
                     posicion_y=config_r.get("posicion_alto_arma_sostenida", 0),
                 )
+
+            offset = self._offset_shake()
+            self.pantalla.blit(superficie, offset)
+
             self.hud_manager.draw(self.pantalla)
             self.chat.draw(self.pantalla)
             self.timer_hud.draw(self.pantalla)
@@ -699,7 +708,6 @@ class MultiplayerGame(BaseGame):
             pygame.draw.rect(self.pantalla, (255, 255, 255), self.rect_mute, width=2, border_radius=8)
             texto_mute = self.fuente_botones.render("Muteado (M)" if muteado else "Sonido (M)", True, (255, 255, 255))
             self.pantalla.blit(texto_mute, texto_mute.get_rect(center=self.rect_mute.center))
-
 
             pygame.display.flip()
             self.reloj.tick(60)

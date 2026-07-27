@@ -232,6 +232,14 @@ class WeaponManager:
             p.update(self.game.tiles + self.game.tiles_impenetrables, candidatos)
             daño = p.daño
 
+            # Aplicar shake al disparar arma
+            if p.explotado and not getattr(p, "_shake_aplicado", False):
+                p._shake_aplicado = True
+                self.game.activar_shake(
+                    p.config.get("sacudida_intensidad", 0),
+                    p.config.get("sacudida_duracion_ms", 0),
+                )
+
             # Proyectil decide TODO sobre a quién dañar (colisión,
             # exclusión de dueño, ya-dañados). Aquí solo se aplica.
             for robot in p.robots_afectados(candidatos):
