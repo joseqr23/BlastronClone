@@ -63,6 +63,7 @@ import os
 import json
 import pygame
 from utils.loader import load_spritesheet
+from utils.paths import resource_path # Para exportar en main.exe PyInstaller
 
 _CACHE = None
 
@@ -97,7 +98,8 @@ def cargar_armas(forzar_recarga=False):
     if _CACHE is not None and not forzar_recarga:
         return _CACHE
 
-    base = "assets/weapons"
+    # base = "assets/weapons"
+    base = resource_path("assets", "weapons") # Para importar en main.exe PyInstaller
     armas = {}
     if not os.path.isdir(base):
         print(f"[Armas] No existe la carpeta '{base}'")

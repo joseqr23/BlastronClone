@@ -4,6 +4,7 @@ from entities.players.robot import Robot
 from utils.weapon_loader import cargar_armas
 from settings import ANCHO
 import math
+from utils.paths import resource_path # Para exportar en main.exe PyInstaller
 
 def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
     """Dibuja una corona simple (sin depender de ninguna imagen) junto al
@@ -132,7 +133,8 @@ class HUDArmas:
         for arma in self.armas:
             imagen = None
             try:
-                imagen = pygame.image.load(f"assets/hud/{arma}.png").convert_alpha()
+                # imagen = pygame.image.load(f"assets/hud/{arma}.png").convert_alpha()
+                imagen = pygame.image.load(resource_path(f"assets/hud/{arma}.png")).convert_alpha() # Para exportar en main.exe PyInstaller
                 imagen = pygame.transform.smoothscale(imagen, (40, 40))
             except Exception:
                 # Sin ícono propio en assets/hud/: usamos el primer frame

@@ -2,15 +2,15 @@
 from levels.tile import Tile
 from utils.mapa_loader import config_mapa
 
-# COLOR_POR_DEFECTO_PLATAFORMAS = None #(0,255,0)
-# COLOR_POR_DEFECTO_LATERALES = None #(255, 0, 0)
-# COLOR_POR_DEFECTO_IMPENETRABLES= None #(255, 255, 0)
-# COLOR_POR_DEFECTO_DAÑINAS = None #(0, 0, 255)
+COLOR_POR_DEFECTO_PLATAFORMAS = None #(0,255,0)
+COLOR_POR_DEFECTO_LATERALES = None #(255, 0, 0)
+COLOR_POR_DEFECTO_IMPENETRABLES= None #(255, 255, 0)
+COLOR_POR_DEFECTO_DAÑINAS = None #(0, 0, 255)
 
-COLOR_POR_DEFECTO_PLATAFORMAS = (0,255,0)
-COLOR_POR_DEFECTO_LATERALES = (255, 0, 0)
-COLOR_POR_DEFECTO_IMPENETRABLES= (255, 255, 0)
-COLOR_POR_DEFECTO_DAÑINAS = (0, 0, 255)
+# COLOR_POR_DEFECTO_PLATAFORMAS = (0,255,0)
+# COLOR_POR_DEFECTO_LATERALES = (255, 0, 0)
+# COLOR_POR_DEFECTO_IMPENETRABLES= (255, 255, 0)
+# COLOR_POR_DEFECTO_DAÑINAS = (0, 0, 255)
 
 def load_static_map(mapa_id="parque"):
     """Genera los tiles de plataformas del mapa indicado, leyendo su
@@ -24,7 +24,6 @@ def load_static_map(mapa_id="parque"):
 def load_static_map_laterales(mapa_id="parque"):
     config = config_mapa(mapa_id) or {}
     return [Tile(x, y, w, h, color=COLOR_POR_DEFECTO_LATERALES) for x, y, w, h in config.get("laterales", [])]
-
 
 def load_static_map_impenetrables(mapa_id="parque"):
     """Igual que laterales para el robot (bloqueo lateral puro, sin

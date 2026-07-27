@@ -56,7 +56,8 @@ class BaseGame:
         self.dano_zonas = cargar_dano_zonas_dañinas(mapa_id)
         config_del_mapa = config_mapa(mapa_id) or {}
         ruta_fondo = config_del_mapa.get("_fondo_path", "assets/maps/fondo.png")
-        self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
+        # self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
+        self.fondo = pygame.image.load(ruta_fondo).convert()
         self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
 
         # Música del mapa: si la carpeta trae su propia musica.mp3, se

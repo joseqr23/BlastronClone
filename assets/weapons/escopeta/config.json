@@ -12,7 +12,7 @@
   "daña_al_dueño": false,
   "municion": 2,
   "cantidad": 8,
-  "dispersion_grados": 15,
+  "dispersion_grados": 5,
   
   "empuje_ancho": 12,
   "empuje_alto": -6,

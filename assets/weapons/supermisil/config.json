@@ -23,8 +23,8 @@
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 120,
   "alto_proyectil": 120,
-  "ancho_explosion": 500,
-  "alto_explosion": 500,
+  "ancho_explosion": 550,
+  "alto_explosion": 550,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
   "hitbox_ancho_proyectil": 25,

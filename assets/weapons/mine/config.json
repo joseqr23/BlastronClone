@@ -1,6 +1,6 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Mine",
+  "nombre": "Mina",
   "comportamiento": "mina",
   "daño": 50,
   "gravedad": 0.5,

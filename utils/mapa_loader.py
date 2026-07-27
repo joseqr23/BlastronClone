@@ -18,6 +18,7 @@ muestra con fondo.png como miniatura.
 """
 import os
 import json
+from utils.paths import resource_path # Para exportar en main.exe PyInstaller
 
 _CACHE = None
 
@@ -25,7 +26,8 @@ def cargar_mapas(forzar_recarga=False):
     global _CACHE
     if _CACHE is not None and not forzar_recarga:
         return _CACHE
-    base = "assets/maps"
+    # base = "assets/maps"
+    base = resource_path("assets", "maps") # Para exportar en main.exe PyInstaller
     mapas = {}
     if not os.path.isdir(base):
         print(f"[Mapas] No existe la carpeta '{base}'")

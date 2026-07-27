@@ -1,3 +1,65 @@
+
+ui/menu/
+├── __init__.py            # from .core import Menu
+├── theme.py                # colores + _draw_panel/_draw_vertical_gradient/_lerp_color
+├── core.py                 # clase Menu: __init__, run(), estado, construir_seleccion_*
+├── pantalla_principal.py   # draw_pantalla_principal(menu, ...) — antes era un método
+└── pantalla_host.py        # draw_pantalla_host_config(menu, ...) — antes era un método
+
+
+
+Los dos métodos de dibujo enormes (_draw_pantalla_principal, 300+ líneas, y _draw_pantalla_host_config, 180+ líneas) pasan a ser funciones sueltas que reciben menu como primer parámetro en vez de self — así siguen leyendo/escribiendo exactamente los mismos atributos (menu.rect_host, menu.font_titulo, etc.) sin ningún cambio de lógica, solo de ubicación.
+Paso 0: borra ui/menu.py y crea la carpeta ui/menu/ con estos 5 archivos.
+
+... preguntar que mas sigue
+
+>>>> Ok dime que mas sigue, adicionalmente he hecho esta modificacion:
+pantalla_host.py >>>> cambiado por >>>> pantalla_modo_multijigador.py (pienso en el futuro añadir)
+
+
+
+
+Pendiente con prioridad:
+1.- Separa Menu.py en archivos ya que actualemente tiene más de 700 lineas y mezcla tres responsabilidades distintas (estado/lógica de navegación, dibujo de pantalla principal, dibujo de configuración de host).
+Posibles:
+Puede ser separarlo en algún momento en
+ui/menu_principal.py 
+ui/menu_host_config.py 
+(o simplemente mover los métodos _draw_* a funciones sueltas que reciban self como parámetro)
+La recomendacion que me digass la aplicaré.
+
+
+Pendiente:
+1.- Agregar selector de mapa en free mode
+ 1.- Agregar "efecto shake" a ciertos mapas y armas. 
+que tan dificil es ? de momento no lo hare en mapa, mi idea es en un futuro agregar tal vez un video de fondo o gif para darle mas " realismo" o efectos tipo lluvia (solo seria un gif o video sobre puesto encima de la pantalla, tambien con efecto de rallo que tal vez genere un destello para darle mas realismo y en mapas asi o en mapas que son barcos, deberian estar en constante movimiento.)
+Pero quiero saber ahora mismo si se puede con las armas?
+
+2.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
+3.- Intentar hacer grande la pantalla 
+4.- Agregar supplies, o ayudas
+5.- Mejorar detalles de hud para que se vea mas amigable y no tan tipo "carton" incluido el cursor
+6.- Implementar nueva funcion/comportamiento en proyectil.py > ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor (igual a la mira de "golpe") pero una mira totalmente libre o de rango en todo el largo del mapa, y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
+
+
+Bugs:
+1.- El sonido de salto del robot, se reproduce cada que sube una plataforma, incluso si no salta como tal, ejemplo:
+* Si el robot sube por una plataforma asi (___-----) , sin saltar (sino por el hecho de que las plataformas estan casi juntas y no hay mucho margen para que sea necesario saltar) hace el sonido de salto, al igual al inicio de la partida que (todos caen del cielo) (al estar en el aire hace sonido de salto.) 
+* Hay forma de que solo haga el sonido al saltar?, no solo al presionar la tecla w, por que en ese caso se reproduciria el sfx cada que le des en esa tecla cosa que no es optimo.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 Consultar:
 Al poner 3 en "frames" esto indica que son 3 frames, pero si le coloco por ejemplo 6 como valor, puedo agregarle un sprite con 6 frames? Es decir, hacerlo dinamico en base a la cantidad de frames que yo escriba.
 De igual forma "frames_explosion" mostraran los frames que se usan para explosion, si se tiene 6 frames se usaran 2 o segun se coloque.
@@ -36,46 +98,6 @@ O de considerar necesario hacer algo asi:
   "frames_proyectil": 5 >> nuevo
 Digo "de ser necesario" ya que el hecho de ya poner 10, y en explosion "5" lo restante siempre iria para el arma.
 Como crees que deberia hacerlo y que archivos necesito? hazmelo saber para pasartelos.
-
-
-
-Pendiente con prioridad:
-1.- Separa Menu.py en archivos ya que actualemente tiene más de 700 lineas y mezcla tres responsabilidades distintas (estado/lógica de navegación, dibujo de pantalla principal, dibujo de configuración de host).
-Posibles:
-Puede ser separarlo en algún momento en
-ui/menu_principal.py 
-ui/menu_host_config.py 
-(o simplemente mover los métodos _draw_* a funciones sueltas que reciban self como parámetro)
-La recomendacion que me digass la aplicaré.
-
-
-
-Pendiente:
-
-
-1.- Agregar selector de mapa en free mode
-
- 1.- Agregar "efecto shake" a ciertos mapas y armas. 
-que tan dificil es ? de momento no lo hare en mapa, mi idea es en un futuro agregar tal vez un video de fondo o gif para darle mas " realismo" o efectos tipo lluvia (solo seria un gif o video sobre puesto encima de la pantalla, tambien con efecto de rallo que tal vez genere un destello para darle mas realismo y en mapas asi o en mapas que son barcos, deberian estar en constante movimiento.)
-
-
-
-Pero quiero saber ahora mismo si se puede con las armas?
-2.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
-
-3.- Intentar hacer grande la pantalla 
-4.- Agregar supplies, o ayudas
-5.- Mejorar detalles de hud para que se vea mas amigable y no tan tipo "carton" incluido el cursor
-
-6.- Implementar nueva funcion/comportamiento en proyectil.py > ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor (igual a la mira de "golpe") pero una mira totalmente libre o de rango en todo el largo del mapa, y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
-
-
-Bugs:
-1.- El sonido de salto del robot, se reproduce cada que sube una plataforma, incluso si no salta como tal, ejemplo:
-* Si el robot sube por una plataforma asi (___-----) , sin saltar (sino por el hecho de que las plataformas estan casi juntas y no hay mucho margen para que sea necesario saltar) hace el sonido de salto, al igual al inicio de la partida que (todos caen del cielo) (al estar en el aire hace sonido de salto.) 
-* Hay forma de que solo haga el sonido al saltar?, no solo al presionar la tecla w, por que en ese caso se reproduciria el sfx cada que le des en esa tecla cosa que no es optimo.
-
-
 
 
 -------------------------------
