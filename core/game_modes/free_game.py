@@ -15,8 +15,12 @@ from utils.weapon_loader import config_arma
 from utils.colors import ColorManager
 
 class FreeGame(BaseGame):
-    def __init__(self, nombre_jugador, personaje):
-        super().__init__(nombre_jugador=nombre_jugador)
+    def __init__(self, nombre_jugador, personaje, mapa_id="parque"):
+        super().__init__(
+            nombre_jugador=nombre_jugador,
+            mapa_id=mapa_id,
+        )
+
         ColorManager.reset()
         # Jugador principal
         self.robot = Robot(
@@ -63,7 +67,11 @@ class FreeGame(BaseGame):
                 self.robot.take_damage(50)
 
             for r in self.robots_estaticos:
-                r.update(self.tiles, self.tiles_laterales)
+                r.update(
+                    tiles=self.tiles,
+                    tiles_laterales=self.tiles_laterales,
+                    tiles_impenetrables=self.tiles_impenetrables,
+                )
 
             # limpiar robots muertos
             self.robots_estaticos = [r for r in self.robots_estaticos if not r.debe_eliminarse()]

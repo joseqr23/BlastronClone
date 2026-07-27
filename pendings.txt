@@ -1,20 +1,47 @@
-
-ui/menu/
-├── __init__.py            # from .core import Menu
-├── theme.py                # colores + _draw_panel/_draw_vertical_gradient/_lerp_color
-├── core.py                 # clase Menu: __init__, run(), estado, construir_seleccion_*
-├── pantalla_principal.py   # draw_pantalla_principal(menu, ...) — antes era un método
-└── pantalla_host.py        # draw_pantalla_host_config(menu, ...) — antes era un método
+Tengo un juego con python, ya esta desarrollado y avanzado en gran escala, pero actualmente entré en conflicto con un archivo, esta todo ok, pero quisiera dividirlo, el archivo es menu.py, tiene ya casi 800 lineas, quisiera saber que division podria hacer.
 
 
+Actualmente el menu funciona asi:
 
-Los dos métodos de dibujo enormes (_draw_pantalla_principal, 300+ líneas, y _draw_pantalla_host_config, 180+ líneas) pasan a ser funciones sueltas que reciben menu como primer parámetro en vez de self — así siguen leyendo/escribiendo exactamente los mismos atributos (menu.rect_host, menu.font_titulo, etc.) sin ningún cambio de lógica, solo de ubicación.
-Paso 0: borra ui/menu.py y crea la carpeta ui/menu/ con estos 5 archivos.
+PANTALLA PRINCIPAL:
+Nombre: [input para poner nombre] |  Seleccionar personaje >[  hud de personaje ]<
+[Modo solo] (bloqueado, aun no disponible)
+[Modo multijugador] (con opciones para poner host o cliente segun el caso)
+[Modo libre] (con un boton que dirige al modo libre)
 
-... preguntar que mas sigue
+CONFIGURACION HOST: (si el jugador elige en modo multijugador la opcion de host se abrira otra ventana con la configuracion de la partida)
+[Boton de volver]
+[Tiempo de partida] [3 botones:3 min | 5min | 10min]
+[Modo de juego] [3 botones: Por puntos | Por muertes | Last man standing ]
+[Mapa] [Selector tipo carusel con opciones indefinidas sin importar la cantidad de mapas (es dinamico si se agregan mas mapas)]
+[BOTON DE EMPEZAR PARTIDA]
 
->>>> Ok dime que mas sigue, adicionalmente he hecho esta modificacion:
-pantalla_host.py >>>> cambiado por >>>> pantalla_modo_multijigador.py (pienso en el futuro añadir)
+Actualmente la ruta es asi:
+ui/menu.py
+Estaba pensando hacerlo asi:
+ui/menu/... archivos separados 
+Tenia en mente algo asi:
+ui/
+├── menu/
+│   ├── __init__.py          # Exporta Menu
+│   ├── controller.py        # Bucle run(), navegación y eventos
+│   ├── state.py             # MenuState y HostConfig (dataclasses)
+│   ├── theme.py             # Colores, fuentes, gradiente, paneles
+│   ├── assets.py            # Carga de iconos, retratos y miniaturas de mapas
+│   ├── widgets.py           # Input estilizado, aviso temporal, carrusel de mapas
+│   └── screens/
+│       ├── __init__.py
+│       ├── main.py          # Pantalla principal + panel Host/Cliente
+│       ├── host_config.py   # Configuración de la partida host
+│       └── solo_config.py   # Vacío por ahora; listo para el futuro
+
+(NO SE SI SEA LA CORRECTA O TIENES ALGO MEJOR EN MENTE)
+
+La idea de poner pantalla_modo_multijigador.py es porque proximamente pienso agregar pantalla_modo_solo.py >> añadiria una pantalla nueva con la configuracion de los niveles etc.
+
+Este es mi codigo actual de menu.py > cualquier sugerencia dimela.
+
+
 
 
 

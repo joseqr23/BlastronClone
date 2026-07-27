@@ -78,7 +78,9 @@ def main():
                         duracion_min=duracion_min, modo_partida=modo_partida, mapa_id=mapa_id)
         elif modo == "free":
             from core.game_modes.free_game import FreeGame as Game
-            juego = Game(nombre_jugador, personaje)
+
+            mapa_id = seleccion.get("mapa", "parque")
+            juego = Game(nombre_jugador, personaje, mapa_id=mapa_id)
         else:
             break
 
