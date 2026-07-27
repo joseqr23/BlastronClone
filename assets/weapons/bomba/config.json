@@ -1,31 +1,32 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "SuperMisil",
-  "comportamiento": "impacto",
-  "daño": 100,
+  "nombre": "Bomba",
+  "comportamiento": "rebote",
+  "daño": 65,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
-  "tiempo_post_explosion_ms": 300,
-  "margen_dueño_ms": 1500,
-
+  "tiempo_post_explosion_ms": 500,
+  
   "daña_al_dueño": true,
-  "municion": 1,
+  "municion": 5,
   "cantidad": 1,
   "dispersion_grados": 25,
 
+  "friccion_rebote": 0.6,
+
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
-  "ancho_proyectil": 120,
-  "alto_proyectil": 120,
-  "ancho_explosion": 500,
-  "alto_explosion": 500,
-
+  "ancho_proyectil": 60,
+  "alto_proyectil": 60,
+  "ancho_explosion": 150,
+  "alto_explosion": 150,
+    
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
-  "hitbox_ancho_proyectil": 25,
-  "hitbox_alto_proyectil": 25,
-  "hitbox_ancho_explosion": 500,
-  "hitbox_alto_explosion": 500,
+  "hitbox_ancho_proyectil": 20,
+  "hitbox_alto_proyectil": 20,
+  "hitbox_ancho_explosion": 100,
+  "hitbox_alto_explosion": 100,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 0,
@@ -34,20 +35,21 @@
   "posicion_alto_explosion": 0,
 
 
-  "_________Dibujado de sprite_________": "______________",
-  "sprite": "assets/weapons/supermisil/sprite.png",
+  "_________Dibujado de sprites_________": "______________",
+  "sprite": "assets/weapons/bomba/sprite.png",
   "frames": 3,
-  "frames_explosion": 2,
+  "frames_explosion": 1,
 
   "ancho_arma_sostenida": 100,
   "alto_arma_sostenida": 100,
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
 
-  "oculta_arma_al_disparar": false,
+  "oculta_arma_al_disparar": true,
   "estilo_mira": "apuntar"
 
 
 }
+
 
 
