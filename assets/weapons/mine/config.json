@@ -5,7 +5,7 @@
   "daño": 50,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
-  "tiempo_post_explosion_ms": 500,
+  "tiempo_post_explosion_ms": 100,
   "margen_dueño_ms": 350,
   
   "daña_al_dueño": true,
@@ -15,7 +15,7 @@
 
   "friccion_rebote": 0.6,
   "radio_proximidad": 25,
-  "velocidad_proyectil": 12,
+  "velocidad_proyectil": 17,
   
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 30,

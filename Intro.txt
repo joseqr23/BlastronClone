@@ -57,7 +57,19 @@ blastron_clone/
 │   ├── weapon_manager_free.py
 │   └── weapon_manager.py
 │
-├── ui/                          # Menús, HUD
+├── ui/ 
+│   ├── menu / # Actualizacion: Ahora todo el contenido de menu.py esta en una carpeta para evitar acumulacion de código.
+│   │   ├── __init__.py          # Exporta Menu
+│   │   ├── controller.py        # Bucle run(), navegación y eventos
+│   │   ├── state.py             # MenuState y HostConfig (dataclasses)
+│   │   ├── theme.py             # Colores, fuentes, gradiente, paneles
+│   │   ├── assets.py            # Carga de iconos, retratos y miniaturas de mapas
+│   │   ├── widgets.py           # Input estilizado, aviso temporal, carrusel de mapas
+│   │   └── screens/
+│   │           ├── __init__.py
+│   │           ├── main.py          # Pantalla principal + panel Host/Cliente
+│   │           ├── host_config.py   # Configuración de la partida host
+│   │           └── solo_config.py   # Vacío por ahora; listo para el futuro
 │   ├── chat.py
 │   ├── hud.py
 │   ├── menu.py

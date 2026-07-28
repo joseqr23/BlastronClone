@@ -11,7 +11,7 @@
 
   "daña_al_dueño": false,
   "municion": 5,
-  "cantidad": 1,
+  "cantidad": 3,
   "dispersion_grados": 25,
 
   "advertencia_ms": 120,
@@ -19,6 +19,9 @@
   "empuje_ancho": 25,
   "empuje_alto": -15,
   
+  "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
+  "intervalo_disparos_ms": 120,
+
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 90,
   "alto_proyectil": 90,
