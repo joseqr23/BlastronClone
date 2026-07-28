@@ -4,7 +4,6 @@ import queue
 
 from entities.players.robot import Robot
 from utils.sound_manager import sound_manager
-from systems.modos_partida import crear_modo
 
 
 class MessageHandler:
@@ -29,30 +28,53 @@ class MessageHandler:
     def handle(self, message):
         game = self.game
         message_type = message.get("tipo")
+
         if message_type == "hello":
             if game.host:
-                name = message.get("jugador")
-                if name and name != game.nombre_jugador:
-                    game.lobby_players[name] = {"nombre": name, "personaje": message.get("personaje", "robot"), "listo": False}
-                    game.broadcast_lobby_state()
+                game.lobby_controller.register_client(
+                    message.get("jugador"),
+                    message.get("personaje", "robot"),
+                )
             return
+
         if message_type == "ready":
             if game.host:
-                name = message.get("jugador")
-                if name in game.lobby_players:
-                    game.lobby_players[name]["listo"] = bool(message.get("listo"))
-                    game.broadcast_lobby_state()
+                game.lobby_controller.set_ready(
+                    message.get("jugador"),
+                    message.get("listo", False),
+                )
             return
+
         if message_type == "lobby_state":
             if not game.host:
-                game.apply_lobby_state(message)
+                game.lobby_controller.apply_remote_state(message)
             return
+
         if message_type == "match_start":
             if not game.host:
-                game.apply_match_configuration(message)
+                game.lobby_controller.apply_remote_state(message)
                 game.partida_iniciada = True
                 game.ultimo_tick = game.now()
             return
+
+        if message_type == "mapa_init":
+            # Compatibilidad con mensajes de clientes/hosts de la versión anterior.
+            if not game.host:
+                from .lobby_state import LobbyConfig
+
+                game.apply_lobby_config(LobbyConfig(
+                    mapa_id=message.get("mapa_id", game.mapa_id),
+                    duracion_min=message.get(
+                        "duracion_min",
+                        game.tiempo_total // 60,
+                    ),
+                    modo_partida=message.get(
+                        "modo_partida",
+                        game.modo_partida,
+                    ),
+                ))
+            return
+        
         if message_type == "update":
             self._apply_player_update(message); return
         if message_type == "disparo":

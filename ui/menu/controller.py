@@ -64,7 +64,7 @@ class Menu:
         return {"modo": "Modo Libre", **self._nombre_y_personaje(), "mapa": self.state.libre.mapa_id or "parque"}
 
     def _resolver_accion(self, action):
-        if action == "abrir_host": self.state.pantalla = "host_config"
+        if action == "crear_host": return self._construir_host()
         elif action == "abrir_libre": self.state.pantalla = "free_config"
         elif action == "volver": self.state.pantalla = "principal"
         elif action == "conectar_cliente": return self._construir_cliente()

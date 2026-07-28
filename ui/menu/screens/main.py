@@ -32,7 +32,7 @@ class MainScreen:
             self.toast.show("Este modo estará disponible próximamente")
             return None
         if modo == "Modo Multijugador":
-            return "abrir_host" if self.state.multijugador_opcion == "host" else "conectar_cliente"
+            return "crear_host" if self.state.multijugador_opcion == "host" else "conectar_cliente"
         return "abrir_libre"
 
     def handle_event(self, event, mouse_pos):
@@ -65,7 +65,7 @@ class MainScreen:
             if self.modo_actual == "Modo Multijugador":
                 if self.rect_host and self.rect_host.collidepoint(mouse_pos):
                     self.state.multijugador_opcion = "host"
-                    return "abrir_host"
+                    return "crear_host"
                 if self.rect_cliente and self.rect_cliente.collidepoint(mouse_pos):
                     self.state.multijugador_opcion = "cliente"
                 if self.rect_conectar and self.rect_conectar.collidepoint(mouse_pos):

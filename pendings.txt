@@ -1,14 +1,19 @@
-core/game_modes/multi_game/
-├── __init__.py
-├── game.py              # MultiplayerGame: coordina lobby y partida
-├── network.py           # Sockets, hilos y cola de mensajes
-├── protocol.py          # Empaquetado TCP JSON
-├── lobby.py             # Sala de espera: jugadores, ready, inicio
-├── message_handler.py   # Rutas para mensajes de lobby y partida
-├── replication.py       # Estado de robots y proyectiles
-├── renderer.py          # Render durante la partida
-└── results.py           # Podio final
 
+1.- bug en last man standing, cuando un robot toca un tile "dañina" (una estructura del mapa que hace daño o mata directamente su vida pasa a valores negativos, lo que es incorrecto y no acaba la partida como tal.)
+las tiles dañinas estan configuradas en los mapas.
+{
+  "nombre": "Cielo",
+  "plataformas": [
+  ],
+  "laterales": [
+  ],
+  "plataformas_y_laterales_impenetrables": [ 
+  ],
+  "plataformas_y_laterales_dañinas": [
+
+  ],
+    "plataformas_y_laterales_dañinas_daño": 1000 <<< este daño hace que mueran
+}
 
 
 

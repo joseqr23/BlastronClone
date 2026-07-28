@@ -40,9 +40,8 @@ blastron_clone/
 │   │   │    ├── game.py              # MultiplayerGame: coordina lobby y partida
 │   │   │    ├── network.py           # Sockets, hilos y cola de mensajes
 │   │   │    ├── protocol.py          # Empaquetado TCP JSON
-│   │   │    ├── lobby.py             # Sala de espera
-│   │   │    ├── lobby_state.py       # LobbyState, LobbyPlayer y LobbyConfig  >> pendiente configurar, extraer de lobby.py
-│   │   │    ├── lobby_controller.py  # Reglas: ready, cambios Host, iniciar partida  >> pendiente configurar, extraer de lobby.py
+│   │   │    ├── lobby_state.py       # LobbyState, LobbyPlayer y LobbyConfig 
+│   │   │    ├── lobby_controller.py  # Reglas: ready, cambios Host, iniciar partida
 │   │   │    ├── message_handler.py   # Rutas para mensajes de lobby y partida
 │   │   │    ├── replication.py       # Estado de robots y proyectiles
 │   │   │    ├── renderer.py          # Render durante la partida
@@ -84,7 +83,7 @@ blastron_clone/
 │   │       ├── main.py         # Pantalla principal + panel Host/Cliente
 │   │       ├── host_config.py  # Configuración de la partida host
 │   │       └── solo_config.py  # Vacío por ahora; listo para el futuro
-│   ├── multiplayer_lobby/ # Nuevo multiplayer_lobby > Ahora la configuracion de partida en modo host, multijugador, es tambien una sala de espera. >> pendiente configurar, conectar de multi_game
+│   ├── multiplayer_lobby/ # Nuevo multiplayer_lobby > Ahora la configuracion de partida en modo host, multijugador, es tambien una sala de espera.
 │   │   ├── __init__.py
 │   │   ├── screen.py                   # Dibuja y recibe clicks del lobby
 │   │   ├── assets.py                   # Portraits y miniaturas de mapas

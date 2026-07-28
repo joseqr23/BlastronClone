@@ -18,7 +18,9 @@ from ui.hud import HUDArmas, HUDPuntajesMultiplayer, HUDTimer, HUDTurnos
 from utils.colors import ColorManager
 from utils.weapon_loader import cargar_armas
 
-from .lobby import LobbyScreen
+from .lobby_state import LobbyConfig, LobbyState
+from .lobby_controller import LobbyController
+from ui.multiplayer_lobby import MultiplayerLobbyScreen
 from .message_handler import MessageHandler
 from .network import NetworkManager
 from .renderer import MultiplayerRenderer
@@ -65,18 +67,22 @@ class MultiplayerGame(BaseGame):
         self.turnos_iniciados = False
         self.partida_iniciada = False
 
-        self.host_name = nombre_jugador if host else None
-        self.local_ready = host
-        self.lobby_players = ({nombre_jugador: {"nombre": nombre_jugador, "personaje": personaje, "listo": True}} if host else {})
-        # main.py lo usa si el Host vuelve a la configuración desde el lobby.
-        self.menu_restore = {
-            "nombre": nombre_jugador, "personaje": personaje, "duracion_min": duracion_min,
-            "modo_partida": modo_partida, "mapa": mapa_id,
-        }
+        self.lobby_state = LobbyState(
+            host_id=nombre_jugador if host else "",
+            config=LobbyConfig(
+                mapa_id=mapa_id,
+                duracion_min=duracion_min,
+                modo_partida=modo_partida,
+            ),
+        )
+        self.lobby_controller = LobbyController(self, self.lobby_state)
+        if self.host:
+            self.lobby_controller.add_local_host()
+
         self.network = NetworkManager(host, server_ip, port)
         self.replication = Replication(self)
         self.messages = MessageHandler(self)
-        self.lobby = LobbyScreen(self)
+        self.lobby_screen = MultiplayerLobbyScreen(self)
         self.renderer = MultiplayerRenderer(self)
         self.results = ResultsScreen(self)
         self._seq_local = 0
@@ -113,55 +119,33 @@ class MultiplayerGame(BaseGame):
     def _cerrar_red(self): self.network.close()
 
     # ---------- Sala de espera ----------
-    def _configuration_message(self, message_type):
-        return {"tipo": message_type, "host_name": self.host_name, "jugadores": list(self.lobby_players.values()),
-                "mapa_id": self.mapa_id, "modo_partida": self.modo_partida,
-                "duracion_min": self.tiempo_total // 60}
+    @property
+    def local_ready(self):
+        jugador = self.lobby_state.jugadores.get(self.nombre_jugador)
+        return bool(jugador and jugador.listo)
 
-    def broadcast_lobby_state(self):
-        if self.host: self.enviar(self._configuration_message("lobby_state"))
+    def apply_lobby_config(self, config):
+        """Aplica la configuración de la sala antes de iniciar la partida."""
+        if config.mapa_id != self.mapa_id:
+            self.cargar_mapa(config.mapa_id)
 
-    def apply_lobby_state(self, message):
-        self.host_name = message.get("host_name", self.host_name)
-        players = message.get("jugadores", [])
-        self.lobby_players = {player["nombre"]: player for player in players if player.get("nombre")}
-        self.local_ready = self.lobby_players.get(self.nombre_jugador, {}).get("listo", False)
-        self.apply_match_configuration(message)
-
-    def apply_match_configuration(self, message):
-        mapa_id = message.get("mapa_id", self.mapa_id)
-        if mapa_id != self.mapa_id: self.cargar_mapa(mapa_id)
-        mode_id = message.get("modo_partida", self.modo_partida)
-        if mode_id != self.modo_partida:
-            self.modo_partida = mode_id
-            self.modo = crear_modo(mode_id, self)
+        if config.modo_partida != self.modo_partida:
+            self.modo_partida = config.modo_partida
+            self.modo = crear_modo(config.modo_partida, self)
             self.vida_maxima = self.modo.vida_maxima
             for robot in [self.robot, *self.robots_remotos.values()]:
-                robot.vida_maxima, robot.health = self.vida_maxima, self.vida_maxima
+                robot.vida_maxima = self.vida_maxima
+                robot.health = self.vida_maxima
                 robot.puede_reaparecer = self.modo.permite_reaparecer
-        minutes = int(message.get("duracion_min", self.tiempo_total // 60))
-        self.tiempo_total, self.tiempo_restante = minutes * 60, minutes * 60
 
-    def set_local_ready(self, ready):
-        if self.host: return
-        self.local_ready = ready
-        self.enviar({"tipo": "ready", "jugador": self.nombre_jugador, "listo": ready})
-
-    def can_start_match(self):
-        return len(self.lobby_players) >= 2 and all(player.get("listo", False) for name, player in self.lobby_players.items() if name != self.nombre_jugador)
-
-    def start_match_if_possible(self):
-        if not self.host or not self.can_start_match(): return False
-        self.partida_iniciada = True
-        self.ultimo_tick = self.now()
-        self.enviar(self._configuration_message("match_start"))
-        print("[HOST] Partida iniciada desde la sala de espera")
-        return True
+        self.tiempo_total = config.duracion_min * 60
+        self.tiempo_restante = self.tiempo_total
+        self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
 
     # ---------- Ciclo público ----------
     def run(self):
         try:
-            lobby_result = self.lobby.run()
+            lobby_result = self.lobby_screen.run()
             if lobby_result != "start": return lobby_result
             return self._run_match()
         finally:
