@@ -76,7 +76,7 @@ def main():
 
         if modo == "solo":
             from core.game_modes.solo_game import SoloGame as Game
-            juego = Game(nombre_jugador, personaje)
+            juego = Game(nombre_jugador, personaje, level_id=seleccion.get("level_id", 1))
         elif modo == "multiplayer":
             from core.game_modes.multi_game import MultiplayerGame as Game
             host = seleccion.get("host", True)

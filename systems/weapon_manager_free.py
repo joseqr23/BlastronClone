@@ -135,7 +135,7 @@ class WeaponManager:
         """p.update() espera una LISTA de robots (no uno solo) y revisa
         colisión en cada sub-paso del movimiento — así se evita que a
         alta velocidad el proyectil traspase a un robot estático."""
-        return [self.game.robot] + list(self.game.robots_estaticos)
+        return [r for r in ([self.game.robot] + list(self.game.robots_estaticos)) if not r.is_dead]
 
     def _update_proyectiles(self):
         for p in self.game.proyectiles[:]:

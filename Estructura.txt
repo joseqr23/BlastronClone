@@ -46,9 +46,24 @@ blastron_clone/
 │   │   │    ├── replication.py       # Estado de robots y proyectiles
 │   │   │    ├── renderer.py          # Render durante la partida
 │   │   │    └── results.py           # Podio final
+│   │   │
+│   │   ├── solo_game/   Nuevo solo_game >> Nueva implementacion igual a multi_game pero con bots 
+│   │   │   ├── __init__.py
+│   │   │   ├── game.py                 # SoloGame: ciclo principal de una partida
+│   │   │   ├── campaign.py             # Progreso, desbloqueos y selección de nivel
+│   │   │   ├── level_config.py         # LevelConfig y generación de niveles
+│   │   │   ├── level_repository.py     # Carga levels.json / progreso del usuario
+│   │   │   ├── bot_manager.py          # Crea bots y coordina su IA
+│   │   │   ├── bot_controller.py       # Decisiones de cada bot: mover, apuntar, disparar
+│   │   │   ├── boss_manager.py         # Spawnea y controla jefe cada 5 niveles
+│   │   │   ├── boss_controller.py      # IA especial y fases del jefe
+│   │   │   ├── rewards.py              # Recompensas, experiencia, estrellas, desbloqueos
+│   │   │   ├── results.py              # Resultado de nivel: victoria, derrota, siguiente nivel
+│   │   │   └── data/
+│   │   │       └── levels.json         # Datos de niveles, no lógica Python
+│   │   │
 │   │   ├── base_game.py        # Base que heredaran el resto de modos
 │   │   ├── free_game.py        # Ya configurado
-│   │   └── solo_game.py        # pendiente
 │   └── robot_selector.py 
 │
 ├── entities/                   # Jugadores, bots, proyectiles

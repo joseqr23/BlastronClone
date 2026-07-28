@@ -60,8 +60,13 @@ class ModoMuertes:
         self.muertes = {}
 
     def registrar_muerte(self, victima, atacante):
-        if atacante and atacante != victima.nombre_jugador:
+        nombre_victima = victima.nombre_jugador
+        if atacante and atacante != nombre_victima:
             self.muertes[atacante] = self.muertes.get(atacante, 0) + 1
+        else:
+            # Suicidio, o muerte sin atacante (ej. zona dañina del
+            # mapa): penaliza restando 1 al propio conteo de la víctima.
+            self.muertes[nombre_victima] = self.muertes.get(nombre_victima, 0) - 1
 
     def partida_terminada(self):
         return False

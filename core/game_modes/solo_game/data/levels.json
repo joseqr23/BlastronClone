@@ -1,0 +1,11 @@
+{
+  "levels": [
+    {"id": 1, "mapa": "parque", "modo": "lms", "bots": 1, "dificultad": 1, "duracion_min": 3, "armas_bots": ["granada"]},
+    {"id": 2, "mapa": "playa", "modo": "lms", "bots": 1, "dificultad": 2, "duracion_min": 3, "armas_bots": ["misil"]},
+    {"id": 3, "mapa": "nieve", "modo": "lms", "bots": 2, "dificultad": 2, "duracion_min": 4, "armas_bots": ["granada", "misil"]},
+    {"id": 4, "mapa": "medieval", "modo": "lms", "bots": 2, "dificultad": 3, "duracion_min": 4, "armas_bots": ["misil", "escopeta"]},
+    {"id": 5, "mapa": "cielo", "modo": "lms", "bots": 1, "dificultad": 3, "duracion_min": 5,
+     "boss": {"robot_id": "correnetali", "sprite_folder": "correnetali_sprites", "vida_maxima": 10, "damage_multiplier": 1.5, "fases": [0.70, 0.35], "armas": ["misil", "supermisil"]},
+     "armas_bots": ["misil"]}
+  ]
+}

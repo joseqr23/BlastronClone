@@ -218,12 +218,12 @@ class WeaponManager:
             p.draw(pantalla)
 
     def _robots_para_colision(self, owner):
-        """Todos los robots contra los que un proyectil puede
-        colisionar: el robot local y TODOS los remotos, incluido el
-        propio dueño. Es la misma lista que se usa tanto para la física
-        (rebote/impacto) como para calcular a quién puede afectar la
-        explosión (ver robots_afectados en Proyectil)."""
-        return [self.game.robot] + list(self.game.robots_estaticos)
+        """Todos los robots VIVOS contra los que un proyectil puede
+        colisionar. Los robots muertos (is_dead=True) quedan excluidos
+        — en modos sin respawn como last man standing, el cuerpo se
+        queda visible en pantalla pero ya no bloquea ni recibe daño de
+        ningún arma."""
+        return [r for r in ([self.game.robot] + list(self.game.robots_estaticos)) if not r.is_dead]
 
     # ------------------------------------------------------------------
     # Física — SOLO se ejecuta en el host

@@ -186,9 +186,25 @@ class MultiplayerGame(BaseGame):
         try:
             lobby_result = self.lobby_screen.run()
             if lobby_result != "start": return lobby_result
+            self._sincronizar_colores()
             return self._run_match()
         finally:
             self._cerrar_red()
+
+    def _sincronizar_colores(self):
+        """Reasigna colores en un orden IDÉNTICO en todas las máquinas —
+        el orden ya sincronizado del lobby (lobby_state.jugadores), en
+        vez del orden en que cada cliente fue descubriendo a los demás
+        por red (que varía según latencia, y por eso el HUD mostraba
+        colores distintos entre máquinas para el mismo jugador)."""
+        ColorManager.reset()
+        for jugador in self.lobby_state.jugadores.keys():
+            ColorManager.get_color(jugador)
+        # self.robot ya existe desde __init__ (con su color asignado
+        # ANTES del reset de arriba, y en un cliente incluso con el
+        # nombre viejo sin renombrar) — se refresca acá para que quede
+        # con el color correcto del orden canónico.
+        self.robot.color_nombre = ColorManager.get_color(self.nombre_jugador)
 
     def _run_match(self):
         while True:
@@ -216,8 +232,8 @@ class MultiplayerGame(BaseGame):
             pygame.display.flip(); self.reloj.tick(60)
 
     def _update_turns_and_player(self):
-        if self.host and not self.turnos_iniciados and self.robots_remotos:
-            players = [self.nombre_jugador, *self.robots_remotos.keys()]
+        if self.host and not self.turnos_iniciados:
+            players = list(self.lobby_state.jugadores.keys())
             self.turn_manager.iniciar(players)
             self.enviar({"tipo": "turnos_init", "jugadores": players})
             self.turnos_iniciados = True

@@ -1,0 +1,86 @@
+Sí. Haría solo_game como un modo que reutiliza tu BaseGame, modos_partida, mapas, robots y armas; lo nuevo sería campaña, IA y jefes.
+core/game_modes/solo_game/
+├── __init__.py
+├── game.py                 # SoloGame: ciclo principal de una partida
+├── campaign.py             # Progreso, desbloqueos y selección de nivel
+├── level_config.py         # LevelConfig y generación de niveles
+├── level_repository.py     # Carga levels.json / progreso del usuario
+├── bot_manager.py          # Crea bots y coordina su IA
+├── bot_controller.py       # Decisiones de cada bot: mover, apuntar, disparar
+├── boss_manager.py         # Spawnea y controla jefe cada 5 niveles
+├── boss_controller.py      # IA especial y fases del jefe
+├── rewards.py              # Recompensas, experiencia, estrellas, desbloqueos
+├── results.py              # Resultado de nivel: victoria, derrota, siguiente nivel
+└── data/
+    └── levels.json         # Datos de niveles, no lógica Python
+El archivo levels.json podría definir la campaña:
+{
+  "levels": [
+    {
+      "id": 1,
+      "mapa": "parque",
+      "modo": "puntos",
+      "bots": 1,
+      "dificultad": 1,
+      "duracion_min": 3,
+      "jefe": false
+    },
+    {
+      "id": 5,
+      "mapa": "sun",
+      "modo": "lms",
+      "bots": 2,
+      "dificultad": 3,
+      "duracion_min": 5,
+      "jefe": true,
+      "boss_id": "netali_correcaminos"
+    }
+  ]
+}
+La regla de desbloqueo debe vivir en campaign.py, no en la UI:
+Nivel 1: desbloqueado siempre
+Nivel N: desbloqueado si Nivel N - 1 fue completado
+Nivel 5, 10, 15...: agrega jefe
+La UI solo pregunta a CampaignProgress:
+campaign.is_unlocked(level_id)
+campaign.complete_level(level_id, estrellas=3)
+campaign.next_level_id()
+Para el progreso persistente usaría un archivo separado del contenido:
+C:\Users\User\.blastron_clone\solo_progress.json
+Ejemplo:
+{
+  "completed_levels": [1, 2, 3],
+  "stars": {"1": 3, "2": 2, "3": 1},
+  "highest_unlocked": 4
+}
+La responsabilidad principal de cada parte sería:
+Módulo	Responsabilidad
+game.py	Ejecuta la partida y decide victoria/derrota.
+campaign.py	Desbloqueos y progreso.
+level_config.py	Convierte datos JSON en configuración de partida.
+bot_manager.py	Crea bots según el nivel.
+bot_controller.py	IA normal de bots.
+boss_controller.py	Patrones especiales: fases, ataques y vida.
+rewards.py	Estrellas y progreso al ganar.
+
+Para un primer corte, evitaría hacer IA compleja. Un bot inicial puede:
+Elegir el enemigo más cercano.
+Caminar hacia una distancia objetivo.
+Apuntar al enemigo.
+Disparar solo en su turno y con cierta probabilidad.
+Subir precisión, vida y agresividad según dificultad.
+El jefe puede reutilizar Robot, pero con una configuración especial:
+BossConfig(
+    robot_id="netali_correcaminos",
+    vida_maxima=1000,
+    damage_multiplier=1.5,
+    fases=[0.70, 0.35],
+    armas=["misil", "supermisil"]
+)
+Mi orden de implementación sería:
+campaign.py + levels.json + pantalla de selección bloqueada.
+SoloGame cargando mapa, modo y bots configurados.
+IA básica de un bot.
+Guardado del progreso tras victoria.
+Jefe del nivel 5 con más vida y una IA/patrón propio.
+Así tendrás niveles configurables por datos: añadir el nivel 21 será editar JSON, no duplicar lógica.

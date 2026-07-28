@@ -15,6 +15,11 @@ class FreeConfig:
 
 
 @dataclass
+class SoloConfig:
+    level_id: int = 1
+
+
+@dataclass
 class MenuState:
     pantalla: str = "principal"  # principal | host_config | free_config | solo_config
     opcion_seleccionada: int = 1
@@ -24,3 +29,4 @@ class MenuState:
     multijugador_opcion: str = "host"  # host | cliente
     host: HostConfig = field(default_factory=HostConfig)
     libre: FreeConfig = field(default_factory=FreeConfig)
+    solo: SoloConfig = field(default_factory=SoloConfig)

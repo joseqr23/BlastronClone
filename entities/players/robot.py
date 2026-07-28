@@ -4,7 +4,9 @@ from utils.loader import load_spritesheet
 from utils.sound_manager import sound_manager
 import time
 import random
+import os
 from utils.colors import ColorManager
+from utils.paths import resource_path
 
 
 class Robot:
@@ -16,7 +18,8 @@ class Robot:
         (128, 0, 128),   # Morado
     ]
 
-    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True):
+    def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True,
+                 sprite_path=None):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
@@ -34,9 +37,10 @@ class Robot:
         self.mensaje_chat_expira = 0
 
         # Animaciones dinámicas según robot_name
-        base_path = f"assets/robots/{self.nombre_robot}"
+        base_path = sprite_path or f"assets/robots/{self.nombre_robot}"
+        idle_file = "idle.png" if os.path.exists(resource_path(base_path, "idle.png")) else "iddle.png"
         self.animations = {
-            "idle": load_spritesheet(f"{base_path}/idle.png", 1, self.width, self.height),
+            "idle": load_spritesheet(f"{base_path}/{idle_file}", 1, self.width, self.height),
             "run": load_spritesheet(f"{base_path}/run.png", 6, self.width, self.height),
             "jump": load_spritesheet(f"{base_path}/jump.png", 1, self.width, self.height),
             "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),

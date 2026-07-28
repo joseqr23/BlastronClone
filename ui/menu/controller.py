@@ -14,6 +14,7 @@ from .widgets import Toast
 from .screens.main import MainScreen
 from .screens.host_config import HostConfigScreen
 from .screens.free_config import FreeConfigScreen
+from .screens.solo_config import SoloConfigScreen
 
 
 class Menu:
@@ -52,6 +53,7 @@ class Menu:
             ),
             "host_config": HostConfigScreen(self.state, self.assets, self.fonts, self.toast),
             "free_config": FreeConfigScreen(self.state, self.assets, self.fonts, self.toast),
+            "solo_config": SoloConfigScreen(self.state, self.fonts, self.toast),
         }
         self.cursor_actual = None
 
@@ -95,13 +97,18 @@ class Menu:
     def _construir_libre(self):
         return {"modo": "Modo Libre", **self._nombre_y_personaje(), "mapa": self.state.libre.mapa_id or "parque"}
 
+    def _construir_solo(self):
+        return {"modo": "Modo Solo", **self._nombre_y_personaje(), "level_id": self.state.solo.level_id}
+
     def _resolver_accion(self, action):
         if action == "crear_host": return self._construir_host()
+        elif action == "abrir_solo": self.state.pantalla = "solo_config"
         elif action == "abrir_libre": self.state.pantalla = "free_config"
         elif action == "volver": self.state.pantalla = "principal"
         elif action == "conectar_cliente": return self._construir_cliente()
         elif action == "empezar_host": return self._construir_host()
         elif action == "empezar_libre": return self._construir_libre()
+        elif action == "empezar_solo": return self._construir_solo()
         return None
 
     def run(self):

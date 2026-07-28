@@ -85,7 +85,7 @@ class BaseGame:
         self.chat.handle_event(event)
 
     def draw_ui(self):
-        self.hud_armas.draw(self.pantalla)
+        self.hud_armas.draw(self.pantalla, self.font)
         self.chat.draw(self.pantalla)
 
     def activar_shake(self, intensidad, duracion_ms):

@@ -1,10 +1,43 @@
-PENDIENTE URG:
-Excelentemente implementado, ahora faltan 2 cosas.
 
-1.- Que la animacion del sprite tambien siga la mira, asi tal cual como ya lo hace weapon.png
-2.- Implementar un timer de la velocidad de la animacion del sprite.
-3.- En modo last man standing puedes hacer que desaparezca la collision de robot? ocurre que al morir el cuerpo queda ahi eso digamos que esta bien, pero el cuerpo sigue recibiendo daño y por ende se come un ataque si este le cae, podria en todo caso quedar solo el sprite?
-4.- Restar -1 en cantidad de kills en el modo muerte cada que haya un suicidio o la muerte no sea ocasionada por otro robot.
+
+### Pendiente modo solo
+
+
+Ultimo realice la implementacion del modo solo, pero necesito hacer algunos cambios.
+Actualmente el modo solo hace esto:
+Similar al modo libre, libertad total entre jugador y bot, disparos infinitos.
+Posibilidad de configurar a traves de un json
+{
+  "levels": [
+    {"id": 1, "mapa": "parque", "modo": "lms", "bots": 1, "dificultad": 1, "duracion_min": 3, "armas_bots": ["granada"]},
+    {"id": 2, "mapa": "playa", "modo": "lms", "bots": 1, "dificultad": 2, "duracion_min": 3, "armas_bots": ["misil"]},
+    {"id": 3, "mapa": "nieve", "modo": "lms", "bots": 2, "dificultad": 2, "duracion_min": 4, "armas_bots": ["granada", "misil"]},
+    {"id": 4, "mapa": "medieval", "modo": "lms", "bots": 2, "dificultad": 3, "duracion_min": 4, "armas_bots": ["misil", "escopeta"]},
+    {"id": 5, "mapa": "cielo", "modo": "lms", "bots": 1, "dificultad": 3, "duracion_min": 5,
+     "boss": {"robot_id": "correnetali", "sprite_folder": "correnetali_sprites", "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.70, 0.35], "armas": ["misil", "supermisil"]},
+     "armas_bots": ["misil"]}
+  ]
+}
+Lo que quisiera, es refactorizar esto, para que ahora sea por turnos, similar a lo que ocurre con multi_game entre jugadores reales, pero en este caso con el jugador real + bots. con tiempo incluso, es decir una partida normal, donde la unica forma de pasarla sea quedando primer lugar, lo demas seria tal cual, lo que tambien necesito es tener control total de la cantidad de bots que aparecen en la partida, y la vida de todos los bots, algo similar a lo que ya existe con robot boss.
+te paso mis codigos actuales, incluido turn manager por si necesitas modifcar algo o solo pasarle la logica que ya se usa para los jugadores reales en el modo multigame.
+
+
+
+
+
+
+
+Ayudame con este error grave:
+
+En modo multijugador, al momento en el que inicia la partida con 2 jugadores o más ocurre un error.
+La partida fue probada en modo de 1vs1vs1vs1 y también 1vs1vs1
+Ocurre que hay un turno que siempre se salta, desconozco la razón exacta, pero tal vez una razón puede ser que un jugador intenta atacar antes de tiempo o algo asi, es un bug, porque el turno pasa por todos excepto por 1 jugador.
+
+también he notado que a pesar de que el jugador este en la partida, en el hud de jugadores no se dibuja, es como si no existiera.
+En la imagen que te adjunto hay 4 jugadores en partida pero solo 3 en el hud de puntajes, este bug ocurre en todos los modos
+
+
+
 
 
 
@@ -42,7 +75,6 @@ Bugs:
 1.- El sonido de salto del robot, se reproduce cada que sube una plataforma, incluso si no salta como tal, ejemplo:
 * Si el robot sube por una plataforma asi (___-----) , sin saltar (sino por el hecho de que las plataformas estan casi juntas y no hay mucho margen para que sea necesario saltar) hace el sonido de salto, al igual al inicio de la partida que (todos caen del cielo) (al estar en el aire hace sonido de salto.) 
 * Hay forma de que solo haga el sonido al saltar?, no solo al presionar la tecla w, por que en ese caso se reproduciria el sfx cada que le des en esa tecla cosa que no es optimo.
-
 
 
 

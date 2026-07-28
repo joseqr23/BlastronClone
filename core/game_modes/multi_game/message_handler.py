@@ -70,6 +70,7 @@ class MessageHandler:
             if not game.host:
                 nombre_final = message.get("nombre")
                 if nombre_final:
+                    game.puntajes[nombre_final] = game.puntajes.pop(game.nombre_jugador, 0)
                     game.nombre_jugador = nombre_final
                     game.robot.nombre_jugador = nombre_final
                     game.chat.nombre_jugador = nombre_final

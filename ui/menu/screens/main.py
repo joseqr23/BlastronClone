@@ -13,7 +13,8 @@ class MainScreen:
         "Modo Multijugador": "Juega por red con amigos",
         "Modo Libre": "Practica armas y movimiento",
     }
-    DISPONIBLES = {"Modo Solo": False, "Modo Multijugador": True, "Modo Libre": True}
+    DESCRIPCIONES["Modo Solo"] = "Campaña contra bots y jefes"
+    DISPONIBLES = {"Modo Solo": True, "Modo Multijugador": True, "Modo Libre": True}
 
     def __init__(self, state, assets, fonts, nombre_input, ip_input, toast, guardar_nombre_en_perfil):
         self.state, self.assets, self.fonts = state, assets, fonts
@@ -35,6 +36,8 @@ class MainScreen:
             return None
         if modo == "Modo Multijugador":
             return "crear_host" if self.state.multijugador_opcion == "host" else "conectar_cliente"
+        if modo == "Modo Solo":
+            return "abrir_solo"
         return "abrir_libre"
 
     def _guardar_nombre(self):
