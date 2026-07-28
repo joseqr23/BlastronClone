@@ -15,6 +15,14 @@
 
   "friccion_rebote": 0.6,
   "radio_proximidad": 25,
+
+  "empuje_ancho": 12,
+  "empuje_alto": -10,
+
+  "_________(Opcional) esto solo es para que el empuje se aplique segun donde es la explosion_________": "En arma se deja en false o no se usa argumento",
+  "empuje_por_impacto": true,
+
+  "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "velocidad_proyectil": 17,
   
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",

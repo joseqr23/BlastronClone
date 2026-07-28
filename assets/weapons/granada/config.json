@@ -15,6 +15,11 @@
 
   "friccion_rebote": 0.6,
 
+  "empuje_ancho": 8,
+  "empuje_alto": -2,
+
+  "_________(Opcional) esto solo es para que el empuje se aplique segun donde es la explosion_________": "En arma se deja en false o no se usa argumento",
+  "empuje_por_impacto": true,
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 20,

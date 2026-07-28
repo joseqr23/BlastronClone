@@ -1,21 +1,11 @@
 
-1.- bug en last man standing, cuando un robot toca un tile "dañina" (una estructura del mapa que hace daño o mata directamente su vida pasa a valores negativos, lo que es incorrecto y no acaba la partida como tal.)
-las tiles dañinas estan configuradas en los mapas.
-{
-  "nombre": "Cielo",
-  "plataformas": [
-  ],
-  "laterales": [
-  ],
-  "plataformas_y_laterales_impenetrables": [ 
-  ],
-  "plataformas_y_laterales_dañinas": [
 
-  ],
-    "plataformas_y_laterales_dañinas_daño": 1000 <<< este daño hace que mueran
-}
-
-
+Pendiente:
+¿Hay forma de categorizar armas para verlas en el hud?
+Tambien quisiera saber si a parte del nombre se le puede agregar el daño al hacer hover
+Mi categoria, no se si deberia ser por tipo: cuerpo a cuerpo/ impacto/ etc
+O deberia ser calidad  francotirador/supermisil/ etc... armas con gran daño irian primero
+O en su defecto, una mezcla de ambos, orden por categoria y cada categoria orden por daño.
 
 
 

@@ -1,37 +1,35 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Bomba",
-  "comportamiento": "rebote",
-  "daño": 65,
+  "nombre": "Shuriken",
+  "comportamiento": "impacto",
+  "daño": 23,
   "gravedad": 0.5,
   "friccion_aire": 0.99,
   "tiempo_explosion_ms": 3000,
-  "tiempo_post_explosion_ms": 500,
+  "tiempo_post_explosion_ms": 300,
+  "margen_dueño_ms": 250,
   
   "daña_al_dueño": true,
-  "municion": 5,
-  "cantidad": 1,
-  "dispersion_grados": 25,
+  "municion": 2,
+  "cantidad": 3,
+  "dispersion_grados": 30,
 
-  "friccion_rebote": 0.6,
-
-  "empuje_ancho": 10,
-  "empuje_alto": -2,
+  "empuje_ancho": 3,
+  "empuje_alto": -5,
 
   "_________(Opcional) esto solo es para que el empuje se aplique segun donde es la explosion_________": "En arma se deja en false o no se usa argumento",
-  "empuje_por_impacto": true,
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
-  "ancho_proyectil": 60,
-  "alto_proyectil": 60,
-  "ancho_explosion": 150,
-  "alto_explosion": 150,
-    
+  "ancho_proyectil": 45,
+  "alto_proyectil": 45,
+  "ancho_explosion": 45,
+  "alto_explosion": 45,
+
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
-  "hitbox_ancho_proyectil": 20,
-  "hitbox_alto_proyectil": 20,
-  "hitbox_ancho_explosion": 100,
-  "hitbox_alto_explosion": 100,
+  "hitbox_ancho_proyectil": 10,
+  "hitbox_alto_proyectil": 10,
+  "hitbox_ancho_explosion": 10,
+  "hitbox_alto_explosion": 10,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 0,
@@ -40,21 +38,18 @@
   "posicion_alto_explosion": 0,
 
 
-  "_________Dibujado de sprites_________": "______________",
-  "sprite": "assets/weapons/bomba/sprite.png",
+  "_________Dibujado de sprite_________": "______________",
+  "sprite": "assets/weapons/shuriken/sprite.png",
   "frames": 3,
-  "frames_explosion": 1,
+  "frames_explosion": 2,
 
-  "ancho_arma_sostenida": 100,
-  "alto_arma_sostenida": 100,
+  "ancho_arma_sostenida": 40,
+  "alto_arma_sostenida": 40,
   "posicion_ancho_arma_sostenida": 0,
   "posicion_alto_arma_sostenida": 0,
 
-  "oculta_arma_al_disparar": true,
+  "oculta_arma_al_disparar": false,
   "estilo_mira": "apuntar"
 
 
 }
-
-
-

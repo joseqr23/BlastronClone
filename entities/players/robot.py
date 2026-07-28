@@ -138,6 +138,7 @@ class Robot:
             sound_manager.salto()
 
     def aplicar_fisica(self):
+        self.x_anterior = self.x
         self.x += self.vel_x
         self.vel_y += self.gravity
         self.y += self.vel_y

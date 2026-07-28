@@ -283,16 +283,31 @@ class WeaponManager:
 
     def _aplicar_empuje(self, p, robot):
         """Empuje/knockback opcional al golpear. config.json opcional:
-        empuje_ancho (se espeja según hacia dónde miraba el arma al
-        golpear) y empuje_alto (negativo = hacia arriba). Si la víctima
-        es un jugador remoto, el host no controla su física real (solo
-        interpola una copia visual) — se le avisa por red para que su
-        propio cliente aplique el empuje a su robot real."""
+        empuje_ancho y empuje_alto (negativo = hacia arriba).
+
+        empuje_por_impacto (bool, default False) decide cómo se calcula
+        la dirección horizontal:
+          False -> según hacia dónde viajaba/apuntaba el arma. Estable
+                   y preciso para disparos directos de un solo punto
+                   (rifle, escopeta, francotirador), donde el punto
+                   exacto de contacto tiene demasiado ruido para ser
+                   confiable como referencia de dirección.
+          True  -> según la posición real de la víctima respecto al
+                   centro del impacto/explosión. Correcto para CUALQUIER
+                   arma que sea una explosión de área de verdad (misil,
+                   supermisil, granada, mina) — sin importar si alcanza
+                   a 1 o varios robots, ni hacia qué lado haya rebotado
+                   o caído."""
         empuje_ancho = p.config.get("empuje_ancho", 0)
         empuje_alto = p.config.get("empuje_alto", 0)
         if not empuje_ancho and not empuje_alto:
             return
-        direccion = 1 if getattr(p, "_facing_right", True) else -1
+        if p.config.get("empuje_por_impacto", False):
+            centro_impacto_x = p.get_hitbox().centerx
+            centro_robot_x = robot.get_centro()[0]
+            direccion = 1 if centro_robot_x >= centro_impacto_x else -1
+        else:
+            direccion = 1 if getattr(p, "_facing_right", True) else -1
         vel_x = empuje_ancho * direccion
         vel_y = empuje_alto
         if robot is self.game.robot:

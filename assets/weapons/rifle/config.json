@@ -16,7 +16,7 @@
   
   "empuje_ancho": 2,
   "empuje_alto": -2,
-  
+    
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "velocidad_proyectil": 45,
   "intervalo_disparos_ms": 80,

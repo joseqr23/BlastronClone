@@ -19,16 +19,30 @@ def check_collisions(robot, tiles):
 
 
 def check_collisions_laterales_esquinas(robot, tiles_laterales):
+    """Muros laterales — bloquean el paso lateral del robot. Además del
+    solape normal, se detecta "tunneling": un empuje fuerte puede mover
+    al robot varios píxeles de golpe y terminar del otro lado del muro
+    sin llegar a solaparse con él en la posición final — por eso se
+    compara también contra la posición del frame anterior."""
+    x_anterior = getattr(robot, "x_anterior", robot.x)
     rect = robot.get_rect()
+    rect_anterior = pygame.Rect(int(x_anterior), rect.y, rect.width, rect.height)
 
     for tile in tiles_laterales:
-        # Sólo bloqueo lateral para estos tiles especiales (los muros)
-        if rect.colliderect(tile.rect):
-            # Bloqueo lateral izquierda
+        solapa_verticalmente = rect.bottom > tile.rect.top and rect.top < tile.rect.bottom
+        if not solapa_verticalmente:
+            continue
+
+        if robot.vel_x > 0 and rect_anterior.right <= tile.rect.left and rect.right >= tile.rect.left:
+            robot.x = tile.rect.left - robot.width
+            robot.vel_x = 0
+        elif robot.vel_x < 0 and rect_anterior.left >= tile.rect.right and rect.left <= tile.rect.right:
+            robot.x = tile.rect.right
+            robot.vel_x = 0
+        elif rect.colliderect(tile.rect):
             if rect.left < tile.rect.right and robot.vel_x < 0:
                 robot.x = tile.rect.right
                 robot.vel_x = 0
-            # Bloqueo lateral derecha
             elif rect.right > tile.rect.left and robot.vel_x > 0:
                 robot.x = tile.rect.left - robot.width
                 robot.vel_x = 0

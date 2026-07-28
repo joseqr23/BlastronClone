@@ -149,21 +149,10 @@ class WeaponManager:
     def _update_proyectiles(self):
         for p in self.game.proyectiles[:]:
             candidatos = self._robots_para_colision()
-            # La colisión/rebote/impacto contra tiles y TODOS los robots
-            # ya ocurre dentro de p.update(), sub-paso por sub-paso.
-            p.update(self.game.tiles + self.game.tiles_impenetrables, candidatos)
+            p.update(self.game.tiles, candidatos)
             daño = p.daño
 
-            # Aplicar shake al disparar arma
-            if p.explotado and not getattr(p, "_shake_aplicado", False):
-                p._shake_aplicado = True
-                self.game.activar_shake(
-                    p.config.get("sacudida_intensidad", 0),
-                    p.config.get("sacudida_duracion_ms", 0),
-                )
-
-
-            # Proyectil decide TODO sobre a quién dañar. Aquí solo se aplica.
+           
             for robot in p.robots_afectados(candidatos):
                 robot.take_damage(daño)
                 self._aplicar_empuje(p, robot)
@@ -181,5 +170,10 @@ class WeaponManager:
         empuje_alto = p.config.get("empuje_alto", 0)
         if not empuje_ancho and not empuje_alto:
             return
-        direccion = 1 if getattr(p, "_facing_right", True) else -1
+        if p.config.get("empuje_por_impacto", False):
+            centro_impacto_x = p.get_hitbox().centerx
+            centro_robot_x = robot.get_centro()[0]
+            direccion = 1 if centro_robot_x >= centro_impacto_x else -1
+        else:
+            direccion = 1 if getattr(p, "_facing_right", True) else -1
         robot.aplicar_empuje(empuje_ancho * direccion, empuje_alto)
