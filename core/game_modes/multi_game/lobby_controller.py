@@ -8,6 +8,7 @@ class LobbyController:
     def __init__(self, game, state):
         self.game = game
         self.state = state
+        self.socket_a_jugador = {}
 
     def add_local_host(self):
         self.state.jugadores[self.game.nombre_jugador] = LobbyPlayer(
@@ -32,6 +33,18 @@ class LobbyController:
             nombre_final, personaje, listo=False
         )
         return nombre_final
+
+    def bind_client_socket(self, sock, nombre):
+        """Asocia un socket TCP al nombre definitivo asignado por el host."""
+        if sock is not None and nombre:
+            self.socket_a_jugador[sock] = nombre
+
+    def remove_client_socket(self, sock):
+        """Quita al cliente desconectado y devuelve su nombre, si se conocía."""
+        nombre = self.socket_a_jugador.pop(sock, None)
+        if nombre:
+            self.state.jugadores.pop(nombre, None)
+        return nombre
 
     def set_ready(self, nombre, listo):
         if not self.game.host or nombre not in self.state.jugadores:

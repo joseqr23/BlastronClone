@@ -52,7 +52,10 @@ class MultiplayerGame(BaseGame):
         self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
         self.volver_al_menu = False
+        self.requiere_confirmacion_menu = True
+        self.confirmando_salida = False
         self.rect_volver_menu = self.rect_mute = None
+        self.rect_confirmar_salida = self.rect_cancelar_salida = None
         self.fuente_botones = pygame.font.SysFont("Arial", 10, bold=True)
         self.mouse_click_sostenido = False
         self.font = pygame.font.SysFont("Arial", 16)
@@ -118,6 +121,42 @@ class MultiplayerGame(BaseGame):
     def _procesar_mensajes_pendientes(self): self.messages.process_pending()
     def _cerrar_red(self): self.network.close()
 
+    def remove_remote_player(self, nombre):
+        """Elimina un jugador que abandonó, sin bloquear el ciclo de turnos."""
+        if not nombre or nombre == self.nombre_jugador:
+            return
+        self.robots_remotos.pop(nombre, None)
+        self.last_sequences.pop(nombre, None)
+        self.puntajes.pop(nombre, None)
+        self.lobby_state.jugadores.pop(nombre, None)
+        self.robots_estaticos = list(self.robots_remotos.values())
+
+        turnos = self.turn_manager
+        if nombre not in turnos.jugadores:
+            return
+        indice = turnos.jugadores.index(nombre)
+        del turnos.jugadores[indice]
+        if not turnos.jugadores:
+            turnos.turno_actual = 0
+            return
+        if indice < turnos.turno_actual:
+            turnos.turno_actual -= 1
+        elif indice == turnos.turno_actual:
+            turnos.turno_actual %= len(turnos.jugadores)
+            turnos.fase = "turno"
+            turnos.en_cooldown = False
+            turnos.disparo_hecho = False
+            turnos.turno_inicio = self.now()
+            turnos.post_disparo_inicio = None
+            turnos.cooldown_inicio = None
+        if self.host:
+            turnos.enviar_sync()
+
+    def finish_if_one_player_left(self):
+        if self.partida_iniciada and len(self.robots_remotos) == 0:
+            self.tiempo_restante = 0
+            self.game_over = True
+
     # ---------- Sala de espera ----------
     @property
     def local_ready(self):
@@ -157,6 +196,8 @@ class MultiplayerGame(BaseGame):
                 self.robot.facing_right = pygame.mouse.get_pos()[0] >= self.robot.get_centro()[0]
             if not self.event_handler.handle_events(): return None
             self.messages.process_pending()
+            if self.volver_al_menu:
+                return "menu"
             if self.game_over:
                 return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
             self._update_turns_and_player()

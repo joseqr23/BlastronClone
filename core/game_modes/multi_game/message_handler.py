@@ -22,7 +22,7 @@ class MessageHandler:
                 return
 
             message_type = message.get("tipo")
-            if self.game.host and message_type not in {"damage", "disparo", "hello", "ready"}:
+            if self.game.host and message_type not in {"damage", "disparo", "hello", "ready", "disconnect"}:
                 self.game.enviar(message, excluir_socket=source_socket)
 
             self.handle(message, source_socket)
@@ -44,7 +44,26 @@ class MessageHandler:
                         source_socket,
                         {"tipo": "nombre_asignado", "nombre": nombre_final},
                     )
+                    game.lobby_controller.bind_client_socket(source_socket, nombre_final)
                     game.lobby_controller.broadcast_state()
+            return
+
+        if message_type == "disconnect":
+            if game.host:
+                nombre = game.lobby_controller.remove_client_socket(source_socket)
+                if not nombre:
+                    return
+                game.remove_remote_player(nombre)
+                if game.partida_iniciada:
+                    game.enviar({"tipo": "player_left", "jugador": nombre})
+                    game.finish_if_one_player_left()
+                    if game.game_over:
+                        game.enviar({"tipo": "match_end", "motivo": "quedó un solo jugador"})
+                else:
+                    game.lobby_controller.broadcast_state()
+            else:
+                # El cliente solo tiene un socket: si cae, el host se fue.
+                game.volver_al_menu = True
             return
 
         if message_type == "nombre_asignado":
@@ -54,6 +73,15 @@ class MessageHandler:
                     game.nombre_jugador = nombre_final
                     game.robot.nombre_jugador = nombre_final
                     game.chat.nombre_jugador = nombre_final
+            return
+
+        if message_type == "player_left":
+            game.remove_remote_player(message.get("jugador"))
+            return
+
+        if message_type == "match_end":
+            game.tiempo_restante = 0
+            game.game_over = True
             return
 
         if message_type == "ready":

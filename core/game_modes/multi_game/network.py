@@ -79,6 +79,8 @@ class NetworkManager:
         with self.clients_lock:
             if sock in self.client_sockets:
                 self.client_sockets.remove(sock)
+        # El hilo de red no altera el juego: notifica al hilo principal.
+        self.incoming.put(({"tipo": "disconnect"}, sock))
 
     def send(self, message, exclude_socket=None):
         if self.host:

@@ -19,6 +19,8 @@ class MultiplayerLobbyScreen:
             game.enviar({"tipo": "hello", "jugador": game.nombre_jugador, "personaje": game.personaje})
         while not game.partida_iniciada:
             game.messages.process_pending()
+            if game.volver_al_menu:
+                return "menu"
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return None

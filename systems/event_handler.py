@@ -14,6 +14,18 @@ class EventHandler:
                 pygame.quit()
                 return False
 
+            # Multijugador puede pedir confirmación antes de abandonar.
+            # FreeGame no activa esta bandera y conserva su salida inmediata.
+            if getattr(self.game, "confirmando_salida", False):
+                if evento.type == pygame.KEYDOWN and evento.key == pygame.K_ESCAPE:
+                    self.game.confirmando_salida = False
+                elif evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+                    if self.game.rect_confirmar_salida and self.game.rect_confirmar_salida.collidepoint(evento.pos):
+                        self.game.volver_al_menu = True
+                    elif self.game.rect_cancelar_salida and self.game.rect_cancelar_salida.collidepoint(evento.pos):
+                        self.game.confirmando_salida = False
+                continue
+
             # Botones de acceso rápido
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_g and not self.game.chat.activo:
@@ -22,7 +34,10 @@ class EventHandler:
                     self.game.sound_manager.alternar_mute()
                 elif evento.key == pygame.K_ESCAPE and not self.game.chat.activo:
                     if hasattr(self.game, "volver_al_menu"):
-                        self.game.volver_al_menu = True
+                        if getattr(self.game, "requiere_confirmacion_menu", False):
+                            self.game.confirmando_salida = True
+                        else:
+                            self.game.volver_al_menu = True
 
             # Chat
             self.game.chat.handle_event(evento)
@@ -43,7 +58,10 @@ class EventHandler:
                 rect_menu = getattr(self.game, "rect_volver_menu", None)
                 rect_mute = getattr(self.game, "rect_mute", None)
                 if rect_menu and rect_menu.collidepoint(evento.pos):
-                    self.game.volver_al_menu = True
+                    if getattr(self.game, "requiere_confirmacion_menu", False):
+                        self.game.confirmando_salida = True
+                    else:
+                        self.game.volver_al_menu = True
                 elif rect_mute and rect_mute.collidepoint(evento.pos):
                     self.game.sound_manager.alternar_mute()
                 elif not self.game.mouse_click_sostenido:
