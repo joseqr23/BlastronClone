@@ -244,16 +244,11 @@ class WeaponManager:
             # exclusión de dueño, ya-dañados). Aquí solo se aplica.
             for robot in p.robots_afectados(candidatos):
                 es_dueño = getattr(p, "owner", None) == robot.nombre_jugador
-                puntos = daño
-                moria = (robot.health - daño <= 0) and not robot.is_dead
-                if moria:
-                    puntos = daño * 2
-                self.aplicar_dano(robot, daño)
+                moria = self.aplicar_dano(robot, daño, atacante=p.owner)
+                puntos = daño * 2 if moria else daño
                 self._aplicar_empuje(p, robot)
                 if not es_dueño:
                     self.game.enviar_evento_puntaje(p.owner, puntos, robot)
-                if moria:
-                    self.game.enviar_evento_muerte(p.owner, robot)
                 p.danados.add(robot)
                 if robot is self.game.robot:
                     print(f"[{p.tipo.upper()}] Host aplica {daño} a {self.game.nombre_jugador} por {p.tipo} de {p.owner}")
@@ -264,11 +259,17 @@ class WeaponManager:
                 except ValueError:
                     pass
 
-    def aplicar_dano(self, robot, cantidad):
-        """Solo se llama desde el host. Aplica el daño localmente y lo
-        notifica a todos los clientes."""
+    def aplicar_dano(self, robot, cantidad, atacante=None):
+        """Solo se llama desde el host. Aplica el daño localmente, lo
+        notifica a todos los clientes, y si este golpe mata al robot,
+        dispara el registro de muerte — centralizado aquí para que
+        CUALQUIER fuente de daño (armas, zonas dañinas del mapa, lo que
+        sea) dispare la muerte de forma consistente, sin que cada
+        llamador tenga que reimplementarlo. Devuelve True si este golpe
+        mató al robot."""
         if not self.game.host:
-            return
+            return False
+        moria = robot.health > 0 and cantidad >= robot.health and not robot.is_dead
         robot.take_damage(cantidad)
         self.game.enviar({
             "tipo": "damage",
@@ -276,6 +277,9 @@ class WeaponManager:
             "cantidad": cantidad,
             "quien": self.game.nombre_jugador,
         })
+        if moria:
+            self.game.enviar_evento_muerte(atacante, robot)
+        return moria
 
     def _aplicar_empuje(self, p, robot):
         """Empuje/knockback opcional al golpear. config.json opcional:

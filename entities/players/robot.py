@@ -98,7 +98,7 @@ class Robot:
 
     def take_damage(self, amount):
         if not self.is_dead:
-            self.health -= amount
+            self.health = max(0, self.health - amount)
             if self.health <= 0:
                 self.die()
             else:

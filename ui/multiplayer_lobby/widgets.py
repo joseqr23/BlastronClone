@@ -84,7 +84,7 @@ class LobbyConfigWidgets:
         if not maps:
             surface.blit(text_font.render("No hay mapas disponibles", True, (210, 130, 120)), (rect.x, rect.y + 30))
             return
-
+ 
         surface.blit(text_font.render("MAPA", True, (174, 183, 202)), (rect.x, rect.y + 3))
         arrow_size, item_w, item_h, gap = 26, 78, 65, 8
         first_x = rect.x + 34
@@ -94,7 +94,7 @@ class LobbyConfigWidgets:
         self.offset = min(self.offset, max_offset)
         self.left_rect = pygame.Rect(rect.x, rect.y + 29, arrow_size, arrow_size) if self.offset > 0 else None
         self.right_rect = pygame.Rect(rect.right - arrow_size, rect.y + 29, arrow_size, arrow_size) if self.offset < max_offset else None
-
+ 
         for button, symbol in ((self.left_rect, "<"), (self.right_rect, ">")):
             if not button:
                 continue
@@ -102,9 +102,19 @@ class LobbyConfigWidgets:
             pygame.draw.rect(surface, (115, 130, 165), button, width=1, border_radius=6)
             rendered = title_font.render(symbol, True, (245, 245, 250))
             surface.blit(rendered, rendered.get_rect(center=button.center))
-
-        x = first_x
-        for mapa_id, nombre, _ in maps[self.offset:self.offset + self.visible_count]:
+ 
+        visibles = maps[self.offset:self.offset + self.visible_count]
+        # Centra el grupo de miniaturas visibles dentro del espacio
+        # reservado (usable_w), en vez de pegarlas a la izquierda — así
+        # no queda un hueco muerto entre la última miniatura y la flecha
+        # derecha cuando el ancho disponible no es múltiplo exacto de
+        # (item_w + gap). Con el carrusel lleno (todos los mapas caben a
+        # la vez) esto además centra el conjunto completo, en vez de
+        # dejarlo desalineado hacia la izquierda.
+        fila_w = len(visibles) * item_w + max(0, len(visibles) - 1) * gap
+        x = first_x + max(0, (usable_w - fila_w) // 2)
+ 
+        for mapa_id, nombre, _ in visibles:
             item = pygame.Rect(x, rect.y + 20, item_w, item_h)
             self.map_rects[mapa_id] = item
             active = mapa_id == config.mapa_id
