@@ -49,13 +49,23 @@ def main():
         "Modo Libre": "free"
     }
 
+    menu_initial_screen = "principal"
+    menu_restore = None
+
     while True:
         screen = pygame.display.set_mode(
             (SCREEN_WIDTH, SCREEN_HEIGHT),
             pygame.RESIZABLE
         )
         sound_manager.iniciar_musica("assets/sfx/inicio.mp3")
-        menu = Menu(screen)
+        menu = Menu(
+            screen,
+            initial_screen=menu_initial_screen,
+            restore=menu_restore,
+        )
+
+        menu_initial_screen = "principal"
+        menu_restore = None
         seleccion = menu.run()
         if not seleccion:
             break
@@ -85,8 +95,16 @@ def main():
             break
 
         resultado = juego.run()
-        if resultado != "menu":
-            break
+
+        if resultado == "menu":
+            continue
+
+        if resultado == "host_config":
+            menu_initial_screen = "host_config"
+            menu_restore = juego.menu_restore
+            continue
+
+        break
 
     pygame.quit()
 

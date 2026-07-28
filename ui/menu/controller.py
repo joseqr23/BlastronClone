@@ -1,3 +1,5 @@
+# ui/menu/controller.py
+
 import pygame
 
 from ui.text_input import TextInput
@@ -13,12 +15,12 @@ from .screens.free_config import FreeConfigScreen
 
 class Menu:
     """Punto de entrada compatible con el antiguo ui/menu.py."""
-    def __init__(self, pantalla):
+    def __init__(self, pantalla, initial_screen="principal", restore=None):
         self.pantalla = pantalla
         self.ancho, self.alto = pantalla.get_size()
         self.fonts = MenuFonts.create()
         self.assets = MenuAssets()
-        self.state = MenuState()
+        self.state = MenuState(pantalla=initial_screen)
         primer_mapa = self.assets.mapas[0][0] if self.assets.mapas else None
         self.state.host.mapa_id = primer_mapa
         self.state.libre.mapa_id = primer_mapa
@@ -26,6 +28,15 @@ class Menu:
         self.nombre_input = TextInput((0, 0, 260, 38), self.fonts.input, max_length=29)
         self.ip_input = TextInput((0, 0, 220, 34), self.fonts.input, max_length=15)
         self.ip_input.text = "192.168.1.236"
+        # Se utiliza cuando el Host sale del lobby y vuelve a configurar la sala.
+        if restore:
+            self.nombre_input.text = restore.get("nombre", "")
+            personaje = restore.get("personaje")
+            if personaje in self.assets.personajes:
+                self.state.personaje_idx = self.assets.personajes.index(personaje)
+            self.state.host.duracion_min = restore.get("duracion_min", self.state.host.duracion_min)
+            self.state.host.modo_partida = restore.get("modo_partida", self.state.host.modo_partida)
+            self.state.host.mapa_id = restore.get("mapa", self.state.host.mapa_id)
         self.screens = {
             "principal": MainScreen(self.state, self.assets, self.fonts, self.nombre_input, self.ip_input, self.toast),
             "host_config": HostConfigScreen(self.state, self.assets, self.fonts, self.toast),

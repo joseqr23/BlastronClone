@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field
+# ui/menu/state.py
 
+from dataclasses import dataclass, field
 
 @dataclass
 class HostConfig:

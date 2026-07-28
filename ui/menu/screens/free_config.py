@@ -1,3 +1,5 @@
+# ui/menu/screens/free_config.py
+
 import pygame
 
 from ..theme import *

@@ -1,3 +1,5 @@
+# ui/menu/assets.py
+
 import os
 import pygame
 

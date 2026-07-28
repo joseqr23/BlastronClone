@@ -1,7 +1,8 @@
+# ui/menu/widgets.py
+
 import pygame
 
 from .theme import *
-
 
 def draw_text_input_contents(surface, text_input):
     """Dibuja TextInput usando el estilo del menú, sin dibujar otro fondo."""

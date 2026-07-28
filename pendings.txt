@@ -1,45 +1,14 @@
-Tengo un juego con python, ya esta desarrollado y avanzado en gran escala, pero actualmente entré en conflicto con un archivo, esta todo ok, pero quisiera dividirlo, el archivo es menu.py, tiene ya casi 800 lineas, quisiera saber que division podria hacer.
+core/game_modes/multi_game/
+├── __init__.py
+├── game.py              # MultiplayerGame: coordina lobby y partida
+├── network.py           # Sockets, hilos y cola de mensajes
+├── protocol.py          # Empaquetado TCP JSON
+├── lobby.py             # Sala de espera: jugadores, ready, inicio
+├── message_handler.py   # Rutas para mensajes de lobby y partida
+├── replication.py       # Estado de robots y proyectiles
+├── renderer.py          # Render durante la partida
+└── results.py           # Podio final
 
-
-Actualmente el menu funciona asi:
-
-PANTALLA PRINCIPAL:
-Nombre: [input para poner nombre] |  Seleccionar personaje >[  hud de personaje ]<
-[Modo solo] (bloqueado, aun no disponible)
-[Modo multijugador] (con opciones para poner host o cliente segun el caso)
-[Modo libre] (con un boton que dirige al modo libre)
-
-CONFIGURACION HOST: (si el jugador elige en modo multijugador la opcion de host se abrira otra ventana con la configuracion de la partida)
-[Boton de volver]
-[Tiempo de partida] [3 botones:3 min | 5min | 10min]
-[Modo de juego] [3 botones: Por puntos | Por muertes | Last man standing ]
-[Mapa] [Selector tipo carusel con opciones indefinidas sin importar la cantidad de mapas (es dinamico si se agregan mas mapas)]
-[BOTON DE EMPEZAR PARTIDA]
-
-Actualmente la ruta es asi:
-ui/menu.py
-Estaba pensando hacerlo asi:
-ui/menu/... archivos separados 
-Tenia en mente algo asi:
-ui/
-├── menu/
-│   ├── __init__.py          # Exporta Menu
-│   ├── controller.py        # Bucle run(), navegación y eventos
-│   ├── state.py             # MenuState y HostConfig (dataclasses)
-│   ├── theme.py             # Colores, fuentes, gradiente, paneles
-│   ├── assets.py            # Carga de iconos, retratos y miniaturas de mapas
-│   ├── widgets.py           # Input estilizado, aviso temporal, carrusel de mapas
-│   └── screens/
-│       ├── __init__.py
-│       ├── main.py          # Pantalla principal + panel Host/Cliente
-│       ├── host_config.py   # Configuración de la partida host
-│       └── solo_config.py   # Vacío por ahora; listo para el futuro
-
-(NO SE SI SEA LA CORRECTA O TIENES ALGO MEJOR EN MENTE)
-
-La idea de poner pantalla_modo_multijigador.py es porque proximamente pienso agregar pantalla_modo_solo.py >> añadiria una pantalla nueva con la configuracion de los niveles etc.
-
-Este es mi codigo actual de menu.py > cualquier sugerencia dimela.
 
 
 

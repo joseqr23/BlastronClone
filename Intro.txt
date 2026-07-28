@@ -3,89 +3,107 @@ blastron_clone/
 ├── assets/                     # Imágenes, sonidos, música
 │   ├── hud/granada.png; machete.png; mine.png; misil.png; nada.png; spawn_robot.png; supermisil.png; ...
 │   ├── maps/                   # Mapas dinamicos, se agrega nueva carpeta con fondo y config y el mapa se genera solo
-│       ├── parque/fondo.png; config.json; musica.mp3
-│       ├── sun/fondo.png; config.json; musica.mp3 
-│       ├── ...
+│   │   ├── parque/fondo.png; config.json; musica.mp3
+│   │   ├── sun/fondo.png; config.json; musica.mp3 
+│   │   └──...
 │   ├── robots/                 # Robots dinamicos, se agrega nueva carpeta con el nombre del robot y sus respectivos png, se añada automaticamente siempre y cuando tenga portrait.png
-│       ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
-│       ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
-│       ├── netali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
-│       ├── robot/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
-│       ├── ...
+│   │   ├── alfonso/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
+│   │   ├── correnetali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
+│   │   ├── netali/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
+│   │   ├── robot/death.png; idle.png; jump.png; robot.png; run.png; portrait.png; celebration.png; defeated.png
+│   │   └── ...
 │   ├── robots_boss/            # Funcionalidad esperada para el modo solo > aún no implementado.
-│       ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
-│   ├── sfx/
-│       ├──dano/dano1.mp3;dano2.mp3;dano3.mp3
-│       ├──death/death1.mp3;death2.mp3;death3.mp3
-│       ├──salto/salto1.mp3;salto2.mp3;salto3.mp3
-│       ├──weapons          
-│       │       ├──granada/disparo.mp3;explosion.mp3
-│       │       ├──misil/disparo.mp3;explosion.mp3
-│       │       ├──mine/disparo.mp3;explosion.mp3
-│       └──musica.mp3
+│   │   ├── netali_correcaminos/death.png; idle.png; jump.png; robot.png; run.png
+│   │   └── ...
+│   ├── sfx/                    # MP3 de todo el proyecto 
+│   │   ├── dano/dano1.mp3;dano2.mp3;dano3.mp3
+│   │   ├── death/death1.mp3;death2.mp3;death3.mp3
+│   │   ├── salto/salto1.mp3;salto2.mp3;salto3.mp3
+│   │   ├── weapons/       
+│   │   │       ├── granada/disparo.mp3;explosion.mp3
+│   │   │       ├── misil/disparo.mp3;explosion.mp3
+│   │   │       ├── mine/disparo.mp3;explosion.mp3
+│   │   ├── inicio.mp3          # Musica de menu
+│   │   └── resultado.mp3       # Musica de resultado/podio
 │   ├── ui/icons/free_game.png; solo_game.png; multi_game.png
-│   └── weapons/    # Si tiene weapon.png, el arma se dibujara sostenida en su brazo
+│   └── weapons/                # Si tiene weapon.png, el arma se dibujara sostenida en su brazo
 │       ├── granada/sprite.png; config.json; weapon.png
 │       ├── misil/sprite.png; config.json; weapon.png
 │       ├── mine/sprite.png; config.json; weapon.png
 │       ├── supermisil/sprite.png; config.json; weapon.png
-│       ├── ...
+│       └── ...
 │
-├── core/                        # Núcleo del motor
+├── core/                       # Núcleo del motor
 │   ├── game_modes/
-│       ├── base_game.py # Base que heredaran el resto de modos
-│       ├── free_game.py # Ya configurado
-│       ├── multi_game.py # Ya configurado
-│       └── solo_game.py # pendiente
+│   │   ├── multi_game/ # Nuevo multi_game >> refactorizado de multi_game.py 
+│   │   │    ├── __init__.py
+│   │   │    ├── game.py              # MultiplayerGame: coordina lobby y partida
+│   │   │    ├── network.py           # Sockets, hilos y cola de mensajes
+│   │   │    ├── protocol.py          # Empaquetado TCP JSON
+│   │   │    ├── lobby.py             # Sala de espera
+│   │   │    ├── lobby_state.py       # LobbyState, LobbyPlayer y LobbyConfig  >> pendiente configurar, extraer de lobby.py
+│   │   │    ├── lobby_controller.py  # Reglas: ready, cambios Host, iniciar partida  >> pendiente configurar, extraer de lobby.py
+│   │   │    ├── message_handler.py   # Rutas para mensajes de lobby y partida
+│   │   │    ├── replication.py       # Estado de robots y proyectiles
+│   │   │    ├── renderer.py          # Render durante la partida
+│   │   │    └── results.py           # Podio final
+│   │   ├── base_game.py        # Base que heredaran el resto de modos
+│   │   ├── free_game.py        # Ya configurado
+│   │   └── solo_game.py        # pendiente
 │   └── robot_selector.py 
 │
-├── entities/                    # Jugadores, bots, proyectiles
-│       ├── boss/ # No implementado aún
-│       ├── players/robot.py;robot_estatico.py
-│       ├── weapons/proyectil.py # Esto toma la info de los json que se procesaron en weapon_loader.py
+├── entities/                   # Jugadores, bots, proyectiles
+│   ├── boss/                   # No implementado aún
+│   ├── players/robot.py;robot_estatico.py # Configuracion de Robot y robot estatico para modo libre
+│   └── weapons/proyectil.py    # Esto toma la info de los json que se procesaron en weapon_loader.py
 │
-├── levels/                      # Mapa, objetos del mundo
-│   ├── map_loader.py   # Toma info de utils/mapa_loader.py, que procesó los json.
+├── levels/                     # Mapa, objetos del mundo
+│   ├── map_loader.py           # Toma info de utils/mapa_loader.py, que procesó los json.
 │   └── tile.py
 │
-├── systems/                     # Lógica de turnos, física, colisiones
-│   ├── aim_indicator.py    # Indicador de mira del robot
-│   ├── collision.py
-│   ├── event_handler.py
-│   ├── hud_manager.py
-│   ├── turn_manager.py
-│   ├── weapon_manager_free.py
-│   └── weapon_manager.py
+├── systems/                    # Lógica de turnos, física, colisiones
+│   ├── aim_indicator.py        # Indicador de mira del robot
+│   ├── collision.py            # Manejador de colisiones, estructura de mapas.
+│   ├── event_handler.py        # Manejador de eventos
+│   ├── hud_manager.py          # Manejador de hud
+│   ├── modos_partida.py        # Configuracion de modos partida modo puntaje, muertes y last man standing 
+│   ├── turn_manager.py         # Manejador de turnos
+│   ├── weapon_manager_free.py  # Configuracion de armas para el modo libre
+│   └── weapon_manager.py       # Configuracion de armas para el modo multijugador
 │
 ├── ui/ 
-│   ├── menu / # Actualizacion: Ahora todo el contenido de menu.py esta en una carpeta para evitar acumulacion de código.
-│   │   ├── __init__.py          # Exporta Menu
-│   │   ├── controller.py        # Bucle run(), navegación y eventos
-│   │   ├── state.py             # MenuState y HostConfig (dataclasses)
-│   │   ├── theme.py             # Colores, fuentes, gradiente, paneles
-│   │   ├── assets.py            # Carga de iconos, retratos y miniaturas de mapas
-│   │   ├── widgets.py           # Input estilizado, aviso temporal, carrusel de mapas
+│   ├── menu /  # Nuevo Menu >> refactorizado de menu.py 
+│   │   ├── __init__.py         # Exporta Menu
+│   │   ├── controller.py       # Bucle run(), navegación y eventos
+│   │   ├── state.py            # MenuState y HostConfig (dataclasses)
+│   │   ├── theme.py            # Colores, fuentes, gradiente, paneles
+│   │   ├── assets.py           # Carga de iconos, retratos y miniaturas de mapas
+│   │   ├── widgets.py          # Input estilizado, aviso temporal, carrusel de mapas
 │   │   └── screens/
-│   │           ├── __init__.py
-│   │           ├── main.py          # Pantalla principal + panel Host/Cliente
-│   │           ├── host_config.py   # Configuración de la partida host
-│   │           └── solo_config.py   # Vacío por ahora; listo para el futuro
-│   ├── chat.py
-│   ├── hud.py
-│   ├── menu.py
-│   ├── portrait.py
-│   └── text_input.py
+│   │       ├── __init__.py
+│   │       ├── main.py         # Pantalla principal + panel Host/Cliente
+│   │       ├── host_config.py  # Configuración de la partida host
+│   │       └── solo_config.py  # Vacío por ahora; listo para el futuro
+│   ├── multiplayer_lobby/ # Nuevo multiplayer_lobby > Ahora la configuracion de partida en modo host, multijugador, es tambien una sala de espera. >> pendiente configurar, conectar de multi_game
+│   │   ├── __init__.py
+│   │   ├── screen.py                   # Dibuja y recibe clicks del lobby
+│   │   ├── assets.py                   # Portraits y miniaturas de mapas
+│   │   └── widgets.py                  # Selector de mapa, duración y modo
+│   ├── chat.py                 # Configuracion de chat
+│   ├── hud.py                  # Configuracion de hud
+│   ├── portrait.py             # Configuracion de portrait
+│   └── text_input.py           # Configuracion de texto
 │
-├── utils/                       # Funciones de ayuda
-│   ├── map_editor/
-│       ├── fondo.png; map_editor.py; plataformas_generadas.py
-│   ├── colors.py
-│   ├── loader.py
+├── utils/                      # Funciones de ayuda
+│   ├── map_editor/             # Editor y generador de mapas manual
+│   │   └── fondo.png; map_editor.py; plataformas_generadas.py
+│   ├── colors.py               # Manjeador de colores, color manager
+│   ├── loader.py 
 │   ├── mapa_loader.py          # Procesa los json de config.json en los mapas creados
-│   ├── paths.py
-│   ├── sound_manager.py
-│   ├── sprite_reproductor.py
-│   └── weapon_loader.py # Esto toma todos los config.json de weapons y los procese. 
-│   
+│   ├── paths.py                # Paths para pygame, resource_path
+│   ├── sound_manager.py        # Manejador de sonidos
+│   ├── sprite_reproductor.py   # Reproductor de sprites
+│   └── weapon_loader.py # Esto toma todos los config.json de weapons y los procese.  
 ├── main.py                      # Punto de entrada
 └── settings.py                  # Configuraciones globales > Ancho de pantalla en juego, alto de pantalla en juego, altura de robot, velocidad y salto. 
+
