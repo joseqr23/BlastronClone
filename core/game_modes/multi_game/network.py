@@ -97,6 +97,13 @@ class NetworkManager:
             except OSError:
                 pass
 
+    def send_to(self, sock, message):
+        """Envía un mensaje únicamente al cliente asociado a este socket."""
+        try:
+            send_framed(sock, message)
+        except OSError:
+            pass            
+                    
     def close(self):
         self.listening = False
         for sock in (self.server_socket, self.client_socket):

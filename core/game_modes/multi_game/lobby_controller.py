@@ -15,10 +15,23 @@ class LobbyController:
         )
 
     def register_client(self, nombre, personaje):
-        if not self.game.host or not nombre or nombre == self.game.nombre_jugador:
-            return
-        self.state.jugadores[nombre] = LobbyPlayer(nombre, personaje, listo=False)
-        self.broadcast_state()
+        if not self.game.host or not nombre:
+            return None
+
+        nombre_base = nombre.strip()
+        nombre_final = nombre_base
+        numero = 2
+
+        while nombre_final in self.state.jugadores:
+            sufijo = f" ({numero})"
+            # Respeta el máximo de 29 caracteres del input del menú.
+            nombre_final = nombre_base[:29 - len(sufijo)] + sufijo
+            numero += 1
+
+        self.state.jugadores[nombre_final] = LobbyPlayer(
+            nombre_final, personaje, listo=False
+        )
+        return nombre_final
 
     def set_ready(self, nombre, listo):
         if not self.game.host or nombre not in self.state.jugadores:

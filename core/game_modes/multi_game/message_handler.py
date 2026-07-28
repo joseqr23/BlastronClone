@@ -20,21 +20,40 @@ class MessageHandler:
                 message, source_socket = network.incoming.get_nowait()
             except queue.Empty:
                 return
+
             message_type = message.get("tipo")
             if self.game.host and message_type not in {"damage", "disparo", "hello", "ready"}:
                 self.game.enviar(message, excluir_socket=source_socket)
-            self.handle(message)
 
-    def handle(self, message):
+            self.handle(message, source_socket)
+
+    def handle(self, message, source_socket=None):
         game = self.game
         message_type = message.get("tipo")
 
         if message_type == "hello":
             if game.host:
-                game.lobby_controller.register_client(
+                nombre_final = game.lobby_controller.register_client(
                     message.get("jugador"),
                     message.get("personaje", "robot"),
                 )
+
+                if nombre_final:
+                    # Solo el cliente nuevo recibe el nombre que le asignó el host.
+                    game.network.send_to(
+                        source_socket,
+                        {"tipo": "nombre_asignado", "nombre": nombre_final},
+                    )
+                    game.lobby_controller.broadcast_state()
+            return
+
+        if message_type == "nombre_asignado":
+            if not game.host:
+                nombre_final = message.get("nombre")
+                if nombre_final:
+                    game.nombre_jugador = nombre_final
+                    game.robot.nombre_jugador = nombre_final
+                    game.chat.nombre_jugador = nombre_final
             return
 
         if message_type == "ready":

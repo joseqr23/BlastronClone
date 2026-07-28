@@ -34,14 +34,14 @@
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
   "posicion_ancho_proyectil": 40,
   "posicion_alto_proyectil": -30,
-  "posicion_ancho_explosion": 35,
-  "posicion_alto_explosion": 0,
+  "posicion_ancho_explosion": 40,
+  "posicion_alto_explosion": -30,
 
 
   "_________Dibujado de sprite_________": "______________",
   "sprite": "assets/weapons/hacha/sprite.png",
   "frames": 3,
-  "frames_explosion": 1,
+  "frames_explosion": 2,
   
   "ancho_arma_sostenida": 90,
   "alto_arma_sostenida": 90,

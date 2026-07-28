@@ -110,7 +110,7 @@ class MultiplayerLobbyScreen:
             image = pygame.transform.smoothscale(portrait, (46, 46))
             surface.blit(image, image.get_rect(center=portrait_box.center))
         name = self._fit_text(small_font, player.nombre, rect.width - 70)
-        robot = self._fit_text(text_font, player.personaje, rect.width - 70)
+        robot = self._fit_text(text_font, player.personaje.capitalize(), rect.width - 70)
         surface.blit(name, (rect.x + 64, rect.y + 9))
         surface.blit(robot, (rect.x + 64, rect.y + 28))
         label = "HOST" if is_host else ("LISTO" if ready else "NO LISTO")

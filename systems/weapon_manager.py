@@ -126,6 +126,7 @@ class WeaponManager:
             "jugador": self.game.nombre_jugador,
             "arma": arma,
             "facing_right": self.game.robot.facing_right,
+            "angulo_ataque": math.degrees(self.game.aim.get_angulo()),
             "disparos": [
                 {"x": origen[0], "y": origen[1], "dir_x": vx, "dir_y": vy}
                 for origen, vx, vy in disparos
@@ -167,6 +168,7 @@ class WeaponManager:
                     "vel_x": disparo["dir_x"], "vel_y": disparo["dir_y"],
                     "owner": jugador,
                     "facing_right": msg.get("facing_right"),
+                    "angulo_ataque": msg.get("angulo_ataque"),
                 })
         else:
             for disparo in disparos:
@@ -174,6 +176,7 @@ class WeaponManager:
                 p = Proyectil(
                     arma, disparo["x"], disparo["y"], disparo["dir_x"], disparo["dir_y"],
                     owner=jugador, facing_right=msg.get("facing_right"),
+                    angulo_ataque=msg.get("angulo_ataque"),
                 )
                 p.proj_id = pid
                 game.proyectiles.append(p)
@@ -204,6 +207,7 @@ class WeaponManager:
             p = Proyectil(
                 d["arma"], d["x"], d["y"], d["vel_x"], d["vel_y"],
                 owner=d["owner"], facing_right=d["facing_right"],
+                angulo_ataque=d.get("angulo_ataque"),
             )
             p.proj_id = pid
             self.game.proyectiles.append(p)
@@ -283,33 +287,38 @@ class WeaponManager:
 
     def _aplicar_empuje(self, p, robot):
         """Empuje/knockback opcional al golpear. config.json opcional:
-        empuje_ancho y empuje_alto (negativo = hacia arriba).
+        empuje_ancho y empuje_alto.
 
-        empuje_por_impacto (bool, default False) decide cómo se calcula
-        la dirección horizontal:
-          False -> según hacia dónde viajaba/apuntaba el arma. Estable
-                   y preciso para disparos directos de un solo punto
-                   (rifle, escopeta, francotirador), donde el punto
-                   exacto de contacto tiene demasiado ruido para ser
-                   confiable como referencia de dirección.
-          True  -> según la posición real de la víctima respecto al
-                   centro del impacto/explosión. Correcto para CUALQUIER
-                   arma que sea una explosión de área de verdad (misil,
-                   supermisil, granada, mina) — sin importar si alcanza
-                   a 1 o varios robots, ni hacia qué lado haya rebotado
-                   o caído."""
+        Para "cuerpo_a_cuerpo_direccional": el empuje sigue la dirección
+        REAL del golpe (self.angulo_ataque) — empuje_ancho es la fuerza
+        total del impulso en esa dirección (no un valor puramente
+        horizontal), y empuje_alto se suma aparte como una elevación
+        extra opcional (el "pop" de un golpe cuerpo a cuerpo, incluso
+        atacando de costado).
+
+        Para el resto de armas, se mantiene la lógica de siempre:
+        empuje_por_impacto (según dónde cayó la explosión) o, por
+        defecto, según hacia dónde viajaba/apuntaba el arma."""
         empuje_ancho = p.config.get("empuje_ancho", 0)
         empuje_alto = p.config.get("empuje_alto", 0)
         if not empuje_ancho and not empuje_alto:
             return
-        if p.config.get("empuje_por_impacto", False):
+
+        if p.comportamiento == "cuerpo_a_cuerpo_direccional":
+            angulo = math.radians(p.angulo_ataque)
+            vel_x = empuje_ancho * math.cos(angulo)
+            vel_y = empuje_ancho * math.sin(angulo) + empuje_alto
+        elif p.config.get("empuje_por_impacto", False):
             centro_impacto_x = p.get_hitbox().centerx
             centro_robot_x = robot.get_centro()[0]
             direccion = 1 if centro_robot_x >= centro_impacto_x else -1
+            vel_x = empuje_ancho * direccion
+            vel_y = empuje_alto
         else:
             direccion = 1 if getattr(p, "_facing_right", True) else -1
-        vel_x = empuje_ancho * direccion
-        vel_y = empuje_alto
+            vel_x = empuje_ancho * direccion
+            vel_y = empuje_alto
+
         if robot is self.game.robot:
             robot.aplicar_empuje(vel_x, vel_y)
         else:

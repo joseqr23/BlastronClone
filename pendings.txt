@@ -1,3 +1,11 @@
+PENDIENTE URG:
+Excelentemente implementado, ahora faltan 2 cosas.
+
+1.- Que la animacion del sprite tambien siga la mira, asi tal cual como ya lo hace weapon.png
+2.- Implementar un timer de la velocidad de la animacion del sprite.
+3.- En modo last man standing puedes hacer que desaparezca la collision de robot? ocurre que al morir el cuerpo queda ahi eso digamos que esta bien, pero el cuerpo sigue recibiendo daño y por ende se come un ataque si este le cae, podria en todo caso quedar solo el sprite?
+4.- Restar -1 en cantidad de kills en el modo muerte cada que haya un suicidio o la muerte no sea ocasionada por otro robot.
+
 
 
 Pendiente:
@@ -11,13 +19,10 @@ O en su defecto, una mezcla de ambos, orden por categoria y cada categoria orden
 
 
 Pendiente con prioridad:
-1.- Separa Menu.py en archivos ya que actualemente tiene más de 700 lineas y mezcla tres responsabilidades distintas (estado/lógica de navegación, dibujo de pantalla principal, dibujo de configuración de host).
-Posibles:
-Puede ser separarlo en algún momento en
-ui/menu_principal.py 
-ui/menu_host_config.py 
-(o simplemente mover los métodos _draw_* a funciones sueltas que reciban self como parámetro)
-La recomendacion que me digass la aplicaré.
+1.- Como se puede añadir IA a los robots?
+Actualemente todas las plataformas de mi mapa solo siguen coordenadas. 
+¿Que tendria que hacer el robot? capturar las coordenadas de las plataformas para saber como moverse?
+¿Capturar la posicion del enemigo para saber el angulo correcto en el que debe disparar?
 
 
 Pendiente:

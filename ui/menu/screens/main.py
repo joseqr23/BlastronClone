@@ -15,10 +15,12 @@ class MainScreen:
     }
     DISPONIBLES = {"Modo Solo": False, "Modo Multijugador": True, "Modo Libre": True}
 
-    def __init__(self, state, assets, fonts, nombre_input, ip_input, toast):
+    def __init__(self, state, assets, fonts, nombre_input, ip_input, toast, guardar_nombre_en_perfil):
         self.state, self.assets, self.fonts = state, assets, fonts
         self.nombre_input, self.ip_input, self.toast = nombre_input, ip_input, toast
+        self.guardar_nombre_en_perfil = guardar_nombre_en_perfil
         self.rect_flecha_izq = self.rect_flecha_der = None
+        self.rect_guardar_nombre = self.rect_editar_nombre = None
         self.rect_opciones = []
         self.rect_host = self.rect_cliente = self.rect_conectar = self.rect_ir_libre = None
 
@@ -35,10 +37,27 @@ class MainScreen:
             return "crear_host" if self.state.multijugador_opcion == "host" else "conectar_cliente"
         return "abrir_libre"
 
+    def _guardar_nombre(self):
+        nombre = self.nombre_input.get_text()
+        if not nombre:
+            self.toast.show("Ingresa un nombre para el jugador")
+            return False
+        self.state.nombre_jugador = nombre
+        self.state.editando_nombre = False
+        self.nombre_input.active = False
+        self.nombre_input.sel_anchor = None
+        self.guardar_nombre_en_perfil(nombre)
+        self.toast.show("Nombre guardado")
+        return True
+
     def handle_event(self, event, mouse_pos):
-        self.nombre_input.handle_event(event)
+        if self.state.editando_nombre:
+            self.nombre_input.handle_event(event)
         if self.modo_actual == "Modo Multijugador" and self.state.multijugador_opcion == "cliente":
             self.ip_input.handle_event(event)
+        if event.type == pygame.KEYDOWN and self.state.editando_nombre and self.nombre_input.active and event.key == pygame.K_RETURN:
+            self._guardar_nombre()
+            return None
         if event.type == pygame.KEYDOWN and not self.nombre_input.active and not self.ip_input.active:
             if event.key == pygame.K_UP:
                 self.state.opcion_seleccionada = (self.state.opcion_seleccionada - 1) % len(self.MODOS)
@@ -51,6 +70,15 @@ class MainScreen:
             elif event.key == pygame.K_RETURN:
                 return self._confirmar()
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.state.editando_nombre and self.rect_guardar_nombre and self.rect_guardar_nombre.collidepoint(mouse_pos):
+                self._guardar_nombre()
+                return None
+            if not self.state.editando_nombre and self.rect_editar_nombre and self.rect_editar_nombre.collidepoint(mouse_pos):
+                self.state.editando_nombre = True
+                self.nombre_input.active = True
+                self.nombre_input.caret_pos = len(self.nombre_input.text)
+                self.nombre_input.sel_anchor = None
+                return None
             if self.rect_flecha_izq and self.rect_flecha_izq.collidepoint(mouse_pos):
                 self.state.personaje_idx = (self.state.personaje_idx - 1) % len(self.assets.personajes)
             elif self.rect_flecha_der and self.rect_flecha_der.collidepoint(mouse_pos):
@@ -85,8 +113,31 @@ class MainScreen:
         player = pygame.Rect(margin, 130, width, 150)
         draw_panel(surface, player)
         surface.blit(self.fonts.label.render("NOMBRE DEL JUGADOR", True, COL_TEXT_DIM), (player.x + 24, player.y + 18))
-        self.nombre_input.rect = pygame.Rect(player.x + 24, player.y + 42, 260, 38)
-        draw_input(surface, self.nombre_input)
+        self.nombre_input.rect = pygame.Rect(player.x + 24, player.y + 42, 190, 38)
+        nombre_button_rect = pygame.Rect(player.x + 224, player.y + 42, 72, 38)
+        if self.state.editando_nombre:
+            self.rect_editar_nombre = None
+            self.rect_guardar_nombre = nombre_button_rect
+            draw_input(surface, self.nombre_input)
+            guardar_hover = nombre_button_rect.collidepoint(mouse_pos)
+            draw_panel(surface, nombre_button_rect, COL_ACCENT if guardar_hover else COL_ACCENT_DIM, COL_ACCENT, 8, 2)
+            guardar = self.fonts.pill.render("Guardar", True, (25, 20, 15))
+            surface.blit(guardar, guardar.get_rect(center=nombre_button_rect.center))
+        else:
+            self.rect_guardar_nombre = None
+            self.rect_editar_nombre = nombre_button_rect
+            pygame.draw.rect(surface, COL_INPUT_BG, self.nombre_input.rect, border_radius=8)
+            pygame.draw.rect(surface, COL_INPUT_BORDER, self.nombre_input.rect, width=2, border_radius=8)
+            nombre = self.state.nombre_jugador or "Jugador"
+            nombre_texto = self.fonts.input.render(nombre, True, COL_TEXT)
+            clip_anterior = surface.get_clip()
+            surface.set_clip(self.nombre_input.rect.inflate(-10, 0))
+            surface.blit(nombre_texto, (self.nombre_input.rect.x + 5, self.nombre_input.rect.y + 7))
+            surface.set_clip(clip_anterior)
+            editar_hover = nombre_button_rect.collidepoint(mouse_pos)
+            draw_panel(surface, nombre_button_rect, COL_OPTION_HOVER if editar_hover else COL_INPUT_BG, COL_ACCENT if editar_hover else COL_INPUT_BORDER, 8, 2)
+            editar = self.fonts.pill.render("Editar", True, COL_TEXT)
+            surface.blit(editar, editar.get_rect(center=nombre_button_rect.center))
         sep = player.x + 320
         pygame.draw.line(surface, COL_CARD_BORDER, (sep, player.y + 16), (sep, player.bottom - 16), 2)
         surface.blit(self.fonts.label.render("PERSONAJE", True, COL_TEXT_DIM), (sep + 24, player.y + 18))
@@ -104,6 +155,14 @@ class MainScreen:
             pygame.draw.circle(surface, COL_ACCENT if over else COL_INPUT_BORDER, rect.center, 17, 2)
             text = self.fonts.flecha.render(symbol, True, COL_TEXT); surface.blit(text, text.get_rect(center=rect.center))
             hover |= over
+        nombre_personaje = personaje.title()
+        texto_nombre = self.fonts.opcion.render(nombre_personaje, True, COL_TEXT)
+        surface.blit(texto_nombre, (self.rect_flecha_der.right + 18, portrait_box.top + 4))
+        contador = self.fonts.opcion_desc.render(
+            f"{self.state.personaje_idx + 1} / {len(self.assets.personajes)}", True, COL_TEXT_DIM
+        )
+        surface.blit(contador, (self.rect_flecha_der.right + 18, portrait_box.top + 32))
+        hover |= (self.rect_guardar_nombre or self.rect_editar_nombre).collidepoint(mouse_pos)
         y = player.bottom + 14; self.rect_opciones = []
         for i, modo in enumerate(self.MODOS):
             selected, available = i == self.state.opcion_seleccionada, self.DISPONIBLES[modo]
@@ -133,6 +192,7 @@ class MainScreen:
         self.toast.draw(surface, margin)
         help_text = self.fonts.opcion_desc.render("↑ ↓ elige el modo   •   ← → cambia de robot   •   Enter para confirmar", True, COL_TEXT_DIM)
         surface.blit(help_text, help_text.get_rect(midbottom=(surface.get_width() // 2, surface.get_height() - 14)))
+
         return hover
 
     def _draw_multiplayer(self, surface, mouse_pos, option_rect, hover):

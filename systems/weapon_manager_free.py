@@ -32,26 +32,12 @@ class WeaponManager:
     # Munición
     # ------------------------------------------------------------------
     def tiene_municion(self, arma, config):
-        # limite = config.get("municion")
-        # if limite is None:
-        #     return True
-        # restante = self.municion_restante.setdefault(arma, limite)
-        # return restante > 0
         return True  # Modo libre: munición infinita para probar armas sin restricciones.
 
     def consumir_municion(self, arma, config):
-        # if config.get("municion") is None:
-        #     return
-        # actual = self.municion_restante.get(arma, config.get("municion"))
-        # self.municion_restante[arma] = max(0, actual - 1)
         return  # No se descuenta nada en modo libre.
 
     def municion_actual(self, arma):
-        # """Usado por el HUD. None = munición ilimitada (no mostrar nada)."""
-        # config = config_arma(arma)
-        # if not config or config.get("municion") is None:
-        #     return None
-        # return self.municion_restante.get(arma, config.get("municion"))
         return None  # Sin límite — el HUD no debería mostrar contador aquí.
 
 
@@ -96,6 +82,8 @@ class WeaponManager:
         disparos = self._generar_disparos(config, ancho, alto)
         intervalo = config.get("intervalo_disparos_ms", 0)
 
+        angulo_ataque = math.degrees(self.game.aim.get_angulo())
+
         if intervalo > 0 and len(disparos) > 1:
             ahora = pygame.time.get_ticks()
             for i, (origen, vel_x, vel_y) in enumerate(disparos):
@@ -104,6 +92,7 @@ class WeaponManager:
                     "arma": arma,
                     "origen": origen, "vel_x": vel_x, "vel_y": vel_y,
                     "facing_right": self.game.robot.facing_right,
+                    "angulo_ataque": angulo_ataque,
                 })
         else:
             for origen, vel_x, vel_y in disparos:
@@ -111,6 +100,7 @@ class WeaponManager:
                     arma, origen[0], origen[1], vel_x, vel_y,
                     owner=self.game.robot.nombre_jugador,
                     facing_right=self.game.robot.facing_right,
+                    angulo_ataque=angulo_ataque,
                 )
                 self.game.proyectiles.append(p)
             sound_manager.disparo(arma)
@@ -132,6 +122,7 @@ class WeaponManager:
                 d["arma"], d["origen"][0], d["origen"][1], d["vel_x"], d["vel_y"],
                 owner=self.game.robot.nombre_jugador,
                 facing_right=d["facing_right"],
+                angulo_ataque=d.get("angulo_ataque"),
             )
             self.game.proyectiles.append(p)
             sound_manager.disparo(d["arma"])
@@ -149,7 +140,7 @@ class WeaponManager:
     def _update_proyectiles(self):
         for p in self.game.proyectiles[:]:
             candidatos = self._robots_para_colision()
-            p.update(self.game.tiles, candidatos)
+            p.update(self.game.tiles + self.game.tiles_impenetrables, candidatos)
             daño = p.daño
 
            
@@ -170,10 +161,20 @@ class WeaponManager:
         empuje_alto = p.config.get("empuje_alto", 0)
         if not empuje_ancho and not empuje_alto:
             return
-        if p.config.get("empuje_por_impacto", False):
+
+        if p.comportamiento == "cuerpo_a_cuerpo_direccional":
+            angulo = math.radians(p.angulo_ataque)
+            vel_x = empuje_ancho * math.cos(angulo)
+            vel_y = empuje_ancho * math.sin(angulo) + empuje_alto
+        elif p.config.get("empuje_por_impacto", False):
             centro_impacto_x = p.get_hitbox().centerx
             centro_robot_x = robot.get_centro()[0]
             direccion = 1 if centro_robot_x >= centro_impacto_x else -1
+            vel_x = empuje_ancho * direccion
+            vel_y = empuje_alto
         else:
             direccion = 1 if getattr(p, "_facing_right", True) else -1
-        robot.aplicar_empuje(empuje_ancho * direccion, empuje_alto)
+            vel_x = empuje_ancho * direccion
+            vel_y = empuje_alto
+
+        robot.aplicar_empuje(vel_x, vel_y)

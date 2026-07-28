@@ -1,5 +1,8 @@
 # ui/menu/controller.py
 
+import json
+from pathlib import Path
+
 import pygame
 
 from ui.text_input import TextInput
@@ -28,9 +31,14 @@ class Menu:
         self.nombre_input = TextInput((0, 0, 260, 38), self.fonts.input, max_length=29)
         self.ip_input = TextInput((0, 0, 220, 34), self.fonts.input, max_length=15)
         self.ip_input.text = "192.168.1.236"
+        self._perfil_path = Path.home() / ".blastron_clone" / "perfil.json"
+        self._cargar_nombre_guardado()
         # Se utiliza cuando el Host sale del lobby y vuelve a configurar la sala.
         if restore:
-            self.nombre_input.text = restore.get("nombre", "")
+            self.state.nombre_jugador = restore.get("nombre", "").strip()
+            self.state.editando_nombre = not bool(self.state.nombre_jugador)
+            self.nombre_input.text = self.state.nombre_jugador
+            self.nombre_input.caret_pos = len(self.nombre_input.text)
             personaje = restore.get("personaje")
             if personaje in self.assets.personajes:
                 self.state.personaje_idx = self.assets.personajes.index(personaje)
@@ -38,15 +46,39 @@ class Menu:
             self.state.host.modo_partida = restore.get("modo_partida", self.state.host.modo_partida)
             self.state.host.mapa_id = restore.get("mapa", self.state.host.mapa_id)
         self.screens = {
-            "principal": MainScreen(self.state, self.assets, self.fonts, self.nombre_input, self.ip_input, self.toast),
+            "principal": MainScreen(
+                self.state, self.assets, self.fonts, self.nombre_input, self.ip_input,
+                self.toast, self._guardar_nombre_en_perfil,
+            ),
             "host_config": HostConfigScreen(self.state, self.assets, self.fonts, self.toast),
             "free_config": FreeConfigScreen(self.state, self.assets, self.fonts, self.toast),
         }
         self.cursor_actual = None
 
+    def _cargar_nombre_guardado(self):
+        try:
+            perfil = json.loads(self._perfil_path.read_text(encoding="utf-8"))
+            nombre = str(perfil.get("nombre", "")).strip()
+        except (OSError, ValueError, TypeError):
+            return
+        if nombre:
+            self.state.nombre_jugador = nombre
+            self.state.editando_nombre = False
+            self.nombre_input.text = nombre
+            self.nombre_input.caret_pos = len(nombre)
+
+    def _guardar_nombre_en_perfil(self, nombre):
+        try:
+            self._perfil_path.parent.mkdir(parents=True, exist_ok=True)
+            self._perfil_path.write_text(
+                json.dumps({"nombre": nombre}, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        except OSError:
+            self.toast.show("No se pudo guardar el nombre")
+
     def _nombre_y_personaje(self):
         return {
-            "nombre": self.nombre_input.get_text() or "Jugador",
+            "nombre": self.state.nombre_jugador or self.nombre_input.get_text() or "Jugador",
             "personaje": self.assets.personajes[self.state.personaje_idx],
         }
 

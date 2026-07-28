@@ -48,7 +48,7 @@ from utils.weapon_loader import config_arma
 
 
 class Proyectil:
-    def __init__(self, tipo, x, y, vel_x, vel_y, owner=None, facing_right=None):
+    def __init__(self, tipo, x, y, vel_x, vel_y, owner=None, facing_right=None, angulo_ataque=None):
         self.tipo = tipo
         self.config = config_arma(tipo) or {}
         self.x = x
@@ -102,6 +102,12 @@ class Proyectil:
         # explícitamente, se deduce del signo de la velocidad inicial
         # (por defecto mira a la derecha si vel_x es 0).
         self._facing_right = facing_right if facing_right is not None else (vel_x >= 0)
+        # Ángulo REAL de apuntado en grados (no solo izquierda/derecha),
+        # usado únicamente por comportamiento="cuerpo_a_cuerpo_direccional"
+        # para rotar los offsets de posición en vez de solo espejarlos.
+        # Si no se pasa, cae a un ángulo básico 0°/180° derivado de
+        # facing_right (compatibilidad hacia atrás).
+        self.angulo_ataque = angulo_ataque if angulo_ataque is not None else (0 if self._facing_right else 180)
 
         # Cuántos de los ÚLTIMOS frames del spritesheet se usan para animar
         # la explosión (en vez de mostrar uno solo fijo). Por defecto 1 =
@@ -134,7 +140,7 @@ class Proyectil:
         override = self.config.get("daña_al_dueño")
         if override is not None:
             return not override
-        return self.comportamiento == "cuerpo_a_cuerpo"
+        return self.comportamiento in ("cuerpo_a_cuerpo", "cuerpo_a_cuerpo_direccional")
 
     def robots_afectados(self, candidatos):
         """Única fuente de verdad de "a quién le hace daño esta explosión
@@ -164,14 +170,29 @@ class Proyectil:
     def get_rect(self):
         return pygame.Rect(int(self.x), int(self.y), self.width, self.height)
 
+    def _offset_direccional(self, ox, oy):
+        """Rota el offset (ox, oy) según el ángulo real de apuntado
+        (self.angulo_ataque), en vez de solo espejarlo en X. Es lo que
+        permite que "cuerpo_a_cuerpo_direccional" dañe hacia
+        arriba/abajo/diagonal según hacia dónde apuntes, no solo
+        izquierda/derecha."""
+        angulo = math.radians(self.angulo_ataque)
+        dx = ox * math.cos(angulo) - oy * math.sin(angulo)
+        dy = ox * math.sin(angulo) + oy * math.cos(angulo)
+        return dx, dy
+
     def get_hitbox(self):
         centro_x = self.x + self.width / 2
         centro_y = self.y + self.height / 2
         direccion = 1 if self._facing_right else -1
+        direccional = self.comportamiento == "cuerpo_a_cuerpo_direccional"
 
         if self.estado == "explode":
-            centro_x += self.config.get("posicion_ancho_explosion", 0) * direccion
-            centro_y += self.config.get("posicion_alto_explosion", 0)
+            ox = self.config.get("posicion_ancho_explosion", 0)
+            oy = self.config.get("posicion_alto_explosion", 0)
+            dx, dy = self._offset_direccional(ox, oy) if direccional else (ox * direccion, oy)
+            centro_x += dx
+            centro_y += dy
             ancho_visual = self.explosion_width or self.width * 2
             alto_visual = self.explosion_height or self.height * 2
             hitbox_ancho = self.config.get(
@@ -183,8 +204,11 @@ class Proyectil:
                 self.config.get("hitbox_alto_proyectil", alto_visual)
             )
         else:
-            centro_x += self.config.get("posicion_ancho_proyectil", 0) * direccion
-            centro_y += self.config.get("posicion_alto_proyectil", 0)
+            ox = self.config.get("posicion_ancho_proyectil", 0)
+            oy = self.config.get("posicion_alto_proyectil", 0)
+            dx, dy = self._offset_direccional(ox, oy) if direccional else (ox * direccion, oy)
+            centro_x += dx
+            centro_y += dy
             hitbox_ancho = self.config.get("hitbox_ancho_proyectil", self.width)
             hitbox_alto = self.config.get("hitbox_alto_proyectil", self.height)
 
@@ -242,7 +266,7 @@ class Proyectil:
             # del ángulo del mouse al crearse, no la dirección del
             # golpe), así que se excluye aquí y conserva para siempre el
             # facing_right explícito que se le pasó al crearlo.
-            if self.comportamiento != "cuerpo_a_cuerpo":
+            if self.comportamiento not in ("cuerpo_a_cuerpo", "cuerpo_a_cuerpo_direccional"):
                 if self.vel_x > 0:
                     self._facing_right = True
                 elif self.vel_x < 0:
@@ -256,8 +280,10 @@ class Proyectil:
         if not self.frames:
             return
         direccion = 1 if self._facing_right else -1
-        offset_x = self.config.get("posicion_ancho_proyectil", 0) * direccion
-        offset_y = self.config.get("posicion_alto_proyectil", 0)
+        direccional = self.comportamiento == "cuerpo_a_cuerpo_direccional"
+        ox_p = self.config.get("posicion_ancho_proyectil", 0)
+        oy_p = self.config.get("posicion_alto_proyectil", 0)
+        offset_x, offset_y = self._offset_direccional(ox_p, oy_p) if direccional else (ox_p * direccion, oy_p)
 
         if self.estado in ("idle", "warning"):
             idx = 0 if self.estado == "idle" else min(1, len(self.frames) - 1)
@@ -297,8 +323,11 @@ class Proyectil:
                 frame = pygame.transform.flip(frame, True, False)
             imagen = pygame.transform.scale(frame, (ancho_exp, alto_exp))
 
-            centro_x = self.x + self.width / 2 + offset_x
-            centro_y = self.y + self.height / 2 + offset_y
+            ox_e = self.config.get("posicion_ancho_explosion", 0)
+            oy_e = self.config.get("posicion_alto_explosion", 0)
+            dx_e, dy_e = self._offset_direccional(ox_e, oy_e) if direccional else (ox_e * direccion, oy_e)
+            centro_x = self.x + self.width / 2 + dx_e
+            centro_y = self.y + self.height / 2 + dy_e
 
             rect = imagen.get_rect(center=(centro_x, centro_y))
             pantalla.blit(imagen, rect.topleft)
@@ -360,6 +389,7 @@ COMPORTAMIENTOS = {
     "impacto": _comportamiento_impacto,
     "mina": _comportamiento_mina,
     "cuerpo_a_cuerpo": _comportamiento_cuerpo_a_cuerpo,
+    "cuerpo_a_cuerpo_direccional": _comportamiento_cuerpo_a_cuerpo,
 }
 
 
