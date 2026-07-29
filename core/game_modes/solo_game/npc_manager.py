@@ -50,7 +50,7 @@ class NpcManager:
             nombre = self._nombre_unico(config.nombre or f"Bot {indice + 1}")
             vida = config.vida_maxima or self.game.modo.vida_maxima
             robot = Robot(ANCHO // 2, ALTO - ALTURA_SUELO - 90, nombre, config.robot_id,
-                          vida_maxima=vida, puede_reaparecer=False,
+                          vida_maxima=vida, puede_reaparecer=self.game.modo.permite_reaparecer,
                           velocidad=config.velocidad, salto=config.salto)
             robot.es_jugador = False
             robot.arma_equipada = config.arma
@@ -67,7 +67,7 @@ class NpcManager:
         robot = Robot(
             ANCHO // 2, ALTO - ALTURA_SUELO - config.alto,
             nombre, config.robot_id,
-            vida_maxima=config.vida_maxima, puede_reaparecer=False,
+            vida_maxima=config.vida_maxima, puede_reaparecer=self.game.modo.permite_reaparecer,
             ancho=config.ancho, alto=config.alto,
             velocidad=config.velocidad, salto=config.salto,
         )

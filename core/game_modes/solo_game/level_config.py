@@ -43,6 +43,8 @@ class LevelConfig:
     nombre: str | None = None  # nombre visible del nivel — independiente del id y del mapa
     bots: tuple[BotConfig, ...] = ()
     boss: BossConfig | None = None
+    armas_jugador: tuple[str, ...] = ()          # () = todas las armas disponibles
+    municion_jugador: dict = field(default_factory=dict)  # override opcional de municion por arma
 
     @classmethod
     def from_dict(cls, data: dict) -> "LevelConfig":
@@ -71,6 +73,8 @@ class LevelConfig:
             duracion_min=max(1, int(data.get("duracion_min", 3))),
             nombre=data.get("nombre"),  # si falta, la UI cae a mapa.capitalize()
             bots=bots, boss=boss,
+            armas_jugador=tuple(data.get("armas_jugador", ())),
+            municion_jugador=dict(data.get("municion_jugador", {})),
         )
 
     @staticmethod

@@ -1,10 +1,36 @@
 
 Pendiente corregir en solo game
+1.- El fix de que los bots salten al encontrarse atascados que hiciste en bot_controller.py, da este error:
+Traceback (most recent call last):
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\main.py", line 114, in <module>
+    main()
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\main.py", line 97, in main
+    resultado = juego.run()
+                ^^^^^^^^^^^
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 149, in run
+    return self._run_match()
+           ^^^^^^^^^^^^^^^^^
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 163, in _run_match
+    self._actualizar_turno_y_actores()
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 209, in _actualizar_turno_y_actores
+    if controlador.should_fire(distancia):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\bot_controller.py", line 115, in should_fire
+    distance = self._distancia_borde(target)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\bot_controller.py", line 46, in _distancia_borde
+    origen, obj = self.robot.get_rect(), target.get_rect()
+                                         ^^^^^^^^^^^^^^^
+AttributeError: 'float' object has no attribute 'get_rect'
 
-1.- Actualmente en el modo solo, unicamente esta configurado lms(last man standing), por defecto todos tienen puede respawnear como false, pero no esta implementado en los demas modos correctamente, solo funciona lms, se puede corregir? 
 
-2.- Actualmente los bots no pueden ser empujados, solo reciben el impacto hacia arriba, pero no en direccion ni hacia los lados. 
-3.- Agregar reglas para solo tener ciertas armas en modo solo
+
+2.- Corregir que bots jefes con un tamaño de cuerpo mas grande, no te atacan cuando usan armas cuerpo a cuerpo, los bots normales si.
+3.- Agregar vida configurable del jugador en los levels.json de solo_game
+
+
+
+3.- Agregar reglas para solo tener ciertas armas en modo solo (tal vez en el json colocar las armas que el jugador puede usar, incluso con la municion restante)
 4.- Para evitar que un bot se quede estancado, seria bueno que se le agregue la logica de saltar cada cierto tiempo o cuando se encuentre "estancado", veo que algunos chocan con los tiles o estructuras del mapa, pero no saltan, solo intentan avanzar en linea recta.
 
 

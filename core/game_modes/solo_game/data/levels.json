@@ -2,7 +2,7 @@
   "mundos": ["Piratas del Firmware", "La Liga de los Boteadores" ,"Bosque Encantado", "Costa Brava", "Reino Medieval"],
   "levels": [
     {
-      "id": 1, "mapa": "parque", "nombre": "El Parque", "modo": "lms", "dificultad": 1, "duracion_min": 3,
+      "id": 1, "mapa": "parque", "nombre": "El Parque", "modo": "lms", "dificultad": 1, "duracion_min": 3, "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 25},
       "bots": [
         {"robot_id": "cholo", "nombre": "Cholo", "vida_maxima": 600, "arma": "box"}
       ]

@@ -49,10 +49,12 @@ class SoloGame(BaseGame):
         self.modo = crear_modo(self.modo_partida, self)
         self.vida_maxima = self.modo.vida_maxima
 
+        armas_disponibles = list(self.level.armas_jugador) or list(cargar_armas().keys())
+
         self.robot = Robot(ANCHO // 2 - 30, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,
                            vida_maxima=self.vida_maxima, puede_reaparecer=self.modo.permite_reaparecer)
         self.robot.es_jugador = True
-        self.robot.arma_equipada = "misil"
+        self.robot.arma_equipada = armas_disponibles[0]
 
         # ---- Bots y jefe: ocupan el mismo rol que un jugador remoto ----
         self.robots_remotos = {}
@@ -74,8 +76,10 @@ class SoloGame(BaseGame):
         self.aim = AimIndicator(self.robot.get_centro())
         self.aim_remoto = AimIndicator((0, 0))  # requerido por MultiplayerRenderer
         self.weapon_manager = WeaponManager(self)
+        for arma, cantidad in self.level.municion_jugador.items():
+            self.weapon_manager.municion_restante[arma] = cantidad
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
-        self.hud_armas = HUDArmas(list(cargar_armas().keys()))
+        self.hud_armas = HUDArmas(armas_disponibles)
         self.hud_manager = HUDManager(self)
         self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
@@ -209,7 +213,8 @@ class SoloGame(BaseGame):
                         if controlador.should_fire(distancia):
                             self._disparar_bot(nombre, robot, aim)
             else:
-                robot.vel_x = 0
+                if pygame.time.get_ticks() >= robot.aturdido_hasta:
+                    robot.vel_x = 0
                 robot.update([])
 
     def _disparar_bot(self, nombre, robot, direccion):
