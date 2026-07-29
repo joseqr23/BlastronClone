@@ -1,32 +1,17 @@
 
-
-### Pendiente modo solo
-
-
-Ultimo realice la implementacion del modo solo, pero necesito hacer algunos cambios.
-Actualmente el modo solo hace esto:
-Similar al modo libre, libertad total entre jugador y bot, disparos infinitos.
-Posibilidad de configurar a traves de un json
-{
-  "levels": [
-    {"id": 1, "mapa": "parque", "modo": "lms", "bots": 1, "dificultad": 1, "duracion_min": 3, "armas_bots": ["granada"]},
-    {"id": 2, "mapa": "playa", "modo": "lms", "bots": 1, "dificultad": 2, "duracion_min": 3, "armas_bots": ["misil"]},
-    {"id": 3, "mapa": "nieve", "modo": "lms", "bots": 2, "dificultad": 2, "duracion_min": 4, "armas_bots": ["granada", "misil"]},
-    {"id": 4, "mapa": "medieval", "modo": "lms", "bots": 2, "dificultad": 3, "duracion_min": 4, "armas_bots": ["misil", "escopeta"]},
-    {"id": 5, "mapa": "cielo", "modo": "lms", "bots": 1, "dificultad": 3, "duracion_min": 5,
-     "boss": {"robot_id": "correnetali", "sprite_folder": "correnetali_sprites", "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.70, 0.35], "armas": ["misil", "supermisil"]},
-     "armas_bots": ["misil"]}
-  ]
-}
-Lo que quisiera, es refactorizar esto, para que ahora sea por turnos, similar a lo que ocurre con multi_game entre jugadores reales, pero en este caso con el jugador real + bots. con tiempo incluso, es decir una partida normal, donde la unica forma de pasarla sea quedando primer lugar, lo demas seria tal cual, lo que tambien necesito es tener control total de la cantidad de bots que aparecen en la partida, y la vida de todos los bots, algo similar a lo que ya existe con robot boss.
-te paso mis codigos actuales, incluido turn manager por si necesitas modifcar algo o solo pasarle la logica que ya se usa para los jugadores reales en el modo multigame.
-
-
+Agregar reglas para solo tener ciertas armas en modo solo
+1.- Fixear daño de armas cuerpo a cuerpo en el boss que es mas "grande" que otros, mide mas pixeles y no ataca con las armas cuerpo a cuerpo.
+2.- Fixear estrellas de dificultad de cada mapa y hacerlas un poco mas grandes.
+3.- Fixear nombre de mapa, para ponerle el nombre que sea, al lado de id por ejemplo, para que mantenga un orden, 1,2,3 pero nombres diferentes.}
+4.- Añadir la imagen del fondo del mapa en cada nivel
+5.- Los robots atacan correctamente en apuntado, pero aun no saben en que parte estan las tiles, y disparan a traves de ellas, que solucion se puede dar?
 
 
 
 Pendiente:
-¿Hay forma de categorizar armas para verlas en el hud?
+1.- Hacer mas lento el final antes de pasar a los podios, sucede que ni bien la partida termina, sea por un ataque o algo, automaticamente se muestra la ventana de podio, deberia esperar al menos 2 segundos
+
+2.- ¿Hay forma de categorizar armas para verlas en el hud?
 Tambien quisiera saber si a parte del nombre se le puede agregar el daño al hacer hover
 Mi categoria, no se si deberia ser por tipo: cuerpo a cuerpo/ impacto/ etc
 O deberia ser calidad  francotirador/supermisil/ etc... armas con gran daño irian primero

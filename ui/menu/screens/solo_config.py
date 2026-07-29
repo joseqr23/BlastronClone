@@ -60,7 +60,10 @@ class SoloConfigScreen:
                        COL_ACCENT if selected else (COL_ACCENT_DIM if unlocked else COL_CARD_BORDER), 10, 2 if selected else 1)
             color = COL_TEXT if unlocked else COL_TEXT_DISABLED
             title = self.fonts.config_seccion.render(f"NIVEL {level.id}", True, color)
-            detail = self.fonts.opcion_desc.render("JEFE" if level.boss else f"{level.bots} bot(s)", True, color)
+            # level.bots ahora es una tupla de BotConfig (no un int) — se
+            # cuenta con len(), nunca se interpola la tupla directo o
+            # Python muestra el repr() de cada BotConfig en la tarjeta.
+            detail = self.fonts.opcion_desc.render("JEFE" if level.boss else f"{len(level.bots)} bot(s)", True, color)
             status = ("*" * self.campaign.stars_for(level.id)) or ("Bloqueado" if not unlocked else "Sin completar")
             progress = self.fonts.opcion_desc.render(status, True, COL_ACCENT if unlocked else COL_TEXT_DISABLED)
             surface.blit(title, (rect.x + 16, rect.y + 17)); surface.blit(detail, (rect.x + 16, rect.y + 47)); surface.blit(progress, (rect.x + 16, rect.y + 75))

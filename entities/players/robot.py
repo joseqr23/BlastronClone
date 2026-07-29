@@ -19,7 +19,7 @@ class Robot:
     ]
 
     def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True,
-                 sprite_path=None):
+                 sprite_path=None, ancho=60, alto=90, velocidad=2.5, salto=15):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
@@ -27,8 +27,10 @@ class Robot:
         self.es_remoto = es_remoto
         self.vida_maxima = vida_maxima
         self.puede_reaparecer = puede_reaparecer
-        self.width = 60
-        self.height = 90
+        self.width = ancho
+        self.height = alto
+        self.velocidad_base = velocidad
+        self.salto_base = salto
         self.font_nombre = pygame.font.SysFont("Arial", 16, bold=True)  # Fuente para el nombre
 
         self.color_nombre = ColorManager.get_color(nombre_jugador)
@@ -36,25 +38,42 @@ class Robot:
         self.mensaje_chat = None
         self.mensaje_chat_expira = 0
 
-        # Animaciones dinámicas según robot_name
+        # Animaciones dinámicas según robot_name. El recorte del PNG
+        # SIEMPRE usa la resolución nativa del arte (60x90, la de todos
+        # los sprites existentes) — nunca self.width/self.height — para
+        # no romperse si un robot (p.ej. un jefe) pide un tamaño final
+        # distinto. Después, si self.width/self.height difiere de lo
+        # nativo, se reescala cada frame ya recortado (ver más abajo).
+        NATIVO_ANCHO, NATIVO_ALTO = 60, 90
         base_path = sprite_path or f"assets/robots/{self.nombre_robot}"
         idle_file = "idle.png" if os.path.exists(resource_path(base_path, "idle.png")) else "iddle.png"
         self.animations = {
-            "idle": load_spritesheet(f"{base_path}/{idle_file}", 1, self.width, self.height),
-            "run": load_spritesheet(f"{base_path}/run.png", 6, self.width, self.height),
-            "jump": load_spritesheet(f"{base_path}/jump.png", 1, self.width, self.height),
-            "death": load_spritesheet(f"{base_path}/death.png", 6, self.width, self.height),
+            "idle": load_spritesheet(f"{base_path}/{idle_file}", 1, NATIVO_ANCHO, NATIVO_ALTO),
+            "run": load_spritesheet(f"{base_path}/run.png", 6, NATIVO_ANCHO, NATIVO_ALTO),
+            "jump": load_spritesheet(f"{base_path}/jump.png", 1, NATIVO_ANCHO, NATIVO_ALTO),
+            "death": load_spritesheet(f"{base_path}/death.png", 6, NATIVO_ANCHO, NATIVO_ALTO),
         }
         # Opcionales — si el robot aún no tiene estos sprites, cae a
         # "idle" sin romper nada (solo se usan en la pantalla de podio).
         try:
-            self.animations["celebration"] = load_spritesheet(f"{base_path}/celebration.png", 6, self.width, self.height)
+            self.animations["celebration"] = load_spritesheet(f"{base_path}/celebration.png", 6, NATIVO_ANCHO, NATIVO_ALTO)
         except Exception:
             self.animations["celebration"] = self.animations["idle"]
         try:
-            self.animations["defeated"] = load_spritesheet(f"{base_path}/defeated.png", 6, self.width, self.height)
+            self.animations["defeated"] = load_spritesheet(f"{base_path}/defeated.png", 6, NATIVO_ANCHO, NATIVO_ALTO)
         except Exception:
             self.animations["defeated"] = self.animations["idle"]
+
+        # Reescala TODOS los frames de una sola vez si el tamaño final
+        # pedido (self.width/self.height) difiere del nativo — así el
+        # sprite se ve grande/chico según se pidió, sin haber tocado el
+        # recorte del PNG original.
+        if (self.width, self.height) != (NATIVO_ANCHO, NATIVO_ALTO):
+            for clave in list(self.animations.keys()):
+                self.animations[clave] = [
+                    pygame.transform.smoothscale(frame, (self.width, self.height))
+                    for frame in self.animations[clave]
+                ]
             
         # Inicializa la imagen para que nunca sea None
         self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))
@@ -75,9 +94,9 @@ class Robot:
         self.vel_y = 0
         self.on_ground = False
         self.facing_right = True
-        self.jump_power = 15
+        self.jump_power = self.salto_base
         self.gravity = 1
-        self.speed = 2.5
+        self.speed = self.velocidad_base
         self.health = self.vida_maxima
         self.is_dead = False
         self.dead_timer = 0

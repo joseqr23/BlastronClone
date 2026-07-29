@@ -1,204 +1,312 @@
 # core/game_modes/solo_game/game.py
-"""Partida local de campaña. No depende de FreeGame ni de MultiGame."""
+"""Partida local de campaña — mismo motor de turnos que multi_game, pero
+SoloGame actúa como el único "host" posible: no hay red, los bots y el
+jefe ocupan el rol de robots_remotos, y enviar() resuelve localmente lo
+poco que WeaponManager/TurnManager esperaban delegar a otras máquinas."""
 import math
+import time
+
 import pygame
 
 from settings import ANCHO, ALTO, ALTURA_SUELO
 from core.game_modes.base_game import BaseGame
+from core.game_modes.multi_game.renderer import MultiplayerRenderer
+from core.game_modes.multi_game.results import ResultsScreen
 from entities.players.robot import Robot
-from entities.weapons.proyectil import Proyectil
 from systems.aim_indicator import AimIndicator
 from systems.collision import (check_collisions, check_collisions_laterales_esquinas,
-                               check_colision_bloque_solido)
-from systems import collision
+                               check_colision_bloque_solido, check_zonas_dañinas)
 from systems.event_handler import EventHandler
+from systems.hud_manager import HUDManager
+from systems.modos_partida import crear_modo
+from systems.turn_manager import TurnManager
+from systems.weapon_manager import WeaponManager
+from ui.chat import Chat
+from ui.hud import HUDArmas, HUDPuntajesMultiplayer, HUDTimer, HUDTurnos
 from utils.colors import ColorManager
-from utils.sound_manager import sound_manager
-from utils.weapon_loader import config_arma
+from utils.weapon_loader import cargar_armas, config_arma
 
-from .bot_manager import BotManager
-from .boss_manager import BossManager
 from .campaign import CampaignProgress
 from .results import LevelResult
 from .rewards import calculate_stars
-
-
-class SoloCombatManager:
-    """Combate local multi-actor; WeaponManager libre solo conoce al jugador."""
-    def __init__(self, game):
-        self.game = game
-
-    def disparar(self):
-        robot = self.game.robot
-        if robot.arma_equipada not in (None, "nada"):
-            self.fire(robot, self.game.aim.direccion)
-
-    def fire(self, robot, direction):
-        weapon = robot.arma_equipada or "misil"
-        config = config_arma(weapon)
-        if not config:
-            return False
-        dx, dy = direction
-        length = math.hypot(dx, dy)
-        if not length:
-            return False
-        speed = config.get("velocidad_proyectil", 20)
-        vx, vy = dx / length * speed, dy / length * speed
-        width, height = config.get("ancho_proyectil", 40), config.get("alto_proyectil", 40)
-        origin = robot.get_centro()
-        projectile = Proyectil(weapon, origin[0] - width / 2, origin[1] - height / 2,
-                               vx, vy, owner=robot.nombre_jugador,
-                               facing_right=robot.facing_right,
-                               angulo_ataque=math.degrees(math.atan2(dy, dx)))
-        self.game.proyectiles.append(projectile)
-        sound_manager.disparo(weapon)
-        return True
-
-    def update(self):
-        candidates = self.game.all_robots()
-        for projectile in self.game.proyectiles[:]:
-            projectile.update(self.game.tiles + self.game.tiles_impenetrables, candidates)
-            for robot in projectile.robots_afectados(candidates):
-                before = robot.is_dead
-                damage = getattr(projectile, "da" + chr(0xF1) + "o") * getattr(self.game.robot_by_name(projectile.owner), "damage_multiplier", 1)
-                robot.take_damage(damage)
-                projectile.danados.add(robot)
-                if projectile.owner == self.game.robot.nombre_jugador:
-                    self.game.puntajes[self.game.robot] += int(damage) * (2 if not before and robot.is_dead else 1)
-            if projectile.estado == "done":
-                self.game.proyectiles.remove(projectile)
-
-    def draw(self, surface):
-        for projectile in self.game.proyectiles:
-            projectile.draw(surface)
+from .npc_manager import NpcManager
 
 
 class SoloGame(BaseGame):
+    """Campaña contra bots/jefe, por turnos — arquitectónicamente es un
+    MultiplayerGame de un solo proceso: mismo TurnManager, mismo
+    WeaponManager, mismo modos_partida. Los bots viven en
+    self.robots_remotos igual que jugadores remotos reales."""
+
     def __init__(self, nombre_jugador, personaje, level_id=1, campaign=None):
         self.campaign = campaign or CampaignProgress()
         self.level = self.campaign.get_level(level_id)
         super().__init__(nombre_jugador=nombre_jugador, personaje=personaje, mapa_id=self.level.mapa)
         ColorManager.reset()
-        self.host = True  # compatibilidad con utilidades locales que consultan este atributo.
-        self.robot = Robot(ANCHO // 2, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,
-                           vida_maxima=250, puede_reaparecer=False)
+        self.host = True  # compatibilidad con utilidades compartidas (TurnManager, WeaponManager, etc.)
+
+        self.modo_partida = self.level.modo
+        self.modo = crear_modo(self.modo_partida, self)
+        self.vida_maxima = self.modo.vida_maxima
+
+        self.robot = Robot(ANCHO // 2 - 30, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,
+                           vida_maxima=self.vida_maxima, puede_reaparecer=self.modo.permite_reaparecer)
         self.robot.es_jugador = True
-        self.chat.robot_local = self.robot
         self.robot.arma_equipada = "misil"
-        self.robots_estaticos = []  # requerido por EventHandler; no participa en campaña.
-        self.bots = []
+
+        # ---- Bots y jefe: ocupan el mismo rol que un jugador remoto ----
+        self.robots_remotos = {}
+        self.robots_estaticos = []  # se refresca cada frame con robots_remotos.values()
+        self.last_sequences = {}    # no aplica sin red, pero algunas utilidades compartidas lo esperan
+
+        self.npc_manager = NpcManager(self, self.level.bots, self.level.dificultad, seed=self.level.id)
+        self.robots_remotos.update(self.npc_manager.spawn_bots())
+        if self.level.boss:
+            self.robots_remotos.update(self.npc_manager.spawn_boss(self.level.boss))
+
+        for nombre in self.robots_remotos:
+            ColorManager.get_color(nombre)
+
+        self.puntajes = {nombre_jugador: 0}
+        for nombre in self.robots_remotos:
+            self.puntajes[nombre] = 0
+
         self.aim = AimIndicator(self.robot.get_centro())
-        self.bot_manager = BotManager(self, self.level.dificultad, seed=self.level.id)
-        self.bots.extend(self.bot_manager.spawn(self.level.bots))
-        for index, bot in enumerate(self.bots):
-            bot.arma_equipada = self.level.armas_bots[index % len(self.level.armas_bots)]
-        self.boss_manager = BossManager(self, self.level.boss) if self.level.boss else None
-        self.boss = self.boss_manager.spawn() if self.boss_manager else None
-        if self.boss:
-            self.boss.arma_equipada = self.level.boss.armas[0]
-        self.puntajes[self.robot] = 0
-        self.weapon_manager = SoloCombatManager(self)
+        self.aim_remoto = AimIndicator((0, 0))  # requerido por MultiplayerRenderer
+        self.weapon_manager = WeaponManager(self)
+        self.hud_puntajes = HUDPuntajesMultiplayer(self)
+        self.hud_armas = HUDArmas(list(cargar_armas().keys()))
+        self.hud_manager = HUDManager(self)
+        self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
+
         self.volver_al_menu = False
+        self.requiere_confirmacion_menu = True
+        self.confirmando_salida = False
         self.rect_volver_menu = self.rect_mute = None
-        self.fuente_botones = pygame.font.SysFont("Arial", 14, bold=True)
-        self.started_at = pygame.time.get_ticks()
-        self.duration_ms = self.level.duracion_min * 60_000
+        self.rect_confirmar_salida = self.rect_cancelar_salida = None
+        self.fuente_botones = pygame.font.SysFont("Arial", 10, bold=True)
+        self.mouse_click_sostenido = False
+
+        self.tiempo_total = self.level.duracion_min * 60
+        self.tiempo_restante = self.tiempo_total
+        self.ultimo_tick = self.now()
+        self.game_over = False
+        self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
+        self.turn_manager = TurnManager(self)
+        self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2, 72))
+        self.turnos_iniciados = False
+
+        self.renderer = MultiplayerRenderer(self)
+        self.results = ResultsScreen(self)
+        self._proj_id = 0
         self.result = None
 
+    def now(self):
+        return time.time()
+
     def all_robots(self):
-        return [self.robot, *self.bots, *([self.boss] if self.boss else [])]
+        return [self.robot, *self.robots_remotos.values()]
 
     def robot_by_name(self, name):
-        return next((robot for robot in self.all_robots() if robot.nombre_jugador == name), None)
+        if name == self.nombre_jugador:
+            return self.robot
+        return self.robots_remotos.get(name)
 
-    def _update_robot_physics(self, robot, keys=None):
-        robot.update(keys)
-        check_collisions(robot, self.tiles)
-        check_collisions_laterales_esquinas(robot, self.tiles_laterales)
-        check_colision_bloque_solido(robot, self.tiles_impenetrables)
-        # El módulo existente conserva este nombre público con "ñ".
-        hazardous_tiles = getattr(self, "tiles_da" + chr(0xF1) + "inas")
-        getattr(collision, "check_zonas_da" + chr(0xF1) + "inas")(robot, hazardous_tiles, self.dano_zonas)
+    # ---------- API que WeaponManager / TurnManager esperan de un "host" ----------
+    def _next_proy_id(self):
+        self._proj_id += 1
+        return self._proj_id
 
-    def _finish(self, victory, reason):
-        if self.result:
-            return
-        elapsed = pygame.time.get_ticks() - self.started_at
-        health = max(0, self.robot.health) / self.robot.vida_maxima
-        stars = calculate_stars(victory, health, elapsed / self.duration_ms)
-        if victory:
-            self.campaign.complete_level(self.level.id, stars)
-        self.result = LevelResult(self.level.id, victory, stars, reason,
-                                  self.campaign.next_level_id(self.level.id) if victory else None)
+    def enviar(self, message, excluir_socket=None):
+        """No hay red: el único efecto que de verdad hace falta reenviar
+        es el empuje sobre un bot/jefe (para el jugador local ya se
+        aplica directo en WeaponManager._aplicar_empuje). El resto de
+        tipos ("damage", "score", "muerte", "timer", "turno_sync") ya se
+        aplicaron localmente antes de esta llamada — no hay nada más
+        que hacer con ellos en un solo proceso."""
+        if message.get("tipo") == "empuje":
+            robot = self.robot_by_name(message.get("jugador"))
+            if robot:
+                robot.aplicar_empuje(message.get("vel_x", 0), message.get("vel_y", 0))
 
-    def _check_result(self):
-        if self.robot.is_dead:
-            self._finish(False, "Tu robot fue derrotado")
-        elif all(bot.is_dead for bot in self.bots) and (not self.boss or self.boss.is_dead):
-            self._finish(True, "Nivel completado")
-        elif pygame.time.get_ticks() - self.started_at >= self.duration_ms:
-            self._finish(False, "Se acabó el tiempo")
+    def enviar_chat(self, mensaje):
+        self.chat.agregar_mensaje(f"{self.nombre_jugador}: {mensaje}")
 
-    def _draw_overlay(self):
-        elapsed = pygame.time.get_ticks() - self.started_at
-        seconds = max(0, (self.duration_ms - elapsed) // 1000)
-        text = self.fuente_botones.render(f"Nivel {self.level.id}   Tiempo {seconds // 60}:{seconds % 60:02d}", True, (255, 255, 255))
-        self.pantalla.blit(text, (12, 12))
-        self.rect_volver_menu = pygame.Rect(ANCHO - 105, ALTO - 60, 95, 24)
-        self.rect_mute = pygame.Rect(ANCHO - 105, ALTO - 30, 95, 24)
-        for rect, label, color in ((self.rect_volver_menu, "Menú (ESC)", (60, 100, 180)),
-                                   (self.rect_mute, "Sonido (M)", (60, 150, 90))):
-            pygame.draw.rect(self.pantalla, color, rect, border_radius=7)
-            pygame.draw.rect(self.pantalla, (255, 255, 255), rect, 1, border_radius=7)
-            label_surface = self.fuente_botones.render(label, True, (255, 255, 255))
-            self.pantalla.blit(label_surface, label_surface.get_rect(center=rect.center))
+    def enviar_evento_puntaje(self, atacante, puntos, victima):
+        self.puntajes[atacante] = self.puntajes.get(atacante, 0) + puntos
+        if victima.health <= 0:
+            self.chat.agregar_mensaje(f"{victima.nombre_jugador} fue derrotado por {atacante}!")
+        self.enviar({"tipo": "score", "atacante": atacante, "puntos": puntos,
+                     "victima": victima.nombre_jugador, "victima_dead": victima.health <= 0})
 
-    def _draw_result(self):
-        if not self.result:
-            return
-        panel = pygame.Rect(ANCHO // 2 - 210, ALTO // 2 - 90, 420, 180)
-        pygame.draw.rect(self.pantalla, (20, 25, 38), panel, border_radius=14)
-        pygame.draw.rect(self.pantalla, (245, 190, 65) if self.result.victory else (210, 75, 75), panel, 3, border_radius=14)
-        title = self.fuente_muerte.render("¡Victoria!" if self.result.victory else "Derrota", True, (255, 255, 255))
-        detail = self.fuente_botones.render(f"{self.result.reason} — {self.result.stars} estrella(s)", True, (230, 230, 230))
-        hint = self.fuente_botones.render("ESC para volver al menú", True, (190, 190, 190))
-        self.pantalla.blit(title, title.get_rect(center=(panel.centerx, panel.y + 52)))
-        self.pantalla.blit(detail, detail.get_rect(center=(panel.centerx, panel.y + 105)))
-        self.pantalla.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 145)))
+    def enviar_evento_muerte(self, atacante, victima):
+        self.modo.registrar_muerte(victima, atacante)
+        self.enviar({"tipo": "muerte", "atacante": atacante, "victima": victima.nombre_jugador})
 
+    # ---------- Ciclo público ----------
     def run(self):
+        return self._run_match()
+
+    def _run_match(self):
         while True:
-            if not self.event_handler.handle_events() or self.volver_al_menu:
+            if not self.robot.is_dead and self.robot.arma_equipada not in (None, "nada"):
+                self.robot.facing_right = pygame.mouse.get_pos()[0] >= self.robot.get_centro()[0]
+            if not self.event_handler.handle_events():
+                return None
+            if self.volver_al_menu:
                 return "menu"
-            if not self.result:
-                keys = pygame.key.get_pressed()
-                mouse_pos = pygame.mouse.get_pos()
-                self.robot.facing_right = mouse_pos[0] >= self.robot.get_centro()[0]
-                self.aim.origen = self.robot.get_centro()
-                self.aim.update(mouse_pos)
-                self._update_robot_physics(self.robot, keys)
-                for bot in self.bots:
-                    self._update_robot_physics(bot)
-                if self.boss:
-                    self._update_robot_physics(self.boss)
-                for bot, direction in self.bot_manager.update(self.robot):
-                    self.weapon_manager.fire(bot, direction)
-                if self.boss_manager:
-                    shot = self.boss_manager.update(self.robot)
-                    if shot:
-                        self.weapon_manager.fire(*shot)
-                self.weapon_manager.update()
-                self._check_result()
-            self.draw_scene(self.superficie_mundo)
-            for actor in self.all_robots():
-                actor.draw(self.superficie_mundo)
-            self.weapon_manager.draw(self.superficie_mundo)
-            if not self.result and self.robot.arma_equipada not in (None, "nada"):
-                self.aim.draw(self.superficie_mundo, estilo=(config_arma(self.robot.arma_equipada) or {}).get("estilo_mira", "apuntar"))
-            self.pantalla.blit(self.superficie_mundo, self._offset_shake())
-            self.draw_ui()
-            self._draw_overlay()
-            self._draw_result()
+            if self.game_over:
+                self._finalizar_si_falta()
+                return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
+
+            self._actualizar_turno_y_actores()
+            self._actualizar_fisica()
+            self.robots_estaticos = list(self.robots_remotos.values())
+            for robot in [self.robot, *self.robots_estaticos]:
+                check_zonas_dañinas(robot, self.tiles_dañinas, self.dano_zonas,
+                                    aplicar_dano_callback=self.weapon_manager.aplicar_dano)
+            self.weapon_manager.update()
+            self._actualizar_reloj()
+            self._chequear_fin_de_partida()
+            self.renderer.draw_frame()
             pygame.display.flip()
             self.reloj.tick(60)
+
+    # ---------- Turnos: jugador humano + bots + jefe ----------
+    def _actualizar_turno_y_actores(self):
+        if not self.turnos_iniciados:
+            jugadores = [self.nombre_jugador] + list(self.robots_remotos.keys())
+            self.turn_manager.iniciar(jugadores)
+            self.turnos_iniciados = True
+
+        self.turn_manager.actualizar()
+        actual = self.turn_manager.jugador_actual()
+        en_cooldown = self.turn_manager.en_cooldown
+
+        if actual == self.nombre_jugador and not en_cooldown:
+            keys = pygame.key.get_pressed()
+            self.robot.update(keys)
+        else:
+            self.robot.update([])
+            if pygame.time.get_ticks() >= self.robot.aturdido_hasta:
+                self.robot.vel_x = 0
+
+        for nombre, robot in self.robots_remotos.items():
+            if robot.is_dead:
+                robot.update([])
+                continue
+
+            controlador = self.npc_manager.controllers.get(robot)
+            if actual == nombre and not en_cooldown and controlador:
+                aim = controlador.update(self.robot)
+                robot.update(None)
+                if aim:
+                    robot.aim_dx, robot.aim_dy = aim  # para que el arma sostenida apunte bien en el render
+                    if self.turn_manager.puede_disparar():
+                        distancia = math.hypot(robot.get_centro()[0] - self.robot.get_centro()[0],
+                                               robot.get_centro()[1] - self.robot.get_centro()[1])
+                        if controlador.should_fire(distancia):
+                            self._disparar_bot(nombre, robot, aim)
+            else:
+                robot.vel_x = 0
+                robot.update([])
+
+    def _disparar_bot(self, nombre, robot, direccion):
+        """Camino de disparo para bots/jefe: no pasa por WeaponManager.disparar()
+        (esa función asume mouse/jugador local) — arma el mismo mensaje que
+        generaría un cliente remoto y lo entrega directo a crear_proyectil_host,
+        que ya se encarga de la física, el sonido, la ráfaga escalonada
+        (intervalo_disparos_ms) y de avisarle a TurnManager que se disparó.
+
+        Munición ilimitada para bots (ver nota sobre
+        WeaponManager.municion_restante compartido por arma, no por jugador)."""
+        tm = self.turn_manager
+        if tm.jugador_actual() != nombre or not tm.puede_disparar():
+            return
+        arma = robot.arma_equipada or "misil"
+        config = config_arma(arma)
+        if not config:
+            return
+        ancho, alto = config.get("ancho_proyectil", 40), config.get("alto_proyectil", 40)
+        origen = robot.get_centro()
+        disparos = self._generar_disparos_bot(config, direccion, origen, ancho, alto)
+        if not disparos:
+            return
+        self.weapon_manager.crear_proyectil_host({
+            "tipo": "disparo",
+            "jugador": nombre,
+            "arma": arma,
+            "facing_right": robot.facing_right,
+            "angulo_ataque": math.degrees(math.atan2(direccion[1], direccion[0])),
+            "disparos": disparos,
+        })
+
+    def _generar_disparos_bot(self, config, direccion, origen, ancho, alto):
+        """Igual que WeaponManager._generar_disparos, pero partiendo de un
+        vector de dirección (el aim del bot) en vez del mouse — así un
+        rifle con "cantidad": 10 también dispara 10 proyectiles en
+        abanico cuando lo usa un bot, no solo cuando lo usa el jugador."""
+        dx, dy = direccion
+        largo = math.hypot(dx, dy)
+        if not largo:
+            return []
+        velocidad = config.get("velocidad_proyectil", 20)
+        vel_x, vel_y = dx / largo * velocidad, dy / largo * velocidad
+        cantidad = max(1, config.get("cantidad", 1))
+        base = {"x": origen[0] - ancho / 2, "y": origen[1] - alto / 2}
+        if cantidad == 1:
+            return [{**base, "dir_x": vel_x, "dir_y": vel_y}]
+
+        spread_total = config.get("dispersion_grados", 18)
+        resultados = []
+        for i in range(cantidad):
+            t = (i / (cantidad - 1)) - 0.5  # de -0.5 a 0.5
+            offset_rad = math.radians(t * spread_total)
+            rot_x = vel_x * math.cos(offset_rad) - vel_y * math.sin(offset_rad)
+            rot_y = vel_x * math.sin(offset_rad) + vel_y * math.cos(offset_rad)
+            resultados.append({**base, "dir_x": rot_x, "dir_y": rot_y})
+        return resultados
+
+    def _actualizar_fisica(self):
+        """A diferencia de multi_game (donde los robots remotos solo
+        interpolan posiciones que llegan por red), acá SÍ somos la única
+        fuente de verdad para los bots — hay que resolver su colisión
+        contra el mapa cada frame, no solo en su turno, o se hunden en
+        el piso mientras esperan."""
+        for robot in [self.robot, *self.robots_remotos.values()]:
+            check_collisions(robot, self.tiles)
+            check_collisions_laterales_esquinas(robot, self.tiles_laterales)
+            check_colision_bloque_solido(robot, self.tiles_impenetrables)
+
+    def _actualizar_reloj(self):
+        if self.game_over:
+            return
+        ahora, delta = self.now(), self.now() - self.ultimo_tick
+        if delta >= 1:
+            self.tiempo_restante = max(0, self.tiempo_restante - int(delta))
+            self.ultimo_tick = ahora
+            if not self.tiempo_restante:
+                self.game_over = True
+
+    def _chequear_fin_de_partida(self):
+        if not self.game_over and self.modo.partida_terminada():
+            self.tiempo_restante = 0
+            self.game_over = True
+
+    # ---------- Resultado de nivel: gana solo si termina primero, solo ----------
+    def _finalizar_si_falta(self):
+        if self.result:
+            return
+        rango, jugadores_top = self.modo.podio()[0]
+        gano = len(jugadores_top) == 1 and jugadores_top[0][0] == self.nombre_jugador
+        elapsed_ratio = 1 - (self.tiempo_restante / self.tiempo_total)
+        health_ratio = max(0, self.robot.health) / self.robot.vida_maxima
+        stars = calculate_stars(gano, health_ratio, elapsed_ratio)
+        if gano:
+            self.campaign.complete_level(self.level.id, stars)
+        self.result = LevelResult(
+            self.level.id, gano, stars,
+            "Nivel completado" if gano else "No quedaste en primer lugar",
+            self.campaign.next_level_id(self.level.id) if gano else None,
+        )
