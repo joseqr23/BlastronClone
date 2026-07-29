@@ -1,4 +1,5 @@
 {
+  "mundos": ["Piratas del Firmware", "La Liga de los Boteadores" ,"Bosque Encantado", "Costa Brava", "Reino Medieval"],
   "levels": [
     {
       "id": 1, "mapa": "parque", "nombre": "El Parque", "modo": "lms", "dificultad": 1, "duracion_min": 3,
@@ -24,13 +25,21 @@
     {
       "id": 4, "mapa": "pirata", "nombre": "Ahoy!", "modo": "lms", "dificultad": 4, "duracion_min": 10,
       "bots": [
-        {"robot_id": "netali", "nombre": "Netali", "vida_maxima": 700, "arma": "machete"},
-        {"robot_id": "estaly", "nombre": "Estaly", "vida_maxima": 700, "arma": "dragon_lore"},
-        {"robot_id": "alfonso", "nombre": "Alfonso", "vida_maxima": 700, "arma": "escopeta"}
+        {"robot_id": "pirate", "nombre": "BarbaBot", "vida_maxima": 700, "arma": "katana"},
+        {"robot_id": "pirate", "nombre": "Botholomew Botberts", "vida_maxima": 700, "arma": "misil"},
+        {"robot_id": "pirate", "nombre": "Henry Botgan", "vida_maxima": 700, "arma": "misil"}
       ]
     },
     {
-      "id": 5, "mapa": "cielo", "nombre": "Trono en las Nubes", "modo": "lms", "dificultad": 3, "duracion_min": 10,
+      "id": 5, "mapa": "pirata", "nombre": "Ahoy!", "modo": "lms", "dificultad": 4, "duracion_min": 10,
+      "bots": [
+        {"robot_id": "pirate", "nombre": "BarbaBot", "vida_maxima": 700, "arma": "katana"},
+        {"robot_id": "pirate", "nombre": "Botholomew Botberts", "vida_maxima": 700, "arma": "misil"},
+        {"robot_id": "pirate", "nombre": "Henry Botgan", "vida_maxima": 700, "arma": "misil"}
+      ]
+    },
+    {
+      "id": 6, "mapa": "cielo", "nombre": "Trono en las Nubes", "modo": "lms", "dificultad": 3, "duracion_min": 10,
       "bots": [
         {"robot_id": "rosadito", "nombre": "Rosadito", "vida_maxima": 100, "arma": "misil"}
       ],
@@ -38,6 +47,13 @@
         "robot_id": "whitelion", "nombre": "Whitelion", "ancho" : "100", "alto": "130", "velocidad": 4, "salto": 20,
         "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.70, 0.35], "armas": ["box", "supermisil"]
       }
+    },
+    {
+      "id": 7, "mapa": "otoño", "nombre": "Nocaut.exe", "modo": "lms", "dificultad": 2, "duracion_min": 5,
+      "bots": [
+        {"robot_id": "gangster", "nombre": "Gangster", "vida_maxima": 1000, "arma": "box"},
+        {"robot_id": "gangster", "nombre": "Gangster", "vida_maxima": 600, "arma": "box"}
+      ]
     }
   ]
 }

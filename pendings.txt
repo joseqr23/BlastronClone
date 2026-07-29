@@ -5,8 +5,14 @@ Pendiente corregir en solo game
 
 2.- Actualmente los bots no pueden ser empujados, solo reciben el impacto hacia arriba, pero no en direccion ni hacia los lados. 
 3.- Agregar reglas para solo tener ciertas armas en modo solo
+4.- Para evitar que un bot se quede estancado, seria bueno que se le agregue la logica de saltar cada cierto tiempo o cuando se encuentre "estancado", veo que algunos chocan con los tiles o estructuras del mapa, pero no saltan, solo intentan avanzar en linea recta.
 
-4.- Los robots atacan correctamente en apuntado, pero aun no saben en que parte estan las tiles, y disparan a traves de ellas, que solucion se puede dar?
+
+
+>> revisar solo_game/level_repository.py >> para ver lo que se guarda en el progreso de niveles de solo game
+
+
+
 
 
 Pendiente:

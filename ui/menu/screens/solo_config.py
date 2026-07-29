@@ -131,11 +131,13 @@ class SoloConfigScreen:
         subtitle = self.fonts.subtitulo.render("Completa niveles, gana estrellas y derrota jefes", True, COL_TEXT_DIM)
         surface.blit(subtitle, (margin + 2, 92))
         pygame.draw.line(surface, COL_CARD_BORDER, (margin, 112), (surface.get_width() - margin, 112), 2)
+        titulo_mundo = self.fonts.config_seccion.render(self.campaign.nombre_mundo(self.page).upper(), True, COL_ACCENT)
+        surface.blit(titulo_mundo, titulo_mundo.get_rect(midtop=(surface.get_width() // 2, 120)))
 
         self.level_rects = []
         card_w, card_h, gap = 200, 132, 18
         start_x = surface.get_width() // 2 - (3 * card_w + 2 * gap) // 2
-        grid_top = 142
+        grid_top = 152  # antes 142 — le deja aire al título "MUNDO N" de arriba
 
         total_pages = self._total_pages()
         self.page = max(0, min(self.page, total_pages - 1))
@@ -210,7 +212,7 @@ class SoloConfigScreen:
                 flecha_txt = self.fonts.config_seccion.render(simbolo, True, COL_TEXT)
                 surface.blit(flecha_txt, flecha_txt.get_rect(center=rect_flecha.center))
                 hover |= over_flecha
-            pagina_txt = self.fonts.opcion_desc.render(f"Pagina {self.page + 1}/{total_pages}", True, COL_TEXT_DIM)
+            pagina_txt = self.fonts.opcion_desc.render(f"{self.campaign.nombre_mundo(self.page)} ({self.page + 1}/{total_pages})", True, COL_TEXT_DIM)
             surface.blit(pagina_txt, pagina_txt.get_rect(midtop=(surface.get_width() // 2, pie_y)))
             pie_y += 26
 

@@ -7,6 +7,7 @@ class CampaignProgress:
     def __init__(self, repository: LevelRepository | None = None):
         self.repository = repository or LevelRepository()
         self.levels = self.repository.load_levels()
+        self.mundos = self.repository.load_mundos()
         self._by_id = {level.id: level for level in self.levels}
         self.progress = self.repository.load_progress()
 
@@ -51,3 +52,8 @@ class CampaignProgress:
             if level.id > current and self.is_unlocked(level.id):
                 return level.id
         return None
+
+    def nombre_mundo(self, indice: int) -> str:
+        if 0 <= indice < len(self.mundos):
+            return self.mundos[indice]
+        return f"Mundo {indice + 1}"

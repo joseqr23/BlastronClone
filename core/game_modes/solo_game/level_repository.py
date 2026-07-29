@@ -37,3 +37,12 @@ class LevelRepository:
         temporary = self.progress_path.with_suffix(".tmp")
         temporary.write_text(json.dumps(progress, ensure_ascii=False, indent=2), encoding="utf-8")
         temporary.replace(self.progress_path)
+
+    def load_mundos(self) -> list[str]:
+        """Nombres de "mundo" por página del carrusel — opcional; si
+        faltan, la UI cae a "Mundo N"."""
+        try:
+            raw = json.loads(self.levels_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        return [str(nombre) for nombre in raw.get("mundos", [])]
