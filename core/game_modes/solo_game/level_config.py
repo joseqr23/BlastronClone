@@ -40,6 +40,7 @@ class LevelConfig:
     modo: str = "lms"
     dificultad: int = 1
     duracion_min: int = 3
+    nombre: str | None = None  # nombre visible del nivel — independiente del id y del mapa
     bots: tuple[BotConfig, ...] = ()
     boss: BossConfig | None = None
 
@@ -68,6 +69,7 @@ class LevelConfig:
             modo=str(data.get("modo", "lms")),
             dificultad=max(1, int(data.get("dificultad", 1))),
             duracion_min=max(1, int(data.get("duracion_min", 3))),
+            nombre=data.get("nombre"),  # si falta, la UI cae a mapa.capitalize()
             bots=bots, boss=boss,
         )
 

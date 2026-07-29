@@ -53,9 +53,8 @@ blastron_clone/
 │   │   │   ├── campaign.py             # Progreso, desbloqueos y selección de nivel
 │   │   │   ├── level_config.py         # LevelConfig y generación de niveles
 │   │   │   ├── level_repository.py     # Carga levels.json / progreso del usuario
-│   │   │   ├── bot_manager.py          # Crea bots y coordina su IA
+│   │   │   ├── npc_manager.py          # Crea bots y coordina su IA, igual con el jefe >> merge de bot y boss manager
 │   │   │   ├── bot_controller.py       # Decisiones de cada bot: mover, apuntar, disparar
-│   │   │   ├── boss_manager.py         # Spawnea y controla jefe cada 5 niveles
 │   │   │   ├── boss_controller.py      # IA especial y fases del jefe
 │   │   │   ├── rewards.py              # Recompensas, experiencia, estrellas, desbloqueos
 │   │   │   ├── results.py              # Resultado de nivel: victoria, derrota, siguiente nivel

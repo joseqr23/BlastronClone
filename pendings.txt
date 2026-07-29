@@ -1,9 +1,5 @@
 
 Agregar reglas para solo tener ciertas armas en modo solo
-1.- Fixear daño de armas cuerpo a cuerpo en el boss que es mas "grande" que otros, mide mas pixeles y no ataca con las armas cuerpo a cuerpo.
-2.- Fixear estrellas de dificultad de cada mapa y hacerlas un poco mas grandes.
-3.- Fixear nombre de mapa, para ponerle el nombre que sea, al lado de id por ejemplo, para que mantenga un orden, 1,2,3 pero nombres diferentes.}
-4.- Añadir la imagen del fondo del mapa en cada nivel
 5.- Los robots atacan correctamente en apuntado, pero aun no saben en que parte estan las tiles, y disparan a traves de ellas, que solucion se puede dar?
 
 
@@ -18,25 +14,14 @@ O deberia ser calidad  francotirador/supermisil/ etc... armas con gran daño iri
 O en su defecto, una mezcla de ambos, orden por categoria y cada categoria orden por daño.
 
 
-
-
-Pendiente con prioridad:
-1.- Como se puede añadir IA a los robots?
-Actualemente todas las plataformas de mi mapa solo siguen coordenadas. 
-¿Que tendria que hacer el robot? capturar las coordenadas de las plataformas para saber como moverse?
-¿Capturar la posicion del enemigo para saber el angulo correcto en el que debe disparar?
-
-
 Pendiente:
-1.- Agregar selector de mapa en free mode
  1.- Agregar "efecto shake" a ciertos mapas y armas. 
 que tan dificil es ? de momento no lo hare en mapa, mi idea es en un futuro agregar tal vez un video de fondo o gif para darle mas " realismo" o efectos tipo lluvia (solo seria un gif o video sobre puesto encima de la pantalla, tambien con efecto de rallo que tal vez genere un destello para darle mas realismo y en mapas asi o en mapas que son barcos, deberian estar en constante movimiento.)
 Pero quiero saber ahora mismo si se puede con las armas?
 
-2.- ¿Si un cliente se sale de mi partida, esta se congela, hay forma de evitar esto?
+
 3.- Intentar hacer grande la pantalla 
 4.- Agregar supplies, o ayudas
-5.- Mejorar detalles de hud para que se vea mas amigable y no tan tipo "carton" incluido el cursor
 6.- Implementar nueva funcion/comportamiento en proyectil.py > ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor (igual a la mira de "golpe") pero una mira totalmente libre o de rango en todo el largo del mapa, y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
 
 

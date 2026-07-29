@@ -10,6 +10,13 @@ class CampaignProgress:
         self._by_id = {level.id: level for level in self.levels}
         self.progress = self.repository.load_progress()
 
+    def refresh(self) -> None:
+        """Recarga el progreso desde disco sin recrear todo el objeto.
+        Pensado para pantallas de menú que viven varios frames: si el
+        jugador completó un nivel y volvió, esto hace que el próximo
+        nivel se vea desbloqueado sin tener que reabrir la pantalla."""
+        self.progress = self.repository.load_progress()
+
     def is_unlocked(self, level_id: int) -> bool:
         level_id = int(level_id)
         if level_id not in self._by_id:
