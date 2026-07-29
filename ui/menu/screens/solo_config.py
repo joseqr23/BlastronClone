@@ -8,7 +8,7 @@ from core.game_modes.solo_game import CampaignProgress
 from utils.paths import resource_path
 from ..theme import *
 
-PAGE_SIZE = 9  # 3x3 por página — si hay más niveles, aparece el carrusel
+PAGE_SIZE = 6  # 3x2 por "mundo" — cada mundo es una página del carrusel
 MAX_ESTRELLAS_DIFICULTAD = 5
 
 # Caché de fondos en memoria a nivel de módulo: distintos niveles que

@@ -1,7 +1,12 @@
 
-Agregar reglas para solo tener ciertas armas en modo solo
-5.- Los robots atacan correctamente en apuntado, pero aun no saben en que parte estan las tiles, y disparan a traves de ellas, que solucion se puede dar?
+Pendiente corregir en solo game
 
+1.- Actualmente en el modo solo, unicamente esta configurado lms(last man standing), por defecto todos tienen puede respawnear como false, pero no esta implementado en los demas modos correctamente, solo funciona lms, se puede corregir? 
+
+2.- Actualmente los bots no pueden ser empujados, solo reciben el impacto hacia arriba, pero no en direccion ni hacia los lados. 
+3.- Agregar reglas para solo tener ciertas armas en modo solo
+
+4.- Los robots atacan correctamente en apuntado, pero aun no saben en que parte estan las tiles, y disparan a traves de ellas, que solucion se puede dar?
 
 
 Pendiente:

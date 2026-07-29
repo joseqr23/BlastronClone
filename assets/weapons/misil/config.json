@@ -50,7 +50,8 @@
   "posicion_alto_arma_sostenida": 0,
 
   "oculta_arma_al_disparar": false,
-  "estilo_mira": "apuntar"
+  "estilo_mira": "apuntar",
+  "tipo": "Explosivas"
 
 
 }

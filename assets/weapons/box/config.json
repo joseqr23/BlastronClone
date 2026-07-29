@@ -19,6 +19,8 @@
   
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "intervalo_disparos_ms": 120,
+  "_________(Opcional)_________" : "Para velocidad de reproduccion de frames de los sprites",
+  "velocidad_animacion_ms": 1,
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
   "ancho_proyectil": 90,
@@ -51,9 +53,6 @@
 
   "oculta_arma_al_disparar": true,
   "estilo_mira": "golpe",
-
-  "_________(Opcional)_________" : "Para velocidad de reproduccion de frames de los sprites",
-  "velocidad_animacion_ms": 1
-
+  "tipo": "Cuerpo a cuerpo"
 
 }

@@ -13,6 +13,11 @@ COL_BOTON_HOVER = (65, 65, 76)
 COL_BOTON_SELECCIONADO = (60, 90, 45)
 COL_BORDE_SELECCIONADO = (255, 196, 60)
 COL_BORDE_BOTON = (90, 90, 100)
+COL_LABEL_CATEGORIA = (200, 200, 210)
+COL_SCROLLBAR = (255, 196, 60, 210)
+COL_SCROLLBAR_RIEL = (255, 255, 255, 25)
+ 
+ALTO_LABEL_CATEGORIA = 18
 
 def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
     """Dibuja una corona simple (sin depender de ninguna imagen) junto al
@@ -32,64 +37,81 @@ def _draw_crown(pantalla, x, y, size=14, color=(255, 215, 0)):
 
 
 
+
 class HUDArmas:
     """
-    Selector de armas en cuadrícula (grid) que se ajusta sola al ancho de
-    pantalla — calcula cuántos botones caben por fila según ANCHO (de
-    settings.py) y su propia posición de inicio, y cuando se llena una
-    fila continúa hacia abajo. No hace falta tocar nada cuando agregas
-    un arma nueva, sin importar cuántas termines teniendo: nunca se sale
-    de la pantalla, solo crece hacia abajo.
+    Selector de armas en cuadrícula, agrupado por categoría ("tipo" en el
+    config.json de cada arma) y con scroll vertical: el panel nunca crece
+    más allá de `filas_visibles` filas, sin importar cuántas armas nuevas
+    agregues — desplazás con la rueda del mouse dentro del panel.
  
     Incluye:
-      - Botón de colapsar/expandir, siempre visible, a la DERECHA de la
-        cuadrícula de armas (las armas quedan ancladas en `posicion`, el
-        botón se calcula después según el ancho real de la cuadrícula).
-      - Panel de fondo semitransparente para que se vea como un widget,
-        no íconos sueltos flotando sobre el mapa.
-      - Tooltip con el nombre legible del arma (campo "nombre" de su
-        config.json) al pasar el mouse por encima.
-      - Indicador de munición restante (opcional): pasa el weapon_manager
-        del jugador a draw() y se dibuja un numerito en la esquina del
-        botón para cualquier arma con "municion" definida en su
-        config.json. Si no le pasás weapon_manager, no se dibuja nada —
-        cero cambios de comportamiento si no lo usás.
+      - Botón de colapsar/expandir a la derecha de la cuadrícula. Al
+        colapsar se muestra un pequeño indicador con el arma
+        actualmente seleccionada al lado del botón.
+      - Panel de fondo semitransparente con bordes redondeados.
+      - Tooltip con el nombre legible del arma al pasar el mouse.
+      - Indicador de munición restante (opcional vía weapon_manager).
       - Cualquier clic dentro del panel (huecos entre botones incluidos)
-        cuenta como "sobre el HUD" — no solo los botones individuales —
-        así nunca se dispara sin querer al clickear al costado de un
-        arma. Ver punto_sobre_hud().
+        cuenta como "sobre el HUD" — no solo los botones — para que
+        nunca se dispare sin querer al clickear al costado de un arma.
  
     Íconos: busca assets/hud/<arma>.png primero; si no existe, usa el
     primer frame del sprite propio del arma como ícono automático.
     """
  
-    def __init__(self, armas_disponibles, posicion=(600, 10), margen_derecho=20, max_por_fila=None):
-        self.armas = ['nada'] + armas_disponibles + ['spawn_robot']
+    def __init__(self, armas_disponibles, posicion=(600, 10), margen_derecho=20,
+                 max_por_fila=None, filas_visibles=3):
+        self.armas = ['nada', 'spawn_robot'] + armas_disponibles
         self.pos = posicion
         self.seleccion = 'nada'
-        self.colapsado = False
+        self.colapsado = True
  
         self.ancho_boton = 60
         self.alto_boton = 60
         self.padding = 10
         self.ancho_toggle = 30
         self.margen_derecho = margen_derecho
-        # Si se pasa un número fijo, se usa tal cual; si no, se calcula
-        # solo según cuánto espacio quede hasta el borde de la pantalla.
         self.max_por_fila = max_por_fila
+        self.filas_visibles = max(1, filas_visibles)
+        self.scroll_px = 0
  
-        self.botones = []
+        self.botones = []               # (arma, rect_local) — coords dentro del contenido scrolleable
+        self.categorias_layout = []      # (etiqueta, y_local)
         self.rect_toggle = pygame.Rect(0, 0, 0, 0)
+        self.rect_viewport = pygame.Rect(0, 0, 0, 0)
         self.rect_panel = pygame.Rect(0, 0, 0, 0)
         self.rect_panel_colapsado = pygame.Rect(0, 0, 0, 0)
+        self.rect_indicador_colapsado = pygame.Rect(0, 0, 0, 0)
+        self.ancho_indicador_colapsado = 44
+        self.alto_contenido_total = self.alto_boton
+        self.ancho_contenido = self.ancho_boton
+ 
         self.imagenes = {}
         self.nombres_legibles = {}
         self.font_toggle = pygame.font.SysFont("Arial", 20, bold=True)
         self.font_tooltip = pygame.font.SysFont("Arial", 14, bold=True)
         self.font_municion = pygame.font.SysFont("Arial", 13, bold=True)
+        self.font_categoria = pygame.font.SysFont("Arial", 11, bold=True)
  
         self.crear_botones()
         self.cargar_imagenes()
+ 
+    # ------------------------------------------------------------------
+    # Categorías
+    # ------------------------------------------------------------------
+    def _agrupar_armas(self):
+        catalogo = cargar_armas()
+        categorias = {}
+        for arma in self.armas:
+            if arma in ('nada', 'spawn_robot'):
+                continue
+            config = catalogo.get(arma, {})
+            tipo = config.get("tipo") or "Otras"
+            categorias.setdefault(tipo, []).append(arma)
+
+        grupos = [("", ['nada', 'spawn_robot'])] + list(categorias.items())
+        return grupos
  
     # ------------------------------------------------------------------
     # Layout
@@ -97,8 +119,6 @@ class HUDArmas:
     def _calcular_por_fila(self):
         if self.max_por_fila is not None:
             return max(1, self.max_por_fila)
-        # Reserva espacio para el toggle AL FINAL (a la derecha de la
-        # cuadrícula), no al principio.
         disponible = max(
             self.ancho_boton,
             (ANCHO - self.margen_derecho) - self.pos[0] - self.ancho_toggle - self.padding
@@ -107,49 +127,57 @@ class HUDArmas:
  
     def crear_botones(self):
         x, y = self.pos
-        self.botones = []
         por_fila = self._calcular_por_fila()
+        grupos = self._agrupar_armas()
  
-        # Las armas se anclan en (x, y) tal cual — ya no se corren para
-        # dejarle hueco al toggle antes de ellas.
-        for i, arma in enumerate(self.armas):
-            fila, col = divmod(i, por_fila)
-            rect = pygame.Rect(
-                x + col * (self.ancho_boton + self.padding),
-                y + fila * (self.alto_boton + self.padding),
-                self.ancho_boton, self.alto_boton,
-            )
-            self.botones.append((arma, rect))
+        self.botones = []
+        self.categorias_layout = []
+        y_local = 0
+        ancho_contenido = por_fila * (self.ancho_boton + self.padding) - self.padding
  
-        columnas = min(len(self.armas), por_fila) if self.armas else 1
-        filas = (len(self.armas) - 1) // por_fila + 1 if self.armas else 1
-        ancho_grid = columnas * (self.ancho_boton + self.padding) - self.padding
-        alto_grid = filas * (self.alto_boton + self.padding) - self.padding
+        for etiqueta, armas_grupo in grupos:
+            if not armas_grupo:
+                continue
+            if etiqueta:
+                self.categorias_layout.append((etiqueta, y_local))
+                y_local += ALTO_LABEL_CATEGORIA
+            for i, arma in enumerate(armas_grupo):
+                fila, col = divmod(i, por_fila)
+                rect = pygame.Rect(
+                    col * (self.ancho_boton + self.padding),
+                    y_local + fila * (self.alto_boton + self.padding),
+                    self.ancho_boton, self.alto_boton,
+                )
+                self.botones.append((arma, rect))
+            filas_grupo = (len(armas_grupo) - 1) // por_fila + 1
+            y_local += filas_grupo * (self.alto_boton + self.padding) - self.padding
+            y_local += 10  # separación entre categorías
  
-        # El toggle se ubica DESPUÉS de la cuadrícula, a su derecha.
-        x_toggle = x + ancho_grid + self.padding
+        self.ancho_contenido = ancho_contenido
+        self.alto_contenido_total = max(y_local, self.alto_boton)
+ 
+        alto_viewport_max = self.filas_visibles * (self.alto_boton + self.padding) - self.padding + ALTO_LABEL_CATEGORIA
+        self.alto_viewport = min(self.alto_contenido_total, alto_viewport_max)
+        self.rect_viewport = pygame.Rect(x, y, ancho_contenido, self.alto_viewport)
+ 
+        max_scroll = max(0, self.alto_contenido_total - self.alto_viewport)
+        self.scroll_px = min(self.scroll_px, max_scroll)
+ 
+        x_toggle = x + ancho_contenido + self.padding
         self.rect_toggle = pygame.Rect(x_toggle, y, self.ancho_toggle, self.alto_boton)
  
-        # Panel de fondo que envuelve toda la cuadrícula + el toggle —
-        # también es el área que bloquea el disparo cuando está expandido.
-        margen = 6
-        self.rect_panel = pygame.Rect(
-            x - margen,
-            y - margen,
-            ancho_grid + self.padding + self.ancho_toggle + margen * 2,
-            max(self.alto_boton, alto_grid) + margen * 2,
-        )
-        # Área que bloquea el disparo cuando está colapsado — coincide
-        # con lo que realmente se dibuja en ese estado (solo el toggle).
-        # Indicador del arma actual, visible al costado del toggle cuando
-        # está colapsado — así siempre se sabe qué arma tenés equipada
-        # aunque la cuadrícula esté oculta.
-        self.ancho_indicador_colapsado = 44
         self.rect_indicador_colapsado = pygame.Rect(
             self.rect_toggle.left - self.padding - self.ancho_indicador_colapsado,
             self.rect_toggle.top, self.ancho_indicador_colapsado, self.alto_boton,
         )
         self.rect_panel_colapsado = self.rect_indicador_colapsado.union(self.rect_toggle).inflate(6, 6)
+ 
+        margen = 6
+        self.rect_panel = pygame.Rect(
+            x - margen, y - margen,
+            ancho_contenido + self.padding + self.ancho_toggle + margen * 2,
+            max(self.alto_boton, self.alto_viewport) + margen * 2,
+        )
  
     # ------------------------------------------------------------------
     # Recursos
@@ -162,8 +190,6 @@ class HUDArmas:
                 imagen = pygame.image.load(resource_path(f"assets/hud/{arma}.png")).convert_alpha()  # Para exportar en main.exe PyInstaller
                 imagen = pygame.transform.smoothscale(imagen, (40, 40))
             except Exception:
-                # Sin ícono propio en assets/hud/: usamos el primer frame
-                # del sprite del arma (idle) como ícono automático.
                 config = catalogo.get(arma)
                 frames = config.get("_frames_img") if config else None
                 if frames:
@@ -179,7 +205,7 @@ class HUDArmas:
             elif arma == 'nada':
                 self.nombres_legibles[arma] = 'Ninguna'
             elif arma == 'spawn_robot':
-                self.nombres_legibles[arma] = 'Invocar robot (Solo en modo libre)'
+                self.nombres_legibles[arma] = 'Invocar robot'
             else:
                 self.nombres_legibles[arma] = arma.capitalize()
  
@@ -187,26 +213,31 @@ class HUDArmas:
     # Eventos
     # ------------------------------------------------------------------
     def punto_sobre_hud(self, pos):
-        """Usado por event_handler.py para no disparar cuando el clic cae
-        sobre el HUD de armas. Chequea el PANEL completo, no botón por
-        botón — así un clic en el hueco entre dos armas (o en el margen
-        del panel) también cuenta como "sobre el HUD" y no dispara."""
         if self.colapsado:
             return self.rect_panel_colapsado.collidepoint(pos)
         return self.rect_panel.collidepoint(pos)
  
     def manejar_evento(self, evento):
-        if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
+        if evento.type == pygame.MOUSEBUTTONDOWN:
             pos = evento.pos
-            if self.rect_toggle.collidepoint(pos):
-                self.colapsado = not self.colapsado
-                return None
-            if self.colapsado:
-                return None
-            for arma, rect in self.botones:
-                if rect.collidepoint(pos):
-                    self.seleccion = arma
-                    return arma
+            if evento.button == 1:
+                if self.rect_toggle.collidepoint(pos):
+                    self.colapsado = not self.colapsado
+                    return None
+                if self.colapsado or not self.rect_viewport.collidepoint(pos):
+                    return None
+                local = (pos[0] - self.rect_viewport.x, pos[1] - self.rect_viewport.y + self.scroll_px)
+                for arma, rect in self.botones:
+                    if rect.collidepoint(local):
+                        self.seleccion = arma
+                        return arma
+            elif not self.colapsado and self.rect_viewport.collidepoint(pos) and evento.button in (4, 5):
+                max_scroll = max(0, self.alto_contenido_total - self.alto_viewport)
+                paso = self.alto_boton + self.padding
+                if evento.button == 4:    # rueda arriba
+                    self.scroll_px = max(0, self.scroll_px - paso)
+                else:                     # rueda abajo
+                    self.scroll_px = min(max_scroll, self.scroll_px + paso)
         return None
  
     # ------------------------------------------------------------------
@@ -219,18 +250,16 @@ class HUDArmas:
         pantalla.blit(fondo, panel.topleft)
         pygame.draw.rect(pantalla, COL_PANEL_BORDE, panel, width=2, border_radius=10)
  
-        toggle_color = COL_BOTON_HOVER if self.rect_toggle.collidepoint(pygame.mouse.get_pos()) else COL_BOTON_IDLE
+        mouse_pos = pygame.mouse.get_pos()
+        toggle_color = COL_BOTON_HOVER if self.rect_toggle.collidepoint(mouse_pos) else COL_BOTON_IDLE
         pygame.draw.rect(pantalla, toggle_color, self.rect_toggle, border_radius=6)
         pygame.draw.rect(pantalla, COL_PANEL_BORDE, self.rect_toggle, width=2, border_radius=6)
-        # El toggle está a la derecha de las armas: ">" significa "las
-        # armas están a la izquierda, clic para ocultarlas" (expandido)
-        # y "<" significa "clic para mostrarlas" (colapsado).
         flecha = "G" if self.colapsado else "G"
         texto_flecha = self.font_toggle.render(flecha, True, (255, 255, 255))
         pantalla.blit(texto_flecha, texto_flecha.get_rect(center=self.rect_toggle.center))
-
-
+ 
         if self.colapsado:
+            # Indicador del arma actualmente equipada, al lado del toggle.
             pygame.draw.rect(pantalla, COL_BOTON_IDLE, self.rect_indicador_colapsado, border_radius=8)
             pygame.draw.rect(pantalla, COL_BORDE_SELECCIONADO, self.rect_indicador_colapsado, width=2, border_radius=8)
             imagen = self.imagenes.get(self.seleccion)
@@ -241,47 +270,74 @@ class HUDArmas:
                 render = font.render(texto, True, (235, 235, 235))
                 pantalla.blit(render, render.get_rect(center=self.rect_indicador_colapsado.center))
             return
-        
-        if self.colapsado:
-            return
  
-        mouse_pos = pygame.mouse.get_pos()
+        # Contenido completo (todas las categorías/armas) se dibuja en una
+        # superficie aparte; solo se muestra el recorte que corresponde
+        # al scroll actual — así el panel visible nunca crece.
+        contenido = pygame.Surface((self.ancho_contenido, self.alto_contenido_total), pygame.SRCALPHA)
+        for etiqueta, y_local in self.categorias_layout:
+            render_etiqueta = self.font_categoria.render(etiqueta.upper(), True, COL_LABEL_CATEGORIA)
+            contenido.blit(render_etiqueta, (2, y_local + 2))
+ 
+        mouse_local = (mouse_pos[0] - self.rect_viewport.x, mouse_pos[1] - self.rect_viewport.y + self.scroll_px)
         hover = None
- 
         for arma, rect in self.botones:
             seleccionado = self.seleccion == arma
+            sobre = rect.collidepoint(mouse_local)
             if seleccionado:
                 color, borde, grosor = COL_BOTON_SELECCIONADO, COL_BORDE_SELECCIONADO, 3
-            elif rect.collidepoint(mouse_pos):
+            elif sobre:
                 color, borde, grosor = COL_BOTON_HOVER, COL_BORDE_BOTON, 2
             else:
                 color, borde, grosor = COL_BOTON_IDLE, COL_BORDE_BOTON, 1
-            pygame.draw.rect(pantalla, color, rect, border_radius=8)
-            pygame.draw.rect(pantalla, borde, rect, width=grosor, border_radius=8)
+            pygame.draw.rect(contenido, color, rect, border_radius=8)
+            pygame.draw.rect(contenido, borde, rect, width=grosor, border_radius=8)
  
             imagen = self.imagenes.get(arma)
             if imagen:
-                img_rect = imagen.get_rect(center=rect.center)
-                pantalla.blit(imagen, img_rect)
+                contenido.blit(imagen, imagen.get_rect(center=rect.center))
             else:
                 texto_mostrar = self.nombres_legibles.get(arma, arma.capitalize())
                 text = font.render(texto_mostrar, True, (235, 235, 235))
-                text_rect = text.get_rect(center=rect.center)
-                pantalla.blit(text, text_rect)
+                contenido.blit(text, text.get_rect(center=rect.center))
  
             if weapon_manager is not None:
-                self._draw_municion(pantalla, arma, rect, weapon_manager)
+                self._draw_municion(contenido, arma, rect, weapon_manager)
  
-            if rect.collidepoint(mouse_pos):
+            if sobre:
                 hover = (arma, rect)
  
+        recorte = pygame.Rect(0, self.scroll_px, self.ancho_contenido, self.rect_viewport.height)
+        pantalla.blit(contenido.subsurface(recorte), self.rect_viewport.topleft)
+ 
+        if self.alto_contenido_total > self.rect_viewport.height:
+            self._draw_scrollbar(pantalla)
+ 
         if hover is not None:
-            self._draw_tooltip(pantalla, *hover)
+            arma_hover, rect_local = hover
+            rect_pantalla = rect_local.move(self.rect_viewport.x, self.rect_viewport.y - self.scroll_px)
+            self._draw_tooltip(pantalla, arma_hover, rect_pantalla)
+ 
+    def _draw_scrollbar(self, pantalla):
+        vp = self.rect_viewport
+        riel_rect = pygame.Rect(vp.right - 5, vp.y, 3, vp.height)
+        riel = pygame.Surface(riel_rect.size, pygame.SRCALPHA)
+        riel.fill(COL_SCROLLBAR_RIEL)
+        pantalla.blit(riel, riel_rect.topleft)
+ 
+        max_scroll = self.alto_contenido_total - vp.height
+        ratio_visible = vp.height / self.alto_contenido_total
+        alto_barra = max(14, int(vp.height * ratio_visible))
+        pos_barra = int((self.scroll_px / max_scroll) * (vp.height - alto_barra)) if max_scroll else 0
+        barra_rect = pygame.Rect(riel_rect.x, riel_rect.y + pos_barra, 3, alto_barra)
+        barra = pygame.Surface(barra_rect.size, pygame.SRCALPHA)
+        barra.fill(COL_SCROLLBAR)
+        pantalla.blit(barra, barra_rect.topleft)
  
     def _draw_municion(self, pantalla, arma, rect, weapon_manager):
         restante = weapon_manager.municion_actual(arma)
         if restante is None:
-            return  # munición ilimitada, no se muestra nada
+            return
         texto = self.font_municion.render(str(restante), True, (255, 255, 255))
         fondo_rect = texto.get_rect()
         fondo_rect.inflate_ip(8, 4)
@@ -298,7 +354,6 @@ class HUDArmas:
         fondo_rect = render.get_rect()
         fondo_rect.inflate_ip(padding * 2, padding * 2)
         fondo_rect.midtop = (rect.centerx, rect.bottom + 6)
-        # No dejar que el tooltip se salga de la pantalla por la derecha.
         if fondo_rect.right > ANCHO:
             fondo_rect.right = ANCHO - 2
         fondo = pygame.Surface(fondo_rect.size, pygame.SRCALPHA)

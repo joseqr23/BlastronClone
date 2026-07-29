@@ -66,7 +66,12 @@ from utils.loader import load_spritesheet
 from utils.paths import resource_path # Para exportar en main.exe PyInstaller
 
 _CACHE = None
-
+_TIPO_POR_COMPORTAMIENTO = {
+    "cuerpo_a_cuerpo": "Cuerpo a cuerpo",
+    "cuerpo_a_cuerpo_direccional": "Cuerpo a cuerpo",
+    "mina": "Explosivas",
+}
+_TIPO_POR_DEFECTO = "Armas de fuego"
 
 def _cargar_frames_escalados(sprite_path, frames, ancho_deseado, alto_deseado):
     """Recorta cada frame usando el tamaño REAL que tiene en el spritesheet
@@ -119,6 +124,12 @@ def cargar_armas(forzar_recarga=False):
             continue
 
         config.setdefault("id", nombre)
+        # "tipo" es solo para agrupar visualmente en el HUD — separado de
+        # "comportamiento" (que sigue siendo la lógica de juego). Si el
+        # config.json no trae "tipo", se infiere de comportamiento.
+        config["tipo"] = config.get("tipo") or _TIPO_POR_COMPORTAMIENTO.get(
+            config.get("comportamiento"), _TIPO_POR_DEFECTO
+        )
         sprite_path = config.get("sprite", os.path.join(carpeta, "sprite.png"))
         frames = config.get("frames", 3)
         ancho = config.get("ancho_proyectil", 40)   # tamaño lógico deseado (display)

@@ -52,7 +52,8 @@
   "posicion_alto_arma_sostenida": 5,
 
   "oculta_arma_al_disparar": false,
-  "estilo_mira": "golpe"
+  "estilo_mira": "golpe",
+  "tipo": "Armas de fuego"
 
 
 }
