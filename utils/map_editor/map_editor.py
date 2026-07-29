@@ -1,6 +1,7 @@
 # utils/map_editor.py
 import pygame
 import os
+import importlib.util
 
 # Configuración de pantalla
 ANCHO, ALTO = 1000, 494
@@ -43,6 +44,28 @@ def save_platforms(filename="utils/map_editor/plataformas_generadas.py"):
         f.write("]\n")
     print(f"✅ Plataformas guardadas en {filename}")
 
+def cargar_platforms(filename="utils/map_editor/cargar.py"):
+    global platforms
+
+    if not os.path.exists(filename):
+        print(f"⚠️ No existe {filename}")
+        return
+
+    try:
+        spec = importlib.util.spec_from_file_location("cargar", filename)
+        modulo = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(modulo)
+
+        platforms.clear()
+
+        for plat in modulo.PLATAFORMAS:
+            platforms.append(tuple(plat))
+
+        print(f"✅ Se cargaron {len(platforms)} plataformas.")
+
+    except Exception as e:
+        print(f"❌ Error al cargar plataformas: {e}")
+        
 def punto_en_rect(punto, rect):
     x, y = punto
     rx, ry, rw, rh = rect
@@ -96,9 +119,14 @@ while corriendo:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_s:
                 save_platforms()
+
+            elif event.key == pygame.K_l:
+                cargar_platforms()
+
             elif event.key == pygame.K_m:
                 moving_mode = not moving_mode
                 print("🧲 Modo mover activado" if moving_mode else "🔒 Modo mover desactivado")
+
 
     # Actualizar plataforma en dibujo (soporta arrastrar en cualquier dirección)
     if drawing and start_pos:
@@ -136,8 +164,9 @@ while corriendo:
     # Instrucciones
     draw_text("🖱️ Clic y arrastra para crear plataformas", 10, 10)
     draw_text("💾 Presiona 'S' para guardar", 10, 30)
-    draw_text("🧲 Presiona 'M' para activar modo mover", 10, 50)
-    draw_text("🗑️ Haz clic derecho sobre una plataforma para eliminarla", 10, 70)
+    draw_text("📂 Presiona 'L' para cargar cargar.py", 10, 50)
+    draw_text("🧲 Presiona 'M' para activar modo mover", 10, 70)
+    draw_text("🗑️ Haz clic derecho sobre una plataforma para eliminarla", 10, 90)
 
     pygame.display.flip()
     clock.tick(60)

@@ -25,22 +25,6 @@ te paso mis codigos actuales, incluido turn manager por si necesitas modifcar al
 
 
 
-
-
-Ayudame con este error grave:
-
-En modo multijugador, al momento en el que inicia la partida con 2 jugadores o más ocurre un error.
-La partida fue probada en modo de 1vs1vs1vs1 y también 1vs1vs1
-Ocurre que hay un turno que siempre se salta, desconozco la razón exacta, pero tal vez una razón puede ser que un jugador intenta atacar antes de tiempo o algo asi, es un bug, porque el turno pasa por todos excepto por 1 jugador.
-
-también he notado que a pesar de que el jugador este en la partida, en el hud de jugadores no se dibuja, es como si no existiera.
-En la imagen que te adjunto hay 4 jugadores en partida pero solo 3 en el hud de puntajes, este bug ocurre en todos los modos
-
-
-
-
-
-
 Pendiente:
 ¿Hay forma de categorizar armas para verlas en el hud?
 Tambien quisiera saber si a parte del nombre se le puede agregar el daño al hacer hover
