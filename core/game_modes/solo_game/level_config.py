@@ -18,7 +18,9 @@ class BotConfig:
     vida_maxima: int | None = None  # None -> usa modo.vida_maxima del modo de partida
     arma: str = "misil"
     velocidad: float = 2.5
-    salto: float = 15
+    salto: float = 15,
+    distancia_acercamiento: float | None = None  # None = automático según el arma
+    distancia_ataque: float | None = None        # None = automático según el arma
 
 @dataclass(frozen=True)
 class BossConfig:
@@ -32,6 +34,8 @@ class BossConfig:
     alto: int = 90
     velocidad: float = 2.5
     salto: float = 15
+    distancia_acercamiento: float | None = None
+    distancia_ataque: float | None = None
 
 @dataclass(frozen=True)
 class LevelConfig:
@@ -45,6 +49,7 @@ class LevelConfig:
     boss: BossConfig | None = None
     armas_jugador: tuple[str, ...] = ()          # () = todas las armas disponibles
     municion_jugador: dict = field(default_factory=dict)  # override opcional de municion por arma
+    vida_jugador: int | None = None  # None = usa modo.vida_maxima (comportamiento de siempre)
 
     @classmethod
     def from_dict(cls, data: dict) -> "LevelConfig":
@@ -64,6 +69,8 @@ class LevelConfig:
             alto=int(boss_data.get("alto", 90)),
             velocidad=float(boss_data.get("velocidad", 2.5)),
             salto=float(boss_data.get("salto", 15)),
+            distancia_acercamiento=boss_data.get("distancia_acercamiento"),
+            distancia_ataque=boss_data.get("distancia_ataque"),
         ) if isinstance(boss_data, dict) else None
 
         return cls(
@@ -75,6 +82,7 @@ class LevelConfig:
             bots=bots, boss=boss,
             armas_jugador=tuple(data.get("armas_jugador", ())),
             municion_jugador=dict(data.get("municion_jugador", {})),
+            vida_jugador=data.get("vida_jugador"),
         )
 
     @staticmethod
@@ -101,6 +109,8 @@ class LevelConfig:
                 arma=b.get("arma", "misil"),
                 velocidad=float(b.get("velocidad", 2.5)),
                 salto=float(b.get("salto", 15)),
+                distancia_acercamiento=b.get("distancia_acercamiento"),
+                distancia_ataque=b.get("distancia_ataque"),
             )
             for b in bots_data
         ]

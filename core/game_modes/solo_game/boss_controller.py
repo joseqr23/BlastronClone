@@ -7,7 +7,9 @@ class BossController(BotController):
     puntería y disparo son EXACTAMENTE los mismos. Solo se vuelve más
     agresivo y cambia de arma al perder vida (fases)."""
     def __init__(self, robot, config, rng=None):
-        super().__init__(robot, difficulty=4, rng=rng)
+        super().__init__(robot, difficulty=4, rng=rng,
+                          distancia_acercamiento=config.distancia_acercamiento,
+                          distancia_ataque=config.distancia_ataque)
         self.config = config
         self.phase = 0
 
@@ -21,8 +23,10 @@ class BossController(BotController):
         return super().update(target)
 
     def _distancia_ideal(self):
-        # Más agresivo por cada fase superada — se acerca más de lo que
-        # normalmente pediría el arma que tenga equipada.
+        if self.distancia_acercamiento is not None:
+            # Override explícito del nivel: se respeta tal cual, sin piso
+            # de agresividad por fase — si pediste 0, es 0.
+            return self.distancia_acercamiento
         return max(50, super()._distancia_ideal() - 35 * self.phase)
 
     def should_fire(self, distance):

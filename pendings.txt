@@ -1,37 +1,39 @@
+1.- Hacer que todas las armas de tipo "Armas de fuego" siempre se apunten al centro del robot.
+Actualmente tengo estas:
+"Explosivas", "Cuerpo a cuerpo", "Armas de fuego", "Especiales"
+Las explosivas deben apuntarse con angulo incluido para no fallar nunca el ataque.
+Las cuerpo a cuerpo da igual porque actualmente el comportamiento es el correcto.
+Las armas de fuego y especiales y cualquier otra (por defecto si no esta definido en el json del arma) deben apuntarse al centro del robot.
+Ejemplo de rifle/config.json en un arma.
+{
+  "_________Propiedades de arma_________": "______________",
+  "nombre": "Rifle",
+  ...
+  ...
+  ...
+  "tipo": "Armas de fuego"
 
-Pendiente corregir en solo game
-1.- El fix de que los bots salten al encontrarse atascados que hiciste en bot_controller.py, da este error:
-Traceback (most recent call last):
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\main.py", line 114, in <module>
-    main()
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\main.py", line 97, in main
-    resultado = juego.run()
-                ^^^^^^^^^^^
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 149, in run
-    return self._run_match()
-           ^^^^^^^^^^^^^^^^^
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 163, in _run_match
-    self._actualizar_turno_y_actores()
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\game.py", line 209, in _actualizar_turno_y_actores
-    if controlador.should_fire(distancia):
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\bot_controller.py", line 115, in should_fire
-    distance = self._distancia_borde(target)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "c:\compartido jose\1.- Aplicativos\3.- Python\3.- Proyectos\4.- Blastron\core\game_modes\solo_game\bot_controller.py", line 46, in _distancia_borde
-    origen, obj = self.robot.get_rect(), target.get_rect()
-                                         ^^^^^^^^^^^^^^^
-AttributeError: 'float' object has no attribute 'get_rect'
+}
 
 
+Sugerencias adicionales.
 
-2.- Corregir que bots jefes con un tamaño de cuerpo mas grande, no te atacan cuando usan armas cuerpo a cuerpo, los bots normales si.
-3.- Agregar vida configurable del jugador en los levels.json de solo_game
+Con todo lo que ya tienes armado (bots configurables por arma/vida/velocidad, jefe con fases, modos de partida reutilizados, restricción de armas del jugador), lo que más "sensación de campaña" agregaría, en orden de costo/beneficio:
+
+
+1.- Diálogo/texto de introducción por nivel — un campo "intro" en el JSON con 1-2 líneas que se muestren antes de empezar (usando el mismo Chat/burbuja que ya tienes, sin sistema nuevo).
+2.- Requisito de estrellas para desbloquear — hoy CampaignProgress.is_unlocked solo mira si completaste el nivel anterior; podrías añadir un mínimo de estrellas acumuladas para desbloquear ciertos niveles (fácil de sumar a la lógica que ya existe).
+3.- Retry rápido tras derrota — en ResultsScreen, un botón "Reintentar" que reconstruya el mismo SoloGame con el mismo level_id en vez de volver siempre al menú.
+4.- Barra de vida del jefe en el HUD (si no la tienes ya — en tu captura no se ve una barra dedicada) — dado que el jefe ya tiene fases por health_ratio, una barra visible ayuda mucho a que el jugador entienda cuándo viene el cambio de fase.
 
 
 
-3.- Agregar reglas para solo tener ciertas armas en modo solo (tal vez en el json colocar las armas que el jugador puede usar, incluso con la municion restante)
-4.- Para evitar que un bot se quede estancado, seria bueno que se le agregue la logica de saltar cada cierto tiempo o cuando se encuentre "estancado", veo que algunos chocan con los tiles o estructuras del mapa, pero no saltan, solo intentan avanzar en linea recta.
+
+
+
+
+
+
 
 
 

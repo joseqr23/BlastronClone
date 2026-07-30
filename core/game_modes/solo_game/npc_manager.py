@@ -55,7 +55,11 @@ class NpcManager:
             robot.es_jugador = False
             robot.arma_equipada = config.arma
 
-            self.controllers[robot] = BotController(robot, self.dificultad, self.rng)
+            self.controllers[robot] = BotController(
+                robot, self.dificultad, self.rng,
+                distancia_acercamiento=config.distancia_acercamiento,
+                distancia_ataque=config.distancia_ataque,
+            )
             bots[nombre] = robot
         return bots
 

@@ -51,8 +51,9 @@ class SoloGame(BaseGame):
 
         armas_disponibles = list(self.level.armas_jugador) or list(cargar_armas().keys())
 
+        vida_jugador = self.level.vida_jugador or self.vida_maxima
         self.robot = Robot(ANCHO // 2 - 30, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,
-                           vida_maxima=self.vida_maxima, puede_reaparecer=self.modo.permite_reaparecer)
+                           vida_maxima=vida_jugador, puede_reaparecer=self.modo.permite_reaparecer)
         self.robot.es_jugador = True
         self.robot.arma_equipada = armas_disponibles[0]
 
@@ -206,12 +207,9 @@ class SoloGame(BaseGame):
                 aim = controlador.update(self.robot)
                 robot.update(None)
                 if aim:
-                    robot.aim_dx, robot.aim_dy = aim  # para que el arma sostenida apunte bien en el render
-                    if self.turn_manager.puede_disparar():
-                        distancia = math.hypot(robot.get_centro()[0] - self.robot.get_centro()[0],
-                                               robot.get_centro()[1] - self.robot.get_centro()[1])
-                        if controlador.should_fire(distancia):
-                            self._disparar_bot(nombre, robot, aim)
+                    robot.aim_dx, robot.aim_dy = aim
+                    if self.turn_manager.puede_disparar() and controlador.should_fire(self.robot):
+                        self._disparar_bot(nombre, robot, aim)
             else:
                 if pygame.time.get_ticks() >= robot.aturdido_hasta:
                     robot.vel_x = 0
