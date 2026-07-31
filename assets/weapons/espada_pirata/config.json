@@ -1,0 +1,56 @@
+{
+  "_________Propiedades de arma_________": "______________",
+  "nombre": "Espada de pirata",
+  "comportamiento": "cuerpo_a_cuerpo",
+  "daño": 60,
+  "gravedad": 0,
+  "friccion_aire": 1,
+  "tiempo_explosion_ms": 150,
+  "tiempo_post_explosion_ms": 250,
+  "margen_dueño_ms": 1350,
+
+  "daña_al_dueño": false,
+  "municion": 1,
+  "cantidad": 1,
+  "dispersion_grados": 25,
+
+  "advertencia_ms": 120,
+  
+  "empuje_ancho": 3,
+  "empuje_alto": -2,
+  
+  "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
+  "ancho_proyectil": 90,
+  "alto_proyectil": 90,
+  "ancho_explosion": 90,
+  "alto_explosion": 90,
+
+  "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
+  "hitbox_ancho_proyectil": 0,
+  "hitbox_alto_proyectil": 0,
+  "hitbox_ancho_explosion": 35,
+  "hitbox_alto_explosion": 55,
+
+  "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
+  "posicion_ancho_proyectil": 40,
+  "posicion_alto_proyectil": -30,
+  "posicion_ancho_explosion": 40,
+  "posicion_alto_explosion": -30,
+
+
+  "_________Dibujado de sprite_________": "______________",
+  "sprite": "assets/weapons/espada_pirata/sprite.png",
+  "frames": 3,
+  "frames_explosion": 2,
+  
+  "ancho_arma_sostenida": 90,
+  "alto_arma_sostenida": 90,
+  "posicion_ancho_arma_sostenida": 10,
+  "posicion_alto_arma_sostenida": 18,
+
+  "oculta_arma_al_disparar": true,
+  "estilo_mira": "golpe",
+  "tipo": "Cuerpo a cuerpo"
+
+
+}

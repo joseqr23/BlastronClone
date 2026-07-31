@@ -1,59 +1,132 @@
 {
-  "mundos": ["Piratas del Firmware", "El ring de los Boteadores" ,"Bosque Encantado", "Costa Brava", "Reino Medieval"],
+  "mundos": ["Piratas del Firmware", "El ring de los Boteadores" , "Vertice Empresarial", "Bosque Encantado", "Costa Brava", "Reino Medieval"],
   "levels": [
     {
-      "id": 1, "mapa": "parque", "nombre": "El Parque", "modo": "lms", "dificultad": 1, "duracion_min": 3, 
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 25}, "vida_jugador": 600,
+      "id": 1, "mapa": "pirata", "nombre": "Bahía de los Contrabandistas", "modo": "lms", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["espada_pirata", "cañon", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "misil": 99}, "vida_jugador": 600, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "cholo", "nombre": "Cholo", "vida_maxima": 600, "arma": "box", "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "pirata_grumete", "nombre": "Grumetebot", "vida_maxima": 300, "arma": "espada_pirata", "velocidad": 3, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_artillero", "nombre": "Artillerobot", "vida_maxima": 300, "arma": "cañon", "velocidad": 2, "salto": 15, "distancia_acercamiento": 300, "distancia_ataque": 600}
       ]
     },
     {
-      "id": 2, "mapa": "cielo", "nombre": "Costa Brava", "modo": "lms", "dificultad": 2, "duracion_min": 5,
+      "id": 2, "mapa": "pirata", "nombre": "Arrecife del Naufragio", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "misil": 99}, "vida_jugador": 600, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "gangster", "nombre": "Gangster", "vida_maxima": 600, "arma": "misil","velocidad": 2, "salto": 10, "distancia_acercamiento": 55, "distancia_ataque": 155 }
+        {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 1", "vida_maxima": 250, "arma": "sarten", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 2", "vida_maxima": 250, "arma": "machete", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
     },
     {
-      "id": 3, "mapa": "medieval", "nombre": "Castillo en Ruinas", "modo": "muertes", "dificultad": 2, "duracion_min": 5,
+      "id": 3, "mapa": "pirata", "nombre": "Fortaleza Corsaria", "modo": "lms", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "supermisil", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 700, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "lancebot", "nombre": "Lancebot", "vida_maxima": 150, "arma": "escopeta"},
-        {"robot_id": "samurai", "nombre": "Samurai", "vida_maxima": 150, "arma": "shuriken"},
-        {"robot_id": "gongot", "nombre": "Gongot", "vida_maxima": 150, "arma": "mine"}
-      ]
-    },
-    {
-      "id": 4, "mapa": "pirata", "nombre": "Ahoy!", "modo": "lms", "dificultad": 4, "duracion_min": 10,
-      "bots": [
-        {"robot_id": "pirate", "nombre": "BarbaBot", "vida_maxima": 700, "arma": "katana"},
-        {"robot_id": "pirate", "nombre": "Botholomew Botberts", "vida_maxima": 700, "arma": "misil"},
-        {"robot_id": "pirate", "nombre": "Henry Botgan", "vida_maxima": 700, "arma": "misil"}
-      ]
-    },
-    {
-      "id": 5, "mapa": "pirata", "nombre": "Ahoy!", "modo": "lms", "dificultad": 4, "duracion_min": 10,
-      "bots": [
-        {"robot_id": "pirate", "nombre": "BarbaBot", "vida_maxima": 700, "arma": "katana"},
-        {"robot_id": "pirate", "nombre": "Botholomew Botberts", "vida_maxima": 700, "arma": "misil"},
-        {"robot_id": "pirate", "nombre": "Henry Botgan", "vida_maxima": 700, "arma": "misil"}
-      ]
-    },
-    {
-      "id": 6, "mapa": "parque", "nombre": "Trono en las Nubes", "modo": "lms", "dificultad": 3, "duracion_min": 10,
-      "bots": [
-        {"robot_id": "rosadito", "nombre": "Rosadito", "vida_maxima": 10, "arma": "box", "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "pirata_grumete", "nombre": "Grumetebot", "vida_maxima": 300, "arma": "espada_pirata", "velocidad": 3, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_artillero", "nombre": "Artillerobot", "vida_maxima": 300, "arma": "cañon", "velocidad": 2, "salto": 15, "distancia_acercamiento": 300, "distancia_ataque": 600},
+        {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100}
       ],
       "boss": {
-        "robot_id": "whitelion", "nombre": "Whitelion", "ancho" : "80", "alto": "120", "velocidad": 5, "salto": 15,
-        "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.70, 0.35], "armas": ["box", "box"], "distancia_acercamiento": 0, "distancia_ataque": 0
+        "robot_id": "contramaestre", "nombre": "Contramaestrebot", "ancho" : "100", "alto": "150", "velocidad": 5, "salto": 17,
+        "vida_maxima": 750, "damage_multiplier": 1.5, "fases": [0.85, 0.65 , 0.45], "armas": ["bomba", "cañon", "pistola_pirata"], "distancia_acercamiento": [20, 30, 40], "distancia_ataque": [100, 130, 150]
       }
     },
     {
-      "id": 7, "mapa": "otoño", "nombre": "Nocaut.exe", "modo": "lms", "dificultad": 2, "duracion_min": 5,
+      "id": 4, "mapa": "pirata", "nombre": "Abordaje al Buffet", "modo": "lms", "dificultad": 3, "duracion_min": 10, 
+      "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "supermisil", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "supermisil": 1, "misil": 99}, "vida_jugador": 700, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "gangster", "nombre": "Gangster", "vida_maxima": 1000, "arma": "box"},
-        {"robot_id": "gangster", "nombre": "Gangster", "vida_maxima": 600, "arma": "box"}
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 1", "vida_maxima": 250, "arma": "machete", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 2", "vida_maxima": 250, "arma": "machete", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 3", "vida_maxima": 250, "arma": "machete", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 4", "vida_maxima": 250, "arma": "sarten", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 5", "vida_maxima": 250, "arma": "sarten", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_cocinero", "nombre": "Cocinerobot 6", "vida_maxima": 250, "arma": "sarten", "velocidad": 4, "salto": 15, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
+    },
+    {
+      "id": 5, "mapa": "pirata", "nombre": "Bombardeo Pirata", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "supermisil", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "supermisil": 1, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100},
+        {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100},
+        {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100},
+        {"robot_id": "pirata_artillero", "nombre": "Artillerobot", "vida_maxima": 300, "arma": "cañon", "velocidad": 2, "salto": 15, "distancia_acercamiento": 300, "distancia_ataque": 600},
+        {"robot_id": "pirata_artillero", "nombre": "Artillerobot", "vida_maxima": 300, "arma": "cañon", "velocidad": 2, "salto": 15, "distancia_acercamiento": 300, "distancia_ataque": 600},
+        {"robot_id": "pirata_artillero", "nombre": "Artillerobot", "vida_maxima": 300, "arma": "cañon", "velocidad": 2, "salto": 15, "distancia_acercamiento": 300, "distancia_ataque": 600}
+      ]
+    },
+    {
+      "id": 6, "mapa": "pirata", "nombre": "La Guarida del Rey Pirata", "modo": "lms", "dificultad": 3, "duracion_min": 10,
+      "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "supermisil", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 900, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "pirata_grumete", "nombre": "Henry Botgan", "vida_maxima": 300, "arma": "espada_pirata", "velocidad": 4, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "pirata_artillero", "nombre": "Botholomew Botberts", "vida_maxima": 300, "arma": "pistola_pirata", "velocidad": 4, "salto": 16, "distancia_acercamiento": 20, "distancia_ataque": 100}
+      ],
+      "boss": {
+        "robot_id": "barbabot", "nombre": "Capitan Barbabot", "ancho" : "100", "alto": "150", "velocidad": 6, "salto": 18,
+        "vida_maxima": 950, "damage_multiplier": 1.5, "fases": [0.85, 0.65, 0.45 ], "armas": ["espada_pirata", "cañon", "pistola_pirata"], "distancia_acercamiento": [0, 20, 30], "distancia_ataque": [0, 150, 150], "mensaje": "¡Nadie sale vivo de esta bahía!"
+      }
+    },
+
+
+    
+
+    {
+      "id": 7, "mapa": "parque", "nombre": "El Primer Asalto", "modo": "muertes", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 8, "mapa": "parque", "nombre": "Patada del Huracán", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+
+    {
+      "id": 9, "mapa": "parque", "nombre": "El Camino del Cinturón Negro", "modo": "lms", "dificultad": 3, "duracion_min": 5, 
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+       {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 10, "mapa": "parque", "nombre": "Dojo del Dragón", "modo": "lms", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+      {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+      {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ],
+      "boss": {
+        "robot_id": "pirate", "nombre": "Bot Lee", "ancho" : "70", "alto": "100", "velocidad": 5, "salto": 17,
+        "vida_maxima": 600, "damage_multiplier": 1.5, "fases": [0.85, 0.50], "armas": ["karate_golpe", "karate_patada"], "distancia_acercamiento": 20, "distancia_ataque": 100
+      }
+    },
+    {
+      "id": 11, "mapa": "parque", "nombre": "Noche de Knockouts", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 12, "mapa": "parque", "nombre": "El Último Rival", "modo": "lms", "dificultad": 3, "duracion_min": 10,
+      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ],
+      "boss": {
+        "robot_id": "pirate", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 18,
+        "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.80, 0.75 ], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0
+      }
     }
+
+
   ]
 }

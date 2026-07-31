@@ -44,36 +44,41 @@ class Robot:
         # no romperse si un robot (p.ej. un jefe) pide un tamaño final
         # distinto. Después, si self.width/self.height difiere de lo
         # nativo, se reescala cada frame ya recortado (ver más abajo).
-        NATIVO_ANCHO, NATIVO_ALTO = 60, 90
         base_path = sprite_path or f"assets/robots/{self.nombre_robot}"
         idle_file = "idle.png" if os.path.exists(resource_path(base_path, "idle.png")) else "iddle.png"
+
+        def _cargar_animacion(nombre_archivo, frames):
+            """Detecta la resolución REAL del PNG (igual que ya hace
+            weapon_loader.py con las armas) y recorta cada frame a su
+            tamaño nativo — sea 60x90 o el triple — para luego escalarlo
+            al tamaño lógico final (self.width/self.height, por defecto
+            60x90). Así podés subir la calidad del arte sin que el juego
+            siga recortando a ciegas con 60x90 fijo."""
+            ruta = f"{base_path}/{nombre_archivo}"
+            hoja = pygame.image.load(ruta).convert_alpha()
+            ancho_real = hoja.get_width() // frames
+            alto_real = hoja.get_height()
+            frames_img = load_spritesheet(ruta, frames, ancho_real, alto_real)
+            if (ancho_real, alto_real) == (self.width, self.height):
+                return frames_img
+            return [pygame.transform.smoothscale(f, (self.width, self.height)) for f in frames_img]
+
         self.animations = {
-            "idle": load_spritesheet(f"{base_path}/{idle_file}", 1, NATIVO_ANCHO, NATIVO_ALTO),
-            "run": load_spritesheet(f"{base_path}/run.png", 6, NATIVO_ANCHO, NATIVO_ALTO),
-            "jump": load_spritesheet(f"{base_path}/jump.png", 1, NATIVO_ANCHO, NATIVO_ALTO),
-            "death": load_spritesheet(f"{base_path}/death.png", 6, NATIVO_ANCHO, NATIVO_ALTO),
+            "idle": _cargar_animacion(idle_file, 1),
+            "run": _cargar_animacion("run.png", 6),
+            "jump": _cargar_animacion("jump.png", 1),
+            "death": _cargar_animacion("death.png", 6),
         }
         # Opcionales — si el robot aún no tiene estos sprites, cae a
         # "idle" sin romper nada (solo se usan en la pantalla de podio).
         try:
-            self.animations["celebration"] = load_spritesheet(f"{base_path}/celebration.png", 6, NATIVO_ANCHO, NATIVO_ALTO)
+            self.animations["celebration"] = _cargar_animacion("celebration.png", 6)
         except Exception:
             self.animations["celebration"] = self.animations["idle"]
         try:
-            self.animations["defeated"] = load_spritesheet(f"{base_path}/defeated.png", 6, NATIVO_ANCHO, NATIVO_ALTO)
+            self.animations["defeated"] = _cargar_animacion("defeated.png", 6)
         except Exception:
             self.animations["defeated"] = self.animations["idle"]
-
-        # Reescala TODOS los frames de una sola vez si el tamaño final
-        # pedido (self.width/self.height) difiere del nativo — así el
-        # sprite se ve grande/chico según se pidió, sin haber tocado el
-        # recorte del PNG original.
-        if (self.width, self.height) != (NATIVO_ANCHO, NATIVO_ALTO):
-            for clave in list(self.animations.keys()):
-                self.animations[clave] = [
-                    pygame.transform.smoothscale(frame, (self.width, self.height))
-                    for frame in self.animations[clave]
-                ]
             
         # Inicializa la imagen para que nunca sea None
         self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))

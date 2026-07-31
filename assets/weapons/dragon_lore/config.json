@@ -1,6 +1,6 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Dragon Lore",
+  "nombre": "Awp Dragon Lore",
   "comportamiento": "impacto",
   "daño": 80,
   "gravedad": 0,
@@ -46,8 +46,8 @@
   "frames": 3,
   "frames_explosion": 2,
   
-  "ancho_arma_sostenida": 100,
-  "alto_arma_sostenida": 100,
+  "ancho_arma_sostenida": 120,
+  "alto_arma_sostenida": 120,
   "posicion_ancho_arma_sostenida": 10,
   "posicion_alto_arma_sostenida": 5,
 

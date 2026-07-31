@@ -165,13 +165,17 @@ class BotController:
         return config.get("comportamiento") in ("cuerpo_a_cuerpo", "cuerpo_a_cuerpo_direccional")
 
     def _aim(self, origin, target, distance):
+        """Explosivas: se apunta con una elevación de arco (para que la
+        trayectoria curva no falle el impacto). Cualquier otro tipo —
+        Armas de fuego, Especiales, Cuerpo a cuerpo, o sin "tipo"
+        definido — apunta directo al centro real del objetivo."""
         config = self._config_arma_actual()
-        gravedad = config.get("gravedad", 0) if config else 0
+        tipo = config.get("tipo") if config else None
         dx, dy = target[0] - origin[0], target[1] - origin[1]
-        if gravedad <= 0:
-            return (dx, dy)
-        elevacion = min(90, distance * 0.15) * min(1.0, gravedad)
-        return (dx, dy - elevacion)
+        if tipo == "Explosivas":
+            elevacion = min(90, distance * 0.18)
+            return (dx, dy - elevacion)
+        return (dx, dy)
 
     def _alcance_cuerpo_a_cuerpo(self, config):
         """Qué tan lejos (borde a borde) debe estar el bot para que su

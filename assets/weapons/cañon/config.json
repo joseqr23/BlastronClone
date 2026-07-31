@@ -1,0 +1,64 @@
+{
+  "_________Propiedades de arma_________": "______________",
+  "nombre": "Cañon",
+  "comportamiento": "rebote",
+  "daño": 30,
+  "gravedad": 0.5,
+  "friccion_aire": 1,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 500,
+  
+  "daña_al_dueño": true,
+  "municion": 2,
+  "cantidad": 3,
+  "dispersion_grados": 0,
+
+  "friccion_rebote": 0.6,
+
+  "empuje_ancho": 8,
+  "empuje_alto": -2,
+
+  "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
+  "intervalo_disparos_ms": 600,
+
+  "_________(Opcional) esto solo es para que el empuje se aplique segun donde es la explosion_________": "En arma se deja en false o no se usa argumento",
+  "empuje_por_impacto": true,
+
+  "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
+  "ancho_proyectil": 40,
+  "alto_proyectil": 40,
+  "ancho_explosion": 80,
+  "alto_explosion": 80,
+    
+  "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
+  "hitbox_ancho_proyectil": 20,
+  "hitbox_alto_proyectil": 20,
+  "hitbox_ancho_explosion": 50,
+  "hitbox_alto_explosion": 50,
+
+  "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
+  "posicion_ancho_proyectil": 0,
+  "posicion_alto_proyectil": 0,
+  "posicion_ancho_explosion": 0,
+  "posicion_alto_explosion": 0,
+
+
+  "_________Dibujado de sprites_________": "______________",
+  "sprite": "assets/weapons/cañon/sprite.png",
+  "frames": 3,
+  "frames_explosion": 1,
+
+  "ancho_arma_sostenida": 60,
+  "alto_arma_sostenida": 60,
+  "posicion_ancho_arma_sostenida": 0,
+  "posicion_alto_arma_sostenida": 10,
+
+  "oculta_arma_al_disparar": false,
+  "estilo_mira": "apuntar",
+  "tipo": "Explosivas"
+
+
+}
+
+
+

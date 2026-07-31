@@ -31,6 +31,7 @@ from .results import LevelResult
 from .rewards import calculate_stars
 from .npc_manager import NpcManager
 
+from .intro_screen import IntroScreen
 
 class SoloGame(BaseGame):
     """Campaña contra bots/jefe, por turnos — arquitectónicamente es un
@@ -53,7 +54,9 @@ class SoloGame(BaseGame):
 
         vida_jugador = self.level.vida_jugador or self.vida_maxima
         self.robot = Robot(ANCHO // 2 - 30, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,
-                           vida_maxima=vida_jugador, puede_reaparecer=self.modo.permite_reaparecer)
+                           vida_maxima=vida_jugador, puede_reaparecer=self.modo.permite_reaparecer,
+                           velocidad=self.level.velocidad_jugador or 2.5,
+                           salto=self.level.salto_jugador or 15)
         self.robot.es_jugador = True
         self.robot.arma_equipada = armas_disponibles[0]
 
@@ -151,6 +154,13 @@ class SoloGame(BaseGame):
 
     # ---------- Ciclo público ----------
     def run(self):
+        entradas = [(bot.robot_id, bot.nombre or bot.robot_id.capitalize(), bot.mensaje) for bot in self.level.bots]
+        if self.level.boss:
+            entradas.append((self.level.boss.robot_id, self.level.boss.nombre, self.level.boss.mensaje))
+        print(f"[DEBUG] nivel={self.level.id} boss={self.level.boss} entradas={entradas}")
+        resultado = IntroScreen(self, entradas).run()
+        if resultado is None:
+            return None
         return self._run_match()
 
     def _run_match(self):

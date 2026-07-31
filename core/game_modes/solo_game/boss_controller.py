@@ -1,15 +1,20 @@
-# core/game_modes/solo_game/boss_controller.py
 from .bot_controller import BotController
 
 
 class BossController(BotController):
     """El jefe mantiene la IA base (BotController) intacta — movimiento,
     puntería y disparo son EXACTAMENTE los mismos. Solo se vuelve más
-    agresivo y cambia de arma al perder vida (fases)."""
+    agresivo y cambia de arma al perder vida (fases).
+
+    distancia_acercamiento/distancia_ataque en el JSON del jefe pueden
+    ser un número simple (mismo valor en todas las fases, igual que en
+    un bot normal) O una lista paralela a "armas" (una distancia propia
+    por cada arma que use en cada fase) — ver _valor_para_fase()."""
+
     def __init__(self, robot, config, rng=None):
         super().__init__(robot, difficulty=4, rng=rng,
-                          distancia_acercamiento=config.distancia_acercamiento,
-                          distancia_ataque=config.distancia_ataque)
+                          distancia_acercamiento=self._valor_para_fase(config.distancia_acercamiento, 0),
+                          distancia_ataque=self._valor_para_fase(config.distancia_ataque, 0))
         self.config = config
         self.phase = 0
 
@@ -20,12 +25,32 @@ class BossController(BotController):
             self.difficulty += 1
             if self.config.armas:
                 self.robot.arma_equipada = self.config.armas[min(self.phase, len(self.config.armas) - 1)]
+            # Recalcula las distancias para la fase/arma que se acaba de
+            # equipar — mismo índice de fase que se usó arriba para el
+            # arma, así quedan siempre sincronizadas entre sí.
+            self.distancia_acercamiento = self._valor_para_fase(self.config.distancia_acercamiento, self.phase)
+            self.distancia_ataque = self._valor_para_fase(self.config.distancia_ataque, self.phase)
         return super().update(target)
+
+    @staticmethod
+    def _valor_para_fase(valor, fase):
+        """Si 'valor' es una lista/tupla (una distancia por cada arma de
+        "armas"), devuelve la que corresponde a esta fase, con el mismo
+        clamp de índice que ya usa el jefe para elegir el arma
+        (min(fase, len-1) — si hay más fases que distancias definidas,
+        se queda en la última). Si es un número (o None), se devuelve
+        tal cual: mismo valor en todas las fases, como hasta ahora."""
+        if isinstance(valor, (list, tuple)):
+            if not valor:
+                return None
+            return valor[min(fase, len(valor) - 1)]
+        return valor
 
     def _distancia_ideal(self):
         if self.distancia_acercamiento is not None:
-            # Override explícito del nivel: se respeta tal cual, sin piso
-            # de agresividad por fase — si pediste 0, es 0.
+            # Override explícito del nivel (ya resuelto para esta fase
+            # en update()): se respeta tal cual, sin piso de
+            # agresividad extra — si pediste 0, es 0.
             return self.distancia_acercamiento
         return max(50, super()._distancia_ideal() - 35 * self.phase)
 

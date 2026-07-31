@@ -1,6 +1,6 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Box",
+  "nombre": "Puño de box",
   "comportamiento": "cuerpo_a_cuerpo_direccional",
   "daño": 30,
   "gravedad": 0,

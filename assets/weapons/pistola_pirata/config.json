@@ -1,0 +1,59 @@
+{
+  "_________Propiedades de arma_________": "______________",
+  "nombre": "Pistola de chispa",
+  "comportamiento": "impacto",
+  "daño": 60,
+  "gravedad": 0.5,
+  "friccion_aire": 1,
+  "tiempo_explosion_ms": 3000,
+  "tiempo_post_explosion_ms": 300,
+  "margen_dueño_ms": 1000,
+  
+  "daña_al_dueño": false,
+  "municion": 1,
+  "cantidad": 1,
+  "dispersion_grados": 0,
+  
+  "empuje_ancho": 12,
+  "empuje_alto": -6,
+  
+  "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
+  "velocidad_proyectil": 35,
+  "intervalo_disparos_ms": 0,
+
+
+  "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
+  "ancho_proyectil": 5,
+  "alto_proyectil": 5,
+  "ancho_explosion": 5,
+  "alto_explosion": 5,
+
+  "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
+  "hitbox_ancho_proyectil": 5,
+  "hitbox_alto_proyectil": 5,
+  "hitbox_ancho_explosion": 3,
+  "hitbox_alto_explosion": 3,
+
+  "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
+  "posicion_ancho_proyectil": 0,
+  "posicion_alto_proyectil": 0,
+  "posicion_ancho_explosion": 0,
+  "posicion_alto_explosion": 0,
+
+
+  "_________Dibujado de sprite_________": "______________",
+  "sprite": "assets/weapons/misil/sprite.png",
+  "frames": 3,
+  "frames_explosion": 2,
+  
+  "ancho_arma_sostenida": 70,
+  "alto_arma_sostenida": 70,
+  "posicion_ancho_arma_sostenida": 10,
+  "posicion_alto_arma_sostenida": 5,
+
+  "oculta_arma_al_disparar": false,
+  "estilo_mira": "golpe",
+  "tipo": "Armas de fuego"
+
+
+}
