@@ -23,7 +23,7 @@ class MainScreen:
         self.rect_flecha_izq = self.rect_flecha_der = None
         self.rect_guardar_nombre = self.rect_editar_nombre = None
         self.rect_opciones = []
-        self.rect_host = self.rect_cliente = self.rect_conectar = self.rect_ir_libre = None
+        self.rect_host = self.rect_cliente = self.rect_conectar = self.rect_ir_libre = self.rect_ir_solo = None
 
     @property
     def modo_actual(self):
@@ -103,10 +103,12 @@ class MainScreen:
                     return "conectar_cliente"
             elif self.modo_actual == "Modo Libre" and self.rect_ir_libre and self.rect_ir_libre.collidepoint(mouse_pos):
                 return "abrir_libre"
+            elif self.modo_actual == "Modo Solo" and self.rect_ir_solo and self.rect_ir_solo.collidepoint(mouse_pos):
+                return "abrir_solo"
         return None
 
     def draw(self, surface, mouse_pos):
-        self.rect_conectar = self.rect_ir_libre = None
+        self.rect_conectar = self.rect_ir_libre = self.rect_ir_solo = None
         margin, width = 60, surface.get_width() - 120
         title = self.fonts.titulo.render("BLASTRON", True, COL_TEXT)
         accent = self.fonts.titulo.render(" CLONE", True, COL_ACCENT)
@@ -191,6 +193,15 @@ class MainScreen:
                 draw_panel(surface, self.rect_ir_libre, COL_ACCENT if over else COL_ACCENT_DIM, COL_ACCENT, 8, 2)
                 text = self.fonts.pill.render("Configurar y jugar", True, (25, 20, 15)); surface.blit(text, text.get_rect(center=self.rect_ir_libre.center))
                 hint = self.fonts.opcion_desc.render("elige mapa antes de empezar", True, COL_TEXT_DIM); surface.blit(hint, (self.rect_ir_libre.right + 14, self.rect_ir_libre.y + 9))
+                hover |= over; y = panel.bottom + 10
+            elif modo == "Modo Solo" and selected:
+                panel = pygame.Rect(rect.x + 20, rect.bottom + 8, rect.width - 40, 56)
+                draw_panel(surface, panel, (26, 30, 41), COL_CARD_BORDER, 10, 1)
+                self.rect_ir_solo = pygame.Rect(panel.x + 16, panel.y + 11, 205, 34)
+                over = self.rect_ir_solo.collidepoint(mouse_pos)
+                draw_panel(surface, self.rect_ir_solo, COL_ACCENT if over else COL_ACCENT_DIM, COL_ACCENT, 8, 2)
+                text = self.fonts.pill.render("Ver campaña", True, (25, 20, 15)); surface.blit(text, text.get_rect(center=self.rect_ir_solo.center))
+                hint = self.fonts.opcion_desc.render("elige nivel antes de empezar", True, COL_TEXT_DIM); surface.blit(hint, (self.rect_ir_solo.right + 14, self.rect_ir_solo.y + 9))
                 hover |= over; y = panel.bottom + 10
         self.toast.draw(surface, margin)
         help_text = self.fonts.opcion_desc.render("↑ ↓ elige el modo   •   ← → cambia de robot   •   Enter para confirmar", True, COL_TEXT_DIM)

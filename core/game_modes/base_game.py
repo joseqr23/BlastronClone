@@ -2,7 +2,7 @@
 
 import pygame
 import random
-from settings import ANCHO, ALTO, ALTURA_SUELO
+from settings import ANCHO, ALTO
 from levels.map_loader import (
     load_static_map, load_static_map_laterales,
     load_static_map_impenetrables, load_static_map_dañinas, cargar_dano_zonas_dañinas,

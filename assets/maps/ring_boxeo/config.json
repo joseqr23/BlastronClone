@@ -1,0 +1,25 @@
+{
+  "nombre": "Ring de Boxeo",
+  "plataformas": [
+
+  ],
+  "laterales": [
+    [1020, -15, 6, 432],
+    [-55, -12, 27, 423],
+
+    [-19, -400, 24, 545],
+    [-24, 105, 30, 563],
+    [992, 175, 27, 524],
+    [991, -359, 33, 549]
+  ],
+  "plataformas_y_laterales_impenetrables": [ 
+    [160, 391, 679, 172],
+    [831, 325, 21, 258],
+    [155, 323, 27, 298]
+  ],
+  "plataformas_y_laterales_dañinas": [
+    [586, 537, 1294, 154],
+    [-705, 508, 984, 140]
+  ],
+    "plataformas_y_laterales_dañinas_daño": 3000
+}

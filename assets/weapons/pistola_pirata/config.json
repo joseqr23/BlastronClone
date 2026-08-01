@@ -2,7 +2,7 @@
   "_________Propiedades de arma_________": "______________",
   "nombre": "Pistola de chispa",
   "comportamiento": "impacto",
-  "daño": 60,
+  "daño": 55,
   "gravedad": 0.5,
   "friccion_aire": 1,
   "tiempo_explosion_ms": 3000,

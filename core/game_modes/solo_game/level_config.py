@@ -49,6 +49,7 @@ class LevelConfig:
     bots: tuple[BotConfig, ...] = ()
     boss: BossConfig | None = None
     armas_jugador: tuple[str, ...] = ()          # () = todas las armas disponibles
+    armas_rondas: tuple[str, ...] = ()            # solo aplica con modo "best_of_three"; () = sortea entre TODAS las armas cargadas
     municion_jugador: dict = field(default_factory=dict)  # override opcional de municion por arma
     vida_jugador: int | None = None  # None = usa modo.vida_maxima (comportamiento de siempre)
     velocidad_jugador: float | None = None  # None = usa el default de Robot (2.5)
@@ -85,6 +86,7 @@ class LevelConfig:
             nombre=data.get("nombre"),  # si falta, la UI cae a mapa.capitalize()
             bots=bots, boss=boss,
             armas_jugador=tuple(data.get("armas_jugador", ())),
+            armas_rondas=tuple(data.get("armas_rondas", ())),
             municion_jugador=dict(data.get("municion_jugador", {})),
             vida_jugador=data.get("vida_jugador"),
             velocidad_jugador=data.get("velocidad") if "velocidad" in data else data.get("velocidad_jugador"),

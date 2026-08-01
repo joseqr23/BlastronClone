@@ -100,6 +100,8 @@ class SoloGame(BaseGame):
         self.tiempo_restante = self.tiempo_total
         self.ultimo_tick = self.now()
         self.game_over = False
+        self.game_over_at = None
+        self.PODIUM_DELAY_S = 2.0
         self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
         self.turn_manager = TurnManager(self)
         self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2, 72))
@@ -157,10 +159,10 @@ class SoloGame(BaseGame):
         entradas = [(bot.robot_id, bot.nombre or bot.robot_id.capitalize(), bot.mensaje) for bot in self.level.bots]
         if self.level.boss:
             entradas.append((self.level.boss.robot_id, self.level.boss.nombre, self.level.boss.mensaje))
-        #print(f"[DEBUG] nivel={self.level.id} boss={self.level.boss} entradas={entradas}")
         resultado = IntroScreen(self, entradas).run()
         if resultado is None:
             return None
+        pygame.event.clear()
         return self._run_match()
 
     def _run_match(self):
@@ -172,6 +174,12 @@ class SoloGame(BaseGame):
             if self.volver_al_menu:
                 return "menu"
             if self.game_over:
+                if self.game_over_at is None:
+                    self.game_over_at = self.now()
+                if self.now() - self.game_over_at < self.PODIUM_DELAY_S:
+                    self.renderer.draw_frame()
+                    pygame.display.flip(); self.reloj.tick(60)
+                    continue
                 self._finalizar_si_falta()
                 return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
 

@@ -70,6 +70,8 @@ def main():
         if not seleccion:
             break
 
+        pygame.key.set_repeat()  # desactiva la repetición de teclas del menú — en partida, cada tecla debe presionarse una vez
+
         modo = modo_map.get(seleccion.get("modo"))
         nombre_jugador = seleccion.get("nombre") or "Jugador"
         personaje = seleccion.get("personaje") or "robot"

@@ -171,24 +171,28 @@ class MessageHandler:
                 modo.ronda = message.get("ronda", modo.ronda)
                 modo.victorias = dict(message.get("victorias", {}))
                 if message.get("final"):
-                    # La partida ya terminó en esta ronda: solo se
-                    # sincroniza el conteo final de victorias para el
-                    # podio — sin revivir robots ni resetear su vida,
-                    # que es lo que corresponde al ARRANCAR una ronda
-                    # nueva, cosa que acá no va a pasar.
-                    modo.terminado = True
+                    # Ronda decisiva: solo sincronizar el conteo final de
+                    # victorias — NO respawnear a nadie, así el mensaje de
+                    # muerte del último eliminado se ve igual en el
+                    # cliente que en el host.
                     return
                 modo.eliminados_ronda = []
                 for nombre in modo._jugadores():
                     robot = modo._robot(nombre)
                     if robot is None:
                         continue
+                    robot.reset()
                     robot.arma_equipada = modo.arma_ronda
-                    robot.health = robot.vida_maxima
-                    robot.is_dead = False
-                    robot.frame_index = 0
-                    robot.current_animation = "idle"
+                banner = message.get("banner")
+                if banner:
+                    modo._mostrar_banner(banner, message.get("banner_ms", 1500))
             return
+
+        if message_type == "ronda_mensaje":
+            if not game.host and hasattr(game.modo, "_mostrar_banner"):
+                game.modo._mostrar_banner(message.get("mensaje", ""), message.get("duracion_ms", 2000))
+            return
+        
         if message_type == "turno_fin":
             self._apply_turn_end(message); return
         if message_type == "iniciar_partida":  # compatibilidad con clientes de la versión anterior

@@ -45,6 +45,7 @@ class Replication:
                 "estado": getattr(projectile, "estado", None),
                 "explotado": getattr(projectile, "explotado", False),
                 "facing_right": getattr(projectile, "_facing_right", True),
+                "angulo_ataque": getattr(projectile, "angulo_ataque", None),
             })
         game.enviar({"tipo": "proy_sync", "items": items})
 
@@ -59,7 +60,8 @@ class Replication:
             proxy = next((p for p in game.proyectiles if getattr(p, "proj_id", None) == projectile_id), None)
             if proxy is None:
                 proxy = Proyectil(item["tipo"], item["x"], item["y"], 0, 0,
-                                  owner=item.get("owner"), facing_right=item.get("facing_right", True))
+                                  owner=item.get("owner"), facing_right=item.get("facing_right", True),
+                                  angulo_ataque=item.get("angulo_ataque"))
                 proxy.proj_id = projectile_id
                 proxy.danados = set()
                 proxy.ya_hizo_dano = True
@@ -72,6 +74,7 @@ class Replication:
             proxy.estado = item.get("estado")
             proxy.explotado = item.get("explotado", False)
             proxy._facing_right = item.get("facing_right", proxy._facing_right)
+            proxy.angulo_ataque = item.get("angulo_ataque", proxy.angulo_ataque)
             if proxy.explotado and not was_exploded:
                 sound_manager.explosion(item["tipo"])
                 game.activar_shake(proxy.config.get("sacudida_intensidad", 0), proxy.config.get("sacudida_duracion_ms", 0))

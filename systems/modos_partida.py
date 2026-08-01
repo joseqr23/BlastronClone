@@ -26,6 +26,7 @@ Interfaz común de cada modo:
                           debe ignorar la munición configurada por arma.
 """
 import random
+import pygame
 from utils.weapon_loader import cargar_armas
 
 class ModoPuntos:
@@ -219,6 +220,9 @@ class ModoMejorDeTres:
     arma_bloqueada = True  # el jugador no puede cambiar de arma a mano
     VICTORIAS_PARA_GANAR = 2
     ARMAS_RONDAS_FALLBACK = ("misil", "granada", "rifle", "escopeta", "katana", "supermisil")
+    DURACION_PAUSA_MS = 2200         # "X gana la ronda" antes de la siguiente
+    DURACION_ROUND_BANNER_MS = 1500  # "ROUND N" al empezar cada ronda
+
 
     def __init__(self, game):
         self.game = game
@@ -230,6 +234,9 @@ class ModoMejorDeTres:
         self.ganador = None
         self.rng = random.Random()
         self.armas_pool = self._resolver_pool_armas()
+        self.pausa_hasta_ms = 0
+        self.banner_texto = None
+        self.banner_hasta_ms = 0
 
     def _resolver_pool_armas(self):
         nivel = getattr(self.game, "level", None)
@@ -269,15 +276,29 @@ class ModoMejorDeTres:
     def _vivos_ronda(self):
         return [j for j in self._jugadores() if j not in self.eliminados_ronda]
 
+    def _mostrar_banner(self, texto, duracion_ms):
+        self.banner_texto = texto
+        self.banner_hasta_ms = pygame.time.get_ticks() + duracion_ms
+
     def actualizar(self):
         """SOLO debe llamarse desde el host (o desde SoloGame, que
         siempre actúa como host). Decide cuándo termina una ronda y
         arranca la siguiente, o cierra la partida."""
         if self.terminado:
             return
+        ahora = pygame.time.get_ticks()
+
+        if self.pausa_hasta_ms:
+            if ahora < self.pausa_hasta_ms:
+                return
+            self.pausa_hasta_ms = 0
+            self._iniciar_ronda()
+            return
+        
         if self.arma_ronda is None:
             self._iniciar_ronda()
             return
+        
         jugadores = self._jugadores()
         if len(jugadores) <= 1 or len(self._vivos_ronda()) > 1:
             return
@@ -290,9 +311,18 @@ class ModoMejorDeTres:
                 self.ganador = ganador_ronda
                 self._sincronizar_victorias_finales()
                 return
-        self._iniciar_ronda()
+            texto = f"¡{ganador_ronda} gana la ronda {self.ronda}!"
+        else:
+            texto = f"¡Ronda {self.ronda} empatada!"
+
+        self._mostrar_banner(texto, self.DURACION_PAUSA_MS)
+        self.pausa_hasta_ms = ahora + self.DURACION_PAUSA_MS
+        self.game.enviar({"tipo": "ronda_mensaje", "mensaje": texto, "duracion_ms": self.DURACION_PAUSA_MS})
 
     def _iniciar_ronda(self):
+        self.game.proyectiles.clear()
+        if hasattr(self.game, "weapon_manager"):
+            self.game.weapon_manager.disparos_pendientes.clear()
         self.eliminados_ronda = []
         self.arma_ronda = self._elegir_arma_ronda()
         self.ronda += 1
@@ -300,16 +330,17 @@ class ModoMejorDeTres:
             robot = self._robot(nombre)
             if robot is None:
                 continue
+            robot.reset()  # respawn aleatorio + vida llena, igual que al arrancar la partida
             robot.arma_equipada = self.arma_ronda
-            robot.health = robot.vida_maxima
-            robot.is_dead = False
-            robot.frame_index = 0
-            robot.current_animation = "idle"
+        texto_banner = f"ROUND {self.ronda}"
+        self._mostrar_banner(texto_banner, self.DURACION_ROUND_BANNER_MS)
         self.game.enviar({
             "tipo": "ronda_sync",
             "arma": self.arma_ronda,
             "ronda": self.ronda,
             "victorias": dict(self.victorias),
+            "banner": texto_banner,
+            "banner_ms": self.DURACION_ROUND_BANNER_MS,
         })
 
     def _sincronizar_victorias_finales(self):

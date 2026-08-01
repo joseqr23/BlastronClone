@@ -64,6 +64,8 @@ class MultiplayerGame(BaseGame):
         self.tiempo_restante = self.tiempo_total
         self.ultimo_tick = self.now()
         self.game_over = False
+        self.game_over_at = None
+        self.PODIUM_DELAY_S = 2.0
         self.timer_hud = HUDTimer(self, duracion=self.tiempo_total, posicion=(ANCHO // 2, 30))
         self.turn_manager = TurnManager(self)
         self.hud_turnos = HUDTurnos(self.turn_manager, posicion=(ANCHO // 2, 72))
@@ -215,6 +217,12 @@ class MultiplayerGame(BaseGame):
             if self.volver_al_menu:
                 return "menu"
             if self.game_over:
+                if self.game_over_at is None:
+                    self.game_over_at = self.now()
+                if self.now() - self.game_over_at < self.PODIUM_DELAY_S:
+                    self.renderer.draw_frame()
+                    pygame.display.flip(); self.reloj.tick(60)
+                    continue
                 return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
             self._update_turns_and_player()
             check_collisions(self.robot, self.tiles)

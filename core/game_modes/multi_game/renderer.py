@@ -27,11 +27,24 @@ class MultiplayerRenderer:
             game.hud_turnos.draw(game.pantalla)
         game.robot.draw_death_message(game.pantalla, game.fuente_muerte)
         for robot in game.robots_remotos.values(): robot.draw_death_message(game.pantalla, game.fuente_muerte)
+        banner = getattr(game.modo, "banner_texto", None)
+        if banner and pygame.time.get_ticks() < getattr(game.modo, "banner_hasta_ms", 0):
+            self._draw_round_banner(banner)
+        self._draw_menu_button()
         self._draw_menu_button()
         self._draw_mute_button()
         if game.confirmando_salida:
             self._draw_exit_confirmation()
 
+    def _draw_round_banner(self, texto):
+        pantalla = self.game.pantalla
+        fuente = pygame.font.SysFont("Arial", 54, bold=True)
+        sombra = fuente.render(texto, True, (0, 0, 0))
+        render = fuente.render(texto, True, (255, 215, 0))
+        centro = (ANCHO // 2, ALTO // 2 - 60)
+        pantalla.blit(sombra, sombra.get_rect(center=(centro[0] + 3, centro[1] + 3)))
+        pantalla.blit(render, render.get_rect(center=centro))
+        
     def _draw_menu_button(self):
         game = self.game
         game.rect_volver_menu = pygame.Rect(ANCHO - 100, ALTO - 60, 90, 22)
