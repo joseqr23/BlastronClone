@@ -21,7 +21,7 @@ class BotController:
     TOLERANCIA_ATAQUE_CUERPO_A_CUERPO = 24  # margen para atacar una vez que llegó ahí
 
     def __init__(self, robot, difficulty: int, rng: random.Random | None = None,
-                 distancia_acercamiento=None, distancia_ataque=None):
+                 distancia_acercamiento=None, distancia_ataque=None, persigue_sin_tregua=False):
         self.robot = robot
         self.difficulty = max(1, difficulty)
         self.rng = rng or random.Random()
@@ -33,6 +33,7 @@ class BotController:
         # calcula automáticamente según el arma, como hasta ahora.
         self.distancia_acercamiento = distancia_acercamiento
         self.distancia_ataque = distancia_ataque
+        self.persigue_sin_tregua = persigue_sin_tregua  # modo libre: nunca se retira tras golpear
 
     # ------------------------------------------------------------------
     def _distancia_ideal(self):
@@ -75,7 +76,7 @@ class BotController:
         distance = self._distancia_borde(target)
         es_cuerpo_a_cuerpo = self._es_cuerpo_a_cuerpo(self._config_arma_actual())
 
-        if ahora < self.retirada_hasta_ms:
+        if not self.persigue_sin_tregua and ahora < self.retirada_hasta_ms:
             self.robot.vel_x = -self.robot.speed * (1 if dx > 0 else -1)
         else:
             objetivo = self._distancia_ideal()
@@ -148,7 +149,7 @@ class BotController:
             return False
 
         self.next_shot_at = now + max(450, 1500 - self.difficulty * 180)
-        if es_cuerpo_a_cuerpo:
+        if es_cuerpo_a_cuerpo and not self.persigue_sin_tregua:
             self.retirada_hasta_ms = now + self.DURACION_RETIRADA_MS
         return True
 

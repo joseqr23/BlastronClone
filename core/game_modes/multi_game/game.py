@@ -232,6 +232,16 @@ class MultiplayerGame(BaseGame):
             pygame.display.flip(); self.reloj.tick(60)
 
     def _update_turns_and_player(self):
+        if not getattr(self.modo, "usa_turnos", True):
+            # Modo libre: nadie espera turno, todos se mueven/disparan
+            # siempre — la cadencia de ataque la limita el cooldown de
+            # WeaponManager, no TurnManager.
+            keys = pygame.key.get_pressed()
+            self.robot.update(keys)
+            if keys[pygame.K_DELETE]:
+                self.robot.take_damage(50)
+            return
+
         if self.host and not self.turnos_iniciados:
             players = list(self.lobby_state.jugadores.keys())
             self.turn_manager.iniciar(players)
@@ -251,6 +261,8 @@ class MultiplayerGame(BaseGame):
             if pygame.time.get_ticks() >= self.robot.aturdido_hasta: self.robot.vel_x = 0
 
     def _update_clock(self):
+        if self.host and not self.game_over:
+            self.modo.actualizar()
         if not self.host or self.game_over: return
         now, delta = self.now(), self.now() - self.ultimo_tick
         if delta >= 1:
@@ -260,3 +272,4 @@ class MultiplayerGame(BaseGame):
         if not self.game_over and self.modo.partida_terminada():
             self.tiempo_restante = 0; self.game_over = True
             self.enviar({"tipo": "timer", "restante": 0})
+

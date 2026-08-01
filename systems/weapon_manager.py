@@ -52,11 +52,14 @@ class WeaponManager:
         # toda la partida (no se reinicia entre turnos).
         self.municion_restante = {}
         self.disparos_pendientes = []  # ráfaga escalonada — ver crear_proyectil_host / update
+        self.proximo_disparo_libre_ms = 0  # cooldown de disparo en modos sin turnos (ver ModoLibre)
 
     # ------------------------------------------------------------------
     # Munición
     # ------------------------------------------------------------------
     def tiene_municion(self, arma, config):
+        if getattr(self.game.modo, "municion_ilimitada", False):
+            return True
         limite = config.get("municion")
         if limite is None:
             return True  # arma ilimitada
@@ -64,6 +67,8 @@ class WeaponManager:
         return restante > 0
 
     def consumir_municion(self, arma, config):
+        if getattr(self.game.modo, "municion_ilimitada", False):
+            return
         if config.get("municion") is None:
             return
         actual = self.municion_restante.get(arma, config.get("municion"))
@@ -101,10 +106,17 @@ class WeaponManager:
         return resultados
 
     def disparar(self):
-        tm = self.game.turn_manager
-        if tm.jugador_actual() != self.game.nombre_jugador or not tm.puede_disparar():
-            print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno o ya disparó.")
+        modo = self.game.modo
+        usa_turnos = getattr(modo, "usa_turnos", True)
+
+        if usa_turnos:
+            tm = self.game.turn_manager
+            if tm.jugador_actual() != self.game.nombre_jugador or not tm.puede_disparar():
+                print(f"[DEBUG] {self.game.nombre_jugador} intentó disparar fuera de turno o ya disparó.")
+                return
+        elif not self._puede_disparar_libre():
             return
+
         if self.game.robot.is_dead:
             return
 
@@ -133,16 +145,25 @@ class WeaponManager:
             ],
         }
 
-        # Bloqueo local inmediato: evita que un doble-click dispare dos
-        # veces mientras se espera la confirmación por red. La munición
-        # se descuenta acá también (por disparo, no por proyectil).
-        tm.disparo_hecho = True
+        # Bloqueo inmediato: evita que un doble-click dispare dos veces
+        # mientras se espera la confirmación por red.
+        if usa_turnos:
+            self.game.turn_manager.disparo_hecho = True
+        else:
+            self._registrar_disparo_libre()
         self.consumir_municion(arma, config)
 
         if self.game.host:
             self.crear_proyectil_host(msg)
         else:
             self.game.enviar(msg)
+
+    def _puede_disparar_libre(self):
+        return pygame.time.get_ticks() >= self.proximo_disparo_libre_ms
+
+    def _registrar_disparo_libre(self):
+        cooldown = getattr(self.game.modo, "cooldown_ataque_ms", 1000)
+        self.proximo_disparo_libre_ms = pygame.time.get_ticks() + cooldown
 
     def crear_proyectil_host(self, msg):
         game = self.game
@@ -182,7 +203,8 @@ class WeaponManager:
                 game.proyectiles.append(p)
             sound_manager.disparo(arma)
 
-        game.turn_manager.registrar_disparo()
+        if getattr(game.modo, "usa_turnos", True):
+            game.turn_manager.registrar_disparo()
 
     # ------------------------------------------------------------------
     # Update / draw

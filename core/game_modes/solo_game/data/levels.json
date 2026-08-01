@@ -44,7 +44,7 @@
       ]
     },
     {
-      "id": 5, "mapa": "pirata", "nombre": "Bombardeo Pirata", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "id": 5, "mapa": "pirata", "nombre": "Bombardeo Pirata", "modo": "best_of_three", "dificultad": 2, "duracion_min": 5, 
       "armas_jugador": ["espada_pirata", "cañon", "bomba", "sarten", "machete", "supermisil", "misil"], "municion_jugador": {"espada_pirata": 5, "cañon": 5, "bomba": 5, "sarten": 5, "machete": 5, "supermisil": 1, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
         {"robot_id": "pirata_marinero", "nombre": "Marinerobot", "vida_maxima": 300, "arma": "bomba", "velocidad": 3, "salto": 15, "distancia_acercamiento": 20, "distancia_ataque": 100},
@@ -72,60 +72,118 @@
     
 
     {
-      "id": 7, "mapa": "parque", "nombre": "El Primer Asalto", "modo": "muertes", "dificultad": 1, "duracion_min": 5, 
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "id": 7, "mapa": "parque", "nombre": "El Primer Asalto", "modo": "lms", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["box", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "deportista_boteador", "nombre": "Boteador", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
     },
     {
       "id": 8, "mapa": "parque", "nombre": "Patada del Huracán", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "armas_jugador": ["box", "karate", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 4, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
     },
 
     {
       "id": 9, "mapa": "parque", "nombre": "El Camino del Cinturón Negro", "modo": "lms", "dificultad": 3, "duracion_min": 5, 
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "armas_jugador": ["box", "karate", "kickboxing", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-       {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+       {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
     },
     {
       "id": 10, "mapa": "parque", "nombre": "Dojo del Dragón", "modo": "lms", "dificultad": 4, "duracion_min": 10,
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-      {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-      {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 4, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+      {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ],
       "boss": {
-        "robot_id": "pirate", "nombre": "Bot Lee", "ancho" : "70", "alto": "100", "velocidad": 5, "salto": 17,
-        "vida_maxima": 600, "damage_multiplier": 1.5, "fases": [0.85, 0.50], "armas": ["karate_golpe", "karate_patada"], "distancia_acercamiento": 20, "distancia_ataque": 100
+        "robot_id": "bot_lee", "nombre": "Bot Lee", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "vida_maxima": 600, "damage_multiplier": 1.5, "fases": [0.85, 0.50], "armas": ["nunchaku", "una_pulgada"], "distancia_acercamiento": 0, "distancia_ataque": 0
       }
     },
     {
       "id": 11, "mapa": "parque", "nombre": "Noche de Knockouts", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "samurai", "nombre": "Karatekabot", "vida_maxima": 400, "arma": "karate_golpe", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "samurai", "nombre": "Pateadorbot", "vida_maxima": 400, "arma": "karate_patada", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 4, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ]
     },
     {
       "id": 12, "mapa": "parque", "nombre": "El Último Rival", "modo": "lms", "dificultad": 3, "duracion_min": 10,
-      "armas_jugador": ["misil", "granada", "rifle"], "municion_jugador": {"misil": 3, "granada": 5, "rifle": 2}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "box_super", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "box_super": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "samurai", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
       ],
       "boss": {
-        "robot_id": "pirate", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 18,
+        "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 18,
+        "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.80, 0.75 ], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0
+      }
+    },
+
+    
+        {
+      "id": 7, "mapa": "parque", "nombre": "El Primer Asalto", "modo": "lms", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["box", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "deportista_boteador", "nombre": "Boteador", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 8, "mapa": "parque", "nombre": "Patada del Huracán", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["box", "karate", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+
+    {
+      "id": 9, "mapa": "parque", "nombre": "El Camino del Cinturón Negro", "modo": "lms", "dificultad": 3, "duracion_min": 5, 
+      "armas_jugador": ["box", "karate", "kickboxing", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+       {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 10, "mapa": "parque", "nombre": "Dojo del Dragón", "modo": "lms", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+      {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+      {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ],
+      "boss": {
+        "robot_id": "bot_lee", "nombre": "Bot Lee", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "vida_maxima": 600, "damage_multiplier": 1.5, "fases": [0.85, 0.50], "armas": ["nunchaku", "una_pulgada"], "distancia_acercamiento": 0, "distancia_ataque": 0
+      }
+    },
+    {
+      "id": 11, "mapa": "parque", "nombre": "Noche de Knockouts", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ]
+    },
+    {
+      "id": 12, "mapa": "parque", "nombre": "El Último Rival", "modo": "lms", "dificultad": 3, "duracion_min": 10,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "box_super", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "box_super": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
+        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      ],
+      "boss": {
+        "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 18,
         "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.80, 0.75 ], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0
       }
     }
+
 
 
   ]

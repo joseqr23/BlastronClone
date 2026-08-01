@@ -23,7 +23,8 @@ class MultiplayerRenderer:
         game.hud_manager.draw(game.pantalla)
         game.chat.draw(game.pantalla)
         game.timer_hud.draw(game.pantalla)
-        game.hud_turnos.draw(game.pantalla)
+        if getattr(game.modo, "usa_turnos", True):
+            game.hud_turnos.draw(game.pantalla)
         game.robot.draw_death_message(game.pantalla, game.fuente_muerte)
         for robot in game.robots_remotos.values(): robot.draw_death_message(game.pantalla, game.fuente_muerte)
         self._draw_menu_button()

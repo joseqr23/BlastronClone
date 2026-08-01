@@ -2,7 +2,7 @@
   "_________Propiedades de arma_________": "______________",
   "nombre": "Puño de box",
   "comportamiento": "cuerpo_a_cuerpo_direccional",
-  "daño": 30,
+  "daño": 25,
   "gravedad": 0,
   "friccion_aire": 1,
   "tiempo_explosion_ms": 350,
@@ -23,10 +23,10 @@
   "velocidad_animacion_ms": 1,
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
-  "ancho_proyectil": 90,
-  "alto_proyectil": 90,
-  "ancho_explosion": 90,
-  "alto_explosion": 90,
+  "ancho_proyectil": 65,
+  "alto_proyectil": 65,
+  "ancho_explosion": 65,
+  "alto_explosion": 65,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
   "hitbox_ancho_proyectil": 0,
@@ -46,8 +46,8 @@
   "frames": 3,
   "frames_explosion": 1,
   
-  "ancho_arma_sostenida": 60,
-  "alto_arma_sostenida": 60,
+  "ancho_arma_sostenida": 50,
+  "alto_arma_sostenida": 50,
   "posicion_ancho_arma_sostenida": 30,
   "posicion_alto_arma_sostenida": 0,
 

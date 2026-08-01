@@ -164,6 +164,31 @@ class MessageHandler:
             return
         if message_type == "turno_sync":
             self._apply_turn_sync(message); return
+        if message_type == "ronda_sync":
+            if not game.host:
+                modo = game.modo
+                modo.arma_ronda = message.get("arma")
+                modo.ronda = message.get("ronda", modo.ronda)
+                modo.victorias = dict(message.get("victorias", {}))
+                if message.get("final"):
+                    # La partida ya terminó en esta ronda: solo se
+                    # sincroniza el conteo final de victorias para el
+                    # podio — sin revivir robots ni resetear su vida,
+                    # que es lo que corresponde al ARRANCAR una ronda
+                    # nueva, cosa que acá no va a pasar.
+                    modo.terminado = True
+                    return
+                modo.eliminados_ronda = []
+                for nombre in modo._jugadores():
+                    robot = modo._robot(nombre)
+                    if robot is None:
+                        continue
+                    robot.arma_equipada = modo.arma_ronda
+                    robot.health = robot.vida_maxima
+                    robot.is_dead = False
+                    robot.frame_index = 0
+                    robot.current_animation = "idle"
+            return
         if message_type == "turno_fin":
             self._apply_turn_end(message); return
         if message_type == "iniciar_partida":  # compatibilidad con clientes de la versión anterior

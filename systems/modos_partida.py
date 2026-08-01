@@ -18,15 +18,24 @@ Interfaz común de cada modo:
                           jugador en el podio.
     podio()              -> [(rango, [(jugador, valor), ...]), ...] ya
                           agrupado y ordenado, listo para dibujar.
-"""
 
+    usa_turnos            (bool, atributo de clase) — si el modo usa
+                          TurnManager (un jugador a la vez) o todos
+                          pueden moverse/atacar siempre.
+    municion_ilimitada    (bool, atributo de clase) — si WeaponManager
+                          debe ignorar la munición configurada por arma.
+"""
+import random
+from utils.weapon_loader import cargar_armas
 
 class ModoPuntos:
     id = "puntos"
     nombre = "Puntos"
     vida_maxima = 200
     permite_reaparecer = True
-
+    usa_turnos = True
+    municion_ilimitada = False
+    
     def __init__(self, game):
         self.game = game
 
@@ -48,12 +57,15 @@ class ModoPuntos:
     def etiqueta_actual(self):
         return "Puntaje"
 
-
+    def actualizar(self):
+        pass  # este modo no tiene lógica propia por frame (solo timer)
 class ModoMuertes:
     id = "muertes"
     nombre = "Muertes"
     vida_maxima = 100  # mitad de lo normal — muertes más rápidas
     permite_reaparecer = True
+    usa_turnos = True
+    municion_ilimitada = False
 
     def __init__(self, game):
         self.game = game
@@ -86,11 +98,16 @@ class ModoMuertes:
     def etiqueta_actual(self):
         return "Muertes"
 
+    def actualizar(self):
+        pass  # este modo no tiene lógica propia por frame (solo timer)
+
 class ModoUltimoEnPie:
     id = "lms"
     nombre = "Último en pie"
-    vida_maxima = 600  # mucha vida — la partida dura, no se acaba de un golpe
+    vida_maxima = 1000  # mucha vida — la partida dura, no se acaba de un golpe
     permite_reaparecer = False
+    usa_turnos = True
+    municion_ilimitada = False
 
     def __init__(self, game):
         self.game = game
@@ -144,6 +161,9 @@ class ModoUltimoEnPie:
     
     def etiqueta_actual(self):
         return "Vida Restante"
+    
+    def actualizar(self):
+        pass  # este modo no tiene lógica propia por frame (solo timer)
 
 def _podio_por_valor_numerico(valores: dict):
     """Helper compartido por los modos que ordenan por un número simple
@@ -157,11 +177,176 @@ def _podio_por_valor_numerico(valores: dict):
             grupos.append((len(grupos) + 1, [(jugador, valor)]))
     return grupos
 
+class ModoLibre(ModoUltimoEnPie):
+    """Todos se mueven y atacan libremente, sin esperar turno — última
+    vida, gana quien sobrevive. Hereda TODA la lógica de eliminación,
+    podio y condición de fin de ModoUltimoEnPie (son la misma regla);
+    solo cambia cómo se gana el derecho a disparar."""
+    id = "libre"
+    nombre = "Libre"
+    vida_maxima = 1000
+    permite_reaparecer = False
+    usa_turnos = False
+    municion_ilimitada = True
+    cooldown_ataque_ms = 2000  # tiempo mínimo entre disparos de un mismo jugador/bot
+    def actualizar(self):
+        pass  # este modo no tiene lógica propia por frame (solo timer)
+
+class ModoMejorDeTres:
+    """Rondas con la MISMA arma para todos (rota por ronda, elegida al
+    azar) — gana la partida quien llegue primero a VICTORIAS_PARA_GANAR
+    rondas. Reutiliza "muerte" tal cual (ya llega replicada a todos los
+    clientes vía el mensaje "muerte", igual que en cualquier otro modo)
+    — lo nuevo es actualizar() (SOLO se llama desde el host) y el
+    mensaje "ronda_sync" para que los clientes reciban el reseteo de
+    arma/vida al empezar cada ronda.
+
+    De qué armas se sortea cada ronda (ver _resolver_pool_armas):
+      - Modo Solo: si el nivel define "armas_rondas" en su JSON, se usa
+        EXACTAMENTE esa lista — permite curar la campaña (p. ej. evitar
+        armas demasiado fuertes en niveles tempranos).
+      - Multijugador, o Solo sin ese campo: se sortea entre TODAS las
+        armas que el juego tenga cargadas (cargar_armas()), sin lista
+        fija — si agregas un arma nueva al proyecto, ya entra sola al
+        pool sin tocar este archivo."""
+    id = "best_of_three"
+    nombre = "Mejor de 3"
+    vida_maxima = 300
+    permite_reaparecer = False
+    usa_turnos = False
+    municion_ilimitada = True
+    cooldown_ataque_ms = 2000  # tiempo mínimo entre disparos de un mismo jugador/bot
+    arma_bloqueada = True  # el jugador no puede cambiar de arma a mano
+    VICTORIAS_PARA_GANAR = 2
+    ARMAS_RONDAS_FALLBACK = ("misil", "granada", "rifle", "escopeta", "katana", "supermisil")
+
+    def __init__(self, game):
+        self.game = game
+        self.victorias = {}
+        self.eliminados_ronda = []
+        self.ronda = 0
+        self.arma_ronda = None
+        self.terminado = False
+        self.ganador = None
+        self.rng = random.Random()
+        self.armas_pool = self._resolver_pool_armas()
+
+    def _resolver_pool_armas(self):
+        nivel = getattr(self.game, "level", None)
+        armas_nivel = getattr(nivel, "armas_rondas", None) if nivel else None
+        if armas_nivel:
+            return list(armas_nivel)
+        try:
+            armas = list(cargar_armas().keys())
+        except Exception:
+            armas = []
+        return armas or list(self.ARMAS_RONDAS_FALLBACK)
+
+    def _elegir_arma_ronda(self):
+        """Sortea la próxima arma evitando repetir la de la ronda
+        anterior de seguido (si el pool tiene más de una opción) — así
+        se siente más variado que un random.choice puro, que a veces
+        repite dos rondas seguidas por pura casualidad."""
+        pool = self.armas_pool
+        if not pool:
+            return self.ARMAS_RONDAS_FALLBACK[0]
+        if len(pool) == 1:
+            return pool[0]
+        opciones = [a for a in pool if a != self.arma_ronda] or pool
+        return self.rng.choice(opciones)
+
+    def _jugadores(self):
+        return [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
+
+    def _robot(self, nombre):
+        return self.game.robot if nombre == self.game.nombre_jugador else self.game.robots_remotos.get(nombre)
+
+    def registrar_muerte(self, victima, atacante):
+        nombre = victima.nombre_jugador
+        if nombre not in self.eliminados_ronda:
+            self.eliminados_ronda.append(nombre)
+
+    def _vivos_ronda(self):
+        return [j for j in self._jugadores() if j not in self.eliminados_ronda]
+
+    def actualizar(self):
+        """SOLO debe llamarse desde el host (o desde SoloGame, que
+        siempre actúa como host). Decide cuándo termina una ronda y
+        arranca la siguiente, o cierra la partida."""
+        if self.terminado:
+            return
+        if self.arma_ronda is None:
+            self._iniciar_ronda()
+            return
+        jugadores = self._jugadores()
+        if len(jugadores) <= 1 or len(self._vivos_ronda()) > 1:
+            return
+        vivos = self._vivos_ronda()
+        ganador_ronda = vivos[0] if vivos else None
+        if ganador_ronda:
+            self.victorias[ganador_ronda] = self.victorias.get(ganador_ronda, 0) + 1
+            if self.victorias[ganador_ronda] >= self.VICTORIAS_PARA_GANAR:
+                self.terminado = True
+                self.ganador = ganador_ronda
+                self._sincronizar_victorias_finales()
+                return
+        self._iniciar_ronda()
+
+    def _iniciar_ronda(self):
+        self.eliminados_ronda = []
+        self.arma_ronda = self._elegir_arma_ronda()
+        self.ronda += 1
+        for nombre in self._jugadores():
+            robot = self._robot(nombre)
+            if robot is None:
+                continue
+            robot.arma_equipada = self.arma_ronda
+            robot.health = robot.vida_maxima
+            robot.is_dead = False
+            robot.frame_index = 0
+            robot.current_animation = "idle"
+        self.game.enviar({
+            "tipo": "ronda_sync",
+            "arma": self.arma_ronda,
+            "ronda": self.ronda,
+            "victorias": dict(self.victorias),
+        })
+
+    def _sincronizar_victorias_finales(self):
+        """Cuando la partida termina justo en la ronda ganadora, no hay
+        una próxima ronda que dispare _iniciar_ronda() (y con ella el
+        "ronda_sync" de siempre) — sin esto, los clientes se quedan con
+        el conteo de victorias de ANTES de la ronda decisiva, mostrando
+        al ganador con un punto menos de lo real en el podio."""
+        self.game.enviar({
+            "tipo": "ronda_sync",
+            "arma": self.arma_ronda,
+            "ronda": self.ronda,
+            "victorias": dict(self.victorias),
+            "final": True,
+        })
+
+    def partida_terminada(self):
+        return self.terminado
+
+    def etiqueta_podio(self):
+        return "Victorias"
+
+    def podio(self):
+        return _podio_por_valor_numerico({j: self.victorias.get(j, 0) for j in self._jugadores()})
+
+    def valores_actuales(self):
+        return {j: self.victorias.get(j, 0) for j in self._jugadores()}
+
+    def etiqueta_actual(self):
+        return f"Victorias — Ronda {self.ronda} ({self.arma_ronda or '?'})"
 
 MODOS = {
     "puntos": ModoPuntos,
     "muertes": ModoMuertes,
     "lms": ModoUltimoEnPie,
+    "libre": ModoLibre,
+    "best_of_three": ModoMejorDeTres,
 }
 
 

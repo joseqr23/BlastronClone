@@ -5,7 +5,7 @@ import pygame
 class LobbyConfigWidgets:
     """Controles del Host. El carrusel muestra cualquier cantidad de mapas."""
     DURACIONES = (3, 5, 10)
-    MODOS = (("puntos", "Puntos"), ("muertes", "Muertes"), ("lms", "Last man standing"))
+    MODOS = (("best_of_three", "Mejor de 3"), ("libre", "Libre"), ("lms", "Last man standing"), ("muertes", "Muertes"), ("puntos", "Puntos"))
 
     def __init__(self, assets):
         self.assets = assets
@@ -143,13 +143,14 @@ class LobbyConfigWidgets:
         surface.blit(font.render("MODO", True, (174, 183, 202)), (rect.x, rect.y + 8))
         x = rect.x + 52
         available = rect.right - x - 14
-        widths = (max(62, int(available * .27)), max(62, int(available * .27)), 0)
-        widths = (widths[0], widths[1], max(92, available - widths[0] - widths[1] - 14))
-        for (mode, label), width in zip(self.MODOS, widths):
-            button = pygame.Rect(x, rect.y, width, 31)
+        n = len(self.MODOS)
+        gap = 7
+        ancho_boton = max(58, (available - gap * (n - 1)) // n)
+        for mode, label in self.MODOS:
+            button = pygame.Rect(x, rect.y, ancho_boton, 31)
             self.mode_rects[mode] = button
             self._button(surface, button, label, mode == config.modo_partida, font)
-            x += width + 7
+            x += ancho_boton + gap
 
     @staticmethod
     def _button(surface, rect, label, active, font):

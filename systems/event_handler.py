@@ -48,7 +48,7 @@ class EventHandler:
                 if arma_seleccionada == "spawn_robot":
                     nuevo_robot = RobotEstatico(400, 300)
                     self.game.robots_estaticos.append(nuevo_robot)
-                else:
+                elif not getattr(self.game.modo, "arma_bloqueada", False):
                     self.game.robot.arma_equipada = arma_seleccionada
 
             # Click: botones propios de la pantalla (volver al menú,

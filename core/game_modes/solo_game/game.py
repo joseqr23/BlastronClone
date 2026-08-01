@@ -157,7 +157,7 @@ class SoloGame(BaseGame):
         entradas = [(bot.robot_id, bot.nombre or bot.robot_id.capitalize(), bot.mensaje) for bot in self.level.bots]
         if self.level.boss:
             entradas.append((self.level.boss.robot_id, self.level.boss.nombre, self.level.boss.mensaje))
-        print(f"[DEBUG] nivel={self.level.id} boss={self.level.boss} entradas={entradas}")
+        #print(f"[DEBUG] nivel={self.level.id} boss={self.level.boss} entradas={entradas}")
         resultado = IntroScreen(self, entradas).run()
         if resultado is None:
             return None
@@ -182,6 +182,7 @@ class SoloGame(BaseGame):
                 check_zonas_dañinas(robot, self.tiles_dañinas, self.dano_zonas,
                                     aplicar_dano_callback=self.weapon_manager.aplicar_dano)
             self.weapon_manager.update()
+            self.modo.actualizar()
             self._actualizar_reloj()
             self._chequear_fin_de_partida()
             self.renderer.draw_frame()
@@ -190,6 +191,10 @@ class SoloGame(BaseGame):
 
     # ---------- Turnos: jugador humano + bots + jefe ----------
     def _actualizar_turno_y_actores(self):
+        if not getattr(self.modo, "usa_turnos", True):
+            self._actualizar_libre()
+            return
+
         if not self.turnos_iniciados:
             jugadores = [self.nombre_jugador] + list(self.robots_remotos.keys())
             self.turn_manager.iniciar(jugadores)
@@ -225,6 +230,30 @@ class SoloGame(BaseGame):
                     robot.vel_x = 0
                 robot.update([])
 
+    def _actualizar_libre(self):
+        """Modo libre: sin turnos — el jugador y TODOS los bots actúan
+        cada frame. Los bots persiguen sin tregua (ver
+        persigue_sin_tregua en BotController)."""
+        keys = pygame.key.get_pressed()
+        self.robot.update(keys)
+        if keys[pygame.K_DELETE]:
+            self.robot.take_damage(50)
+
+        for nombre, robot in self.robots_remotos.items():
+            if robot.is_dead:
+                robot.update([])
+                continue
+            controlador = self.npc_manager.controllers.get(robot)
+            if not controlador:
+                robot.update([])
+                continue
+            aim = controlador.update(self.robot)
+            robot.update(None)
+            if aim:
+                robot.aim_dx, robot.aim_dy = aim
+                if controlador.should_fire(self.robot):
+                    self._disparar_bot(nombre, robot, aim)
+
     def _disparar_bot(self, nombre, robot, direccion):
         """Camino de disparo para bots/jefe: no pasa por WeaponManager.disparar()
         (esa función asume mouse/jugador local) — arma el mismo mensaje que
@@ -235,8 +264,9 @@ class SoloGame(BaseGame):
         Munición ilimitada para bots (ver nota sobre
         WeaponManager.municion_restante compartido por arma, no por jugador)."""
         tm = self.turn_manager
-        if tm.jugador_actual() != nombre or not tm.puede_disparar():
-            return
+        if getattr(self.modo, "usa_turnos", True):
+            if tm.jugador_actual() != nombre or not tm.puede_disparar():
+                return
         arma = robot.arma_equipada or "misil"
         config = config_arma(arma)
         if not config:

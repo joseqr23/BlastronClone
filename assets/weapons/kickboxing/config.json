@@ -1,6 +1,6 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Super puño de box",
+  "nombre": "Golpe de kickboxing",
   "comportamiento": "cuerpo_a_cuerpo_direccional",
   "daño": 30,
   "gravedad": 0,
@@ -10,12 +10,12 @@
   "margen_dueño_ms": 1350,
 
   "daña_al_dueño": false,
-  "municion": 1,
-  "cantidad": 3,
+  "municion": 5,
+  "cantidad": 2,
   "dispersion_grados": 25,
   
-  "empuje_ancho": 25,
-  "empuje_alto": 0,
+  "empuje_ancho": 15,
+  "empuje_alto": -2,
   
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "intervalo_disparos_ms": 120,
@@ -23,33 +23,33 @@
   "velocidad_animacion_ms": 1,
 
   "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
-  "ancho_proyectil": 130,
-  "alto_proyectil": 130,
-  "ancho_explosion": 130,
-  "alto_explosion": 130,
+  "ancho_proyectil": 120,
+  "alto_proyectil": 120,
+  "ancho_explosion": 120,
+  "alto_explosion": 120,
 
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
   "hitbox_ancho_proyectil": 0,
   "hitbox_alto_proyectil": 0,
-  "hitbox_ancho_explosion": 80,
-  "hitbox_alto_explosion": 110,
+  "hitbox_ancho_explosion": 70,
+  "hitbox_alto_explosion": 100,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
-  "posicion_ancho_proyectil": 40,
+  "posicion_ancho_proyectil": 10,
   "posicion_alto_proyectil": 0,
-  "posicion_ancho_explosion": 35,
+  "posicion_ancho_explosion": 5,
   "posicion_alto_explosion": 0,
 
 
   "_________Dibujado de sprite_________": "______________",
-  "sprite": "assets/weapons/box_super/sprite.png",
+  "sprite": "assets/weapons/kickboxing/sprite.png",
   "frames": 3,
   "frames_explosion": 1,
   
   "ancho_arma_sostenida": 80,
   "alto_arma_sostenida": 80,
-  "posicion_ancho_arma_sostenida": 30,
-  "posicion_alto_arma_sostenida": 0,
+  "posicion_ancho_arma_sostenida": 15,
+  "posicion_alto_arma_sostenida": 20,
 
   "oculta_arma_al_disparar": true,
   "estilo_mira": "golpe",

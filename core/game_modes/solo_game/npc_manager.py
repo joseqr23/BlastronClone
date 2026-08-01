@@ -59,6 +59,7 @@ class NpcManager:
                 robot, self.dificultad, self.rng,
                 distancia_acercamiento=config.distancia_acercamiento,
                 distancia_ataque=config.distancia_ataque,
+                persigue_sin_tregua=not self.game.modo.usa_turnos,
             )
             bots[nombre] = robot
         return bots
@@ -80,4 +81,5 @@ class NpcManager:
         robot.arma_equipada = config.armas[0] if config.armas else "misil"
 
         self.controllers[robot] = BossController(robot, config, self.rng)
+        self.controllers[robot].persigue_sin_tregua = not self.game.modo.usa_turnos
         return {nombre: robot}

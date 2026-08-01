@@ -1,8 +1,8 @@
 {
   "_________Propiedades de arma_________": "______________",
-  "nombre": "Golpe de karate",
+  "nombre": "Patada de karate",
   "comportamiento": "cuerpo_a_cuerpo_direccional",
-  "daño": 40,
+  "daño": 30,
   "gravedad": 0,
   "friccion_aire": 1,
   "tiempo_explosion_ms": 350,
@@ -14,8 +14,8 @@
   "cantidad": 2,
   "dispersion_grados": 25,
   
-  "empuje_ancho": 15,
-  "empuje_alto": -2,
+  "empuje_ancho": 2,
+  "empuje_alto": -15,
   
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "intervalo_disparos_ms": 120,
@@ -31,23 +31,23 @@
   "_________Tamaño hitbox: Arma / Explosion_________": "En daño real",
   "hitbox_ancho_proyectil": 0,
   "hitbox_alto_proyectil": 0,
-  "hitbox_ancho_explosion": 50,
-  "hitbox_alto_explosion": 80,
+  "hitbox_ancho_explosion": 70,
+  "hitbox_alto_explosion": 100,
 
   "_________Tamaño posicion: Arma / Explosion_________": "En posicion X & Y",
-  "posicion_ancho_proyectil": 40,
+  "posicion_ancho_proyectil": 10,
   "posicion_alto_proyectil": 0,
-  "posicion_ancho_explosion": 35,
+  "posicion_ancho_explosion": 5,
   "posicion_alto_explosion": 0,
 
 
   "_________Dibujado de sprite_________": "______________",
-  "sprite": "assets/weapons/karate_golpe/sprite.png",
+  "sprite": "assets/weapons/karate/sprite.png",
   "frames": 3,
   "frames_explosion": 1,
   
-  "ancho_arma_sostenida": 60,
-  "alto_arma_sostenida": 60,
+  "ancho_arma_sostenida": 90,
+  "alto_arma_sostenida": 90,
   "posicion_ancho_arma_sostenida": 30,
   "posicion_alto_arma_sostenida": 20,
 

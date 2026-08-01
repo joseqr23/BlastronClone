@@ -14,6 +14,8 @@ from systems.hud_manager import HUDManager # Manejador de HUD
 from utils.weapon_loader import config_arma 
 from utils.colors import ColorManager
 
+from systems.modos_partida import crear_modo
+
 class FreeGame(BaseGame):
     def __init__(self, nombre_jugador, personaje, mapa_id="parque"):
         super().__init__(
@@ -35,6 +37,8 @@ class FreeGame(BaseGame):
         self.robots_estaticos = []
         self.aim = AimIndicator(self.robot.get_centro())
         self.puntajes[self.robot] = 0
+
+        self.modo = crear_modo("libre", self) # Modo de juego libre (sin turnos, sin límite de tiempo, sin puntaje)
 
         # HUD individual de puntajes (lo usa el HUDManager)
         self.hud_puntajes = HUDPuntajes(self)
