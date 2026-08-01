@@ -110,8 +110,12 @@ class Robot:
         self.frame_timer = 0
         self.aturdido_hasta = 0
         # Reaparecer en posición aleatoria
-        min_x = 100
-        max_x = 800
+        # 0        100                       800       1000
+        # |---------|-------------------------|----------|
+        #           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        #               zona de aparición
+        min_x = 130 # 100
+        max_x = 810 # 800
         self.x = random.randint(min_x, max_x)
         self.y = 0  # empieza desde arriba y caerá
         # Asegura que la imagen esté inicializada

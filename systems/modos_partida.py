@@ -216,7 +216,7 @@ class ModoMejorDeTres:
     permite_reaparecer = False
     usa_turnos = False
     municion_ilimitada = True
-    cooldown_ataque_ms = 2000  # tiempo mínimo entre disparos de un mismo jugador/bot
+    cooldown_ataque_ms = 1200  # tiempo mínimo entre disparos de un mismo jugador/bot
     arma_bloqueada = True  # el jugador no puede cambiar de arma a mano
     VICTORIAS_PARA_GANAR = 2
     ARMAS_RONDAS_FALLBACK = ("misil", "granada", "rifle", "escopeta", "katana", "supermisil")

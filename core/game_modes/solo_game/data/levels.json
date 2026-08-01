@@ -115,15 +115,15 @@
       ]
     },
     {
-      "id": 12, "mapa": "ring_boxeo", "nombre": "El Último Rival", "modo": "best_of_three", "dificultad": 3, "duracion_min": 10,
-      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "espada_pirata", "pistola_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "espada_pirata": 5, "pistola_pirata": 5, "bomba": 5, "supermisil": 7, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "id": 12, "mapa": "ring_boxeo", "nombre": "El Último Rival", "modo": "best_of_three", "dificultad": 5, "duracion_min": 10,
+      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "espada_pirata", "pistola_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "espada_pirata": 5, "pistola_pirata": 5, "bomba": 5, "supermisil": 7, "misil": 99}, "vida_jugador": 1500, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "armas_rondas": ["box", "box_super"], "____SOLO MODO BEST OF THREE____": "_______",
       "bots": [
         
       ],
       "boss": {
-        "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 15,
-        "vida_maxima": 800, "damage_multiplier": 1.5, "fases": [0.35, 0.20], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0, "mensaje": "¿En serio crees que puedes derrotarme? ¡Prepárate para el KO!" 
+        "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "100", "alto": "130", "velocidad": 5, "salto": 10,
+        "vida_maxima": 2000, "damage_multiplier": 1.5, "fases": [0.35, 0.20], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0, "mensaje": "¿En serio crees que puedes derrotarme? ¡Prepárate para el KO!" 
       }
     },
 
