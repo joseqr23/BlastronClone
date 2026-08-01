@@ -326,12 +326,16 @@ class ModoMejorDeTres:
         self.eliminados_ronda = []
         self.arma_ronda = self._elegir_arma_ronda()
         self.ronda += 1
+        npc_manager = getattr(self.game, "npc_manager", None)
         for nombre in self._jugadores():
             robot = self._robot(nombre)
             if robot is None:
                 continue
             robot.reset()  # respawn aleatorio + vida llena, igual que al arrancar la partida
             robot.arma_equipada = self.arma_ronda
+            controlador = npc_manager.controllers.get(robot) if npc_manager else None
+            if controlador:
+                controlador.on_round_start()
         texto_banner = f"ROUND {self.ronda}"
         self._mostrar_banner(texto_banner, self.DURACION_ROUND_BANNER_MS)
         self.game.enviar({

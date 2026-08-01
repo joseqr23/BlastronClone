@@ -1,8 +1,21 @@
--- hacer que cada que acabe una ronda en best of three, los bots reaparezcan en su totalidad, como cuando empieza la partida, es decir un respawn aleatorio como ya se maneja.
-^^
-Hice esto pero en modo cliente multijugador hay un bug visual, no de logica porque funciona bien, pero ocurre que por ejemplo:
-en la ronda final, en host, se muestra el mensaje "El jugador ha sido detonado" y permanece ahi, pero en cliente, ni bien alguien gana la partida automaticamente reaparecen y no aparece el mensaje (sin embargo la logica esta bien porque si acaba la partida ahi contando al ganador y todo, es algo visual).
-El bug visual aparentemente se encuentra en message_handler.py
+-- implementar un aura para cada fase del boss, actualmente es una simple con math.
+Ubicado en boss_controller
+-- self.robot.activar_aura(color)
+
+Y en robot.py
+-- self._dibujar_aura(pantalla)
+
+1.- Como solo los boss tienen aura, estaba pensando cambiar la logica asi:
+Sale ese destello ya dibujado, pero solo por 2 segundos, y yo generaré los sprites de cada robot jefe, basicamente seran los mismos, pero le añadire otro efecto, asi que seria literalemente reemplazar los sprites por unos que lo muestren enojado (yo los hare)
+estaran ubicados en su misma carpeta de "assets/robots/barbabot..."
+O
+2.- Simplemente se le puede añadir un aura tipo de fuego tambien generado por un sprite de 3 frames que tambien hare yo, este se mostrara como un gif constante detras del robot, puede ser por 3 segundos o permanente mientras esta en furia.
+
+
+
+
+-- Asi como se ha implementado lo del nombre que se guarda, y lo de los niveles desbloqueables, se puede hacer tambien con los personajes o incluso las armas?
+Por ejemplo los jefes de cada mapa de modo solo, al ganar, si no esta desbloqueado que se desbloquee y salga un mensaje "personaje desbloqueado: Nombrederobot"
 
 
 -- hacer que modo "libre" tambien reciba un json opcional de "armas_rondas": ["box", "box_super"],

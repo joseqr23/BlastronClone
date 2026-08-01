@@ -11,8 +11,15 @@ class BossController(BotController):
     un bot normal) O una lista paralela a "armas" (una distancia propia
     por cada arma que use en cada fase) — ver _valor_para_fase()."""
 
+    DIFFICULTY_BASE = 4
+    COLORES_FURIA = (
+        (255, 170, 60),   # fase 1 — naranja
+        (255, 90, 20),    # fase 2 — naranja-rojo intenso
+        (255, 25, 10),     # fase 3+ — rojo furia
+    )
+
     def __init__(self, robot, config, rng=None):
-        super().__init__(robot, difficulty=4, rng=rng,
+        super().__init__(robot, difficulty=self.DIFFICULTY_BASE, rng=rng,
                           distancia_acercamiento=self._valor_para_fase(config.distancia_acercamiento, 0),
                           distancia_ataque=self._valor_para_fase(config.distancia_ataque, 0))
         self.config = config
@@ -30,6 +37,11 @@ class BossController(BotController):
             # arma, así quedan siempre sincronizadas entre sí.
             self.distancia_acercamiento = self._valor_para_fase(self.config.distancia_acercamiento, self.phase)
             self.distancia_ataque = self._valor_para_fase(self.config.distancia_ataque, self.phase)
+            # Aura de furia: se queda activa para toda esta fase (no un
+            # flash), y se vuelve más intensa/roja mientras más fases
+            # pasa el jefe.
+            color = self.COLORES_FURIA[min(self.phase - 1, len(self.COLORES_FURIA) - 1)]
+            #self.robot.activar_aura(color) >> pendiente activar aura de furia en el jefe, pero no hay assets para eso todavía de momento es un efecto pobre con math
         return super().update(target)
 
     @staticmethod
@@ -60,3 +72,16 @@ class BossController(BotController):
         if result:
             self.next_shot_at = min(self.next_shot_at, old + 500)
         return result
+
+    def on_round_start(self):
+        """Reinicia TODO lo que las fases fueron acumulando durante la
+        ronda anterior — sin esto, self.phase queda "adelantado" y el
+        jefe se salta directo a un arma/distancia avanzada en vez de
+        volver a empezar en fase 0, ronda tras ronda."""
+        self.phase = 0
+        self.difficulty = self.DIFFICULTY_BASE
+        if self.config.armas:
+            self.robot.arma_equipada = self.config.armas[0]
+        self.distancia_acercamiento = self._valor_para_fase(self.config.distancia_acercamiento, 0)
+        self.distancia_ataque = self._valor_para_fase(self.config.distancia_ataque, 0)
+        self.robot.desactivar_aura()

@@ -188,3 +188,11 @@ class BotController:
         ancho_hitbox = config.get("hitbox_ancho_explosion") or config.get("hitbox_ancho_proyectil", 40)
         offset = abs(config.get("posicion_ancho_explosion", 0)) or abs(config.get("posicion_ancho_proyectil", 0))
         return max(20, offset + ancho_hitbox / 2)
+
+    def on_round_start(self):
+        """Se llama al arrancar cada ronda de un modo por rondas (ver
+        ModoMejorDeTres._iniciar_ronda). Un bot normal no tiene estado
+        que arrastre entre rondas, así que no hace nada — solo existe
+        para que BossController (y cualquier IA futura con fases) tenga
+        dónde resetearse."""
+        pass

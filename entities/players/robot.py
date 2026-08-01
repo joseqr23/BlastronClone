@@ -7,7 +7,7 @@ import random
 import os
 from utils.colors import ColorManager
 from utils.paths import resource_path
-
+import math
 
 class Robot:
     COLORES_NOMBRES = [
@@ -89,6 +89,15 @@ class Robot:
         # self.death_sound.set_volume(0.5)
         self.arma_equipada = None  # 'granada', 'misil', o None
         self.es_jugador = True
+
+        # Aura pulsante opcional (ver activar_aura/desactivar_aura) — la
+        # usan IAs con fases (BossController) para dar sensación de
+        # furia al cambiar de fase, sin necesitar un sprite nuevo.
+        self._aura_color = None
+        self._aura_inicio = 0
+        self._aura_hasta = None
+        self._aura_pulso_ms = 550
+
         # Configuración inicial del robot
         self.reset()
 
@@ -109,6 +118,7 @@ class Robot:
         self.frame_index = 0
         self.frame_timer = 0
         self.aturdido_hasta = 0
+        self._aura_color = None  # una furia de la ronda/vida anterior no debe seguir en la nueva
         # Reaparecer en posición aleatoria
         # 0        100                       800       1000
         # |---------|-------------------------|----------|
@@ -222,6 +232,7 @@ class Robot:
         self.actualizar_animacion()
 
     def draw(self, pantalla):
+        self._dibujar_aura(pantalla)
         if self.es_remoto:
             # Forzar a usar el frame recibido por red
             anim = self.animations.get(self.current_animation, self.animations["idle"])
@@ -323,6 +334,45 @@ class Robot:
             self.aturdido_hasta = pygame.time.get_ticks() + duracion_ms
         if vel_y:
             self.vel_y = vel_y
+
+    def activar_aura(self, color, duracion_ms=None, pulso_ms=550):
+        """Aura pulsante de color detrás del sprite. duracion_ms=None
+        (default) la deja activa indefinidamente, hasta que se llame
+        desactivar_aura() o el robot haga reset() — pensado para "modo
+        furia" de una fase completa, no un flash de un instante. Si le
+        pasas un número, se apaga sola pasado ese tiempo."""
+        self._aura_color = color
+        self._aura_inicio = pygame.time.get_ticks()
+        self._aura_hasta = (self._aura_inicio + duracion_ms) if duracion_ms else None
+        self._aura_pulso_ms = pulso_ms
+
+    def desactivar_aura(self):
+        self._aura_color = None
+
+    def _dibujar_aura(self, pantalla):
+        if not self._aura_color:
+            return
+        ahora = pygame.time.get_ticks()
+        if self._aura_hasta is not None and ahora >= self._aura_hasta:
+            self._aura_color = None
+            return
+
+        # Pulso suave 0 -> 1 -> 0 en bucle (no es un parpadeo brusco).
+        t = ((ahora - self._aura_inicio) % self._aura_pulso_ms) / self._aura_pulso_ms
+        fase = math.sin(t * math.pi)
+
+        centro = (int(self.x + self.width / 2), int(self.y + self.height / 2))
+        radio_base = max(self.width, self.height) * 0.55
+
+        for escala, alpha_max in ((1.0, 90), (1.25, 55), (1.55, 28)):
+            radio = max(1, int(radio_base * (escala + 0.12 * fase)))
+            alpha = int(alpha_max * (0.5 + 0.5 * fase))
+            capa = pygame.Surface((radio * 2, radio * 2), pygame.SRCALPHA)
+            pygame.draw.circle(capa, (*self._aura_color, alpha), (radio, radio), radio)
+            # Blend aditivo: los colores se suman a lo que ya hay detrás
+            # en vez de taparlo — así se ve como un resplandor de verdad
+            # (más brillante donde se solapa) en vez de un círculo plano.
+            pantalla.blit(capa, capa.get_rect(center=centro), special_flags=pygame.BLEND_RGBA_ADD)
 
     def mostrar_mensaje(self, texto, duracion_ms=4000):
         self.mensaje_chat = texto

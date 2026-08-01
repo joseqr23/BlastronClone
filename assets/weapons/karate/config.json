@@ -14,8 +14,8 @@
   "cantidad": 2,
   "dispersion_grados": 25,
   
-  "empuje_ancho": 2,
-  "empuje_alto": -15,
+  "empuje_ancho": 10,
+  "empuje_alto": -10,
   
   "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
   "intervalo_disparos_ms": 120,

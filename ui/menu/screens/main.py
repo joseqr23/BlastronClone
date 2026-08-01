@@ -200,7 +200,7 @@ class MainScreen:
                 self.rect_ir_solo = pygame.Rect(panel.x + 16, panel.y + 11, 205, 34)
                 over = self.rect_ir_solo.collidepoint(mouse_pos)
                 draw_panel(surface, self.rect_ir_solo, COL_ACCENT if over else COL_ACCENT_DIM, COL_ACCENT, 8, 2)
-                text = self.fonts.pill.render("Ver campaña", True, (25, 20, 15)); surface.blit(text, text.get_rect(center=self.rect_ir_solo.center))
+                text = self.fonts.pill.render("Ver campañas", True, (25, 20, 15)); surface.blit(text, text.get_rect(center=self.rect_ir_solo.center))
                 hint = self.fonts.opcion_desc.render("elige nivel antes de empezar", True, COL_TEXT_DIM); surface.blit(hint, (self.rect_ir_solo.right + 14, self.rect_ir_solo.y + 9))
                 hover |= over; y = panel.bottom + 10
         self.toast.draw(surface, margin)
