@@ -20,7 +20,7 @@ class Replication:
     def send_local_state(self):
         game = self.game
         game._seq_local += 1
-        mouse = pygame.mouse.get_pos()
+        mouse = game.mouse_logico()
         origin = game.robot.get_centro()
         ammo = game.weapon_manager.municion_actual(game.robot.arma_equipada)
         game.enviar({

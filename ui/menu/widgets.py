@@ -82,21 +82,37 @@ class MapCarousel:
         draw_panel(surface, rect)
         surface.blit(fonts.config_seccion.render("MAPA", True, COL_TEXT_DIM), (rect.x + 24, rect.y + 10))
         self.rect_items, self.rect_left, self.rect_right = {}, None, None
-        thumb_w, thumb_h, gap, arrow_w = 90, 56, 14, 28
+        gap, arrow_w = 14, 28
         left, right, y = rect.x + 24, rect.right - 24, rect.y + 34
-        raw_capacity = max(1, (right - left) // (thumb_w + gap))
+        thumb_h = max(48, rect.height - 58)
+        thumb_w_base = int(thumb_h * 1.6)
+
+        raw_capacity = max(1, (right - left) // (thumb_w_base + gap))
         arrows = len(self.mapas) > raw_capacity
-        self.items_per_page = max(1, ((right - left) - 2 * (arrow_w + 12)) // (thumb_w + gap)) if arrows else raw_capacity
+        usable = (right - left) - (2 * (arrow_w + 12) if arrows else 0)
+        self.items_per_page = max(1, usable // (thumb_w_base + gap)) if arrows else (min(raw_capacity, len(self.mapas)) or 1)
         self.max_offset = max(0, len(self.mapas) - self.items_per_page)
         self.offset = max(0, min(self.offset, self.max_offset))
+
+        visibles = self.mapas[self.offset:self.offset + self.items_per_page]
+        # Si entran todos los mapas visibles sin necesitar flechas, las
+        # miniaturas se estiran para llenar el ancho disponible — igual
+        # que las tarjetas de nivel del modo Solo — en vez de quedar
+        # pegadas a la izquierda con espacio vacío a la derecha.
+        if not arrows and visibles:
+            thumb_w = min(180, max(thumb_w_base, (usable - gap * (len(visibles) - 1)) // len(visibles)))
+        else:
+            thumb_w = thumb_w_base
+
         x = left + (arrow_w + 12 if arrows else 0)
         hover = False
-        for mapa_id, nombre, _ in self.mapas[self.offset:self.offset + self.items_per_page]:
+        for mapa_id, nombre, _ in visibles:
             thumb_rect = pygame.Rect(x, y, thumb_w, thumb_h)
             over = thumb_rect.collidepoint(mouse_pos)
             pygame.draw.rect(surface, COL_INPUT_BG, thumb_rect, border_radius=8)
             if self.thumbs.get(mapa_id):
-                surface.blit(self.thumbs[mapa_id], self.thumbs[mapa_id].get_rect(center=thumb_rect.center))
+                image = pygame.transform.smoothscale(self.thumbs[mapa_id], (thumb_w - 4, thumb_h - 4))
+                surface.blit(image, image.get_rect(center=thumb_rect.center))
             pygame.draw.rect(surface, COL_ACCENT if mapa_id == self.selected_id else (COL_ACCENT_DIM if over else COL_CARD_BORDER), thumb_rect, 2, border_radius=8)
             label = fonts.opcion_desc.render(nombre, True, COL_TEXT if mapa_id == self.selected_id else COL_TEXT_DIM)
             surface.blit(label, label.get_rect(midtop=(thumb_rect.centerx, thumb_rect.bottom + 4)))

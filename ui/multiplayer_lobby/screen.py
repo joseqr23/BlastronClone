@@ -24,26 +24,33 @@ class MultiplayerLobbyScreen:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return None
+                if event.type == pygame.VIDEORESIZE:
+                    game.redimensionar_ventana(event.w, event.h)
+                    continue
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         return "menu"
+                    if event.key == pygame.K_F11:
+                        game.alternar_pantalla_completa()
+                        continue
                     if game.host and event.key == pygame.K_RETURN:
                         game.lobby_controller.start_match()
                     if not game.host and event.key == pygame.K_r:
                         self._toggle_ready()
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if self.back_rect and self.back_rect.collidepoint(event.pos):
+                    pos = game.convertir_coordenadas(event.pos)
+                    if self.back_rect and self.back_rect.collidepoint(pos):
                         return "menu"
                     if game.host:
-                        change = self.config_widgets.handle_click(event.pos, game.lobby_state.config)
+                        change = self.config_widgets.handle_click(pos, game.lobby_state.config)
                         if change:
                             game.lobby_controller.update_config(**change)
-                        elif self.start_rect and self.start_rect.collidepoint(event.pos):
+                        elif self.start_rect and self.start_rect.collidepoint(pos):
                             game.lobby_controller.start_match()
-                    elif self.ready_rect and self.ready_rect.collidepoint(event.pos):
+                    elif self.ready_rect and self.ready_rect.collidepoint(pos):
                         self._toggle_ready()
             self.draw()
-            pygame.display.flip()
+            game.presentar()
             game.reloj.tick(30)
         return "start"
 
@@ -63,7 +70,7 @@ class MultiplayerLobbyScreen:
         screen.fill((20, 24, 34))
         title_font = pygame.font.SysFont("Arial", 34, bold=True)
         text_font = pygame.font.SysFont("Arial", 15)
-        small_font = pygame.font.SysFont("Arial", 13, bold=True)
+        small_font = pygame.font.SysFont("Arial", 15, bold=True)
         screen.blit(title_font.render("SALA DE ESPERA", True, (245, 245, 250)), (margin, 20))
         subtitle = "El Host configura la partida; los clientes marcan Listo"
         screen.blit(text_font.render(subtitle, True, (172, 181, 200)), (margin + 2, 66))

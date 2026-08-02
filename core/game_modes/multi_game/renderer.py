@@ -31,7 +31,6 @@ class MultiplayerRenderer:
         if banner and pygame.time.get_ticks() < getattr(game.modo, "banner_hasta_ms", 0):
             self._draw_round_banner(banner)
         self._draw_menu_button()
-        self._draw_menu_button()
         self._draw_mute_button()
         if game.confirmando_salida:
             self._draw_exit_confirmation()
@@ -56,7 +55,7 @@ class MultiplayerRenderer:
     def _draw_local_weapon(self, surface):
         game, robot = self.game, self.game.robot
         if robot.arma_equipada in (None, "nada"): return
-        mouse = pygame.mouse.get_pos()
+        mouse = game.mouse_logico()
         game.aim.origen = robot.get_centro(); game.aim.update(mouse)
         config = config_arma(robot.arma_equipada)
         if not config: return

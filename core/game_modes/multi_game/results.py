@@ -28,7 +28,7 @@ class ResultsScreen:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: return False
                 if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_RETURN): return back_to_menu
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button.collidepoint(event.pos): return back_to_menu
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and button.collidepoint(game.convertir_coordenadas(event.pos)): return back_to_menu
             now, frame = pygame.time.get_ticks(), (pygame.time.get_ticks() - started) // 150
             game.pantalla.fill((30, 30, 40))
             title = title_font.render("¡Fin de la partida!", True, (255, 215, 0)); game.pantalla.blit(title, title.get_rect(center=(ANCHO // 2, 50)))
@@ -45,11 +45,11 @@ class ResultsScreen:
                 name = name_font.render(player, True, ColorManager.get_color(player)); game.pantalla.blit(name, name.get_rect(center=(cx, sprite_top - 15)))
                 rank_text = rank_font.render(f"{rank}°", True, (255, 255, 255)); game.pantalla.blit(rank_text, rank_text.get_rect(center=(cx, base_y + 20)))
                 value_text = value_font.render(f"{label}: {value}", True, (255, 255, 255)); game.pantalla.blit(value_text, value_text.get_rect(center=(cx, base_y + 42)))
-            over = button.collidepoint(pygame.mouse.get_pos())
+            over = button.collidepoint(game.mouse_logico())
             pygame.draw.rect(game.pantalla, (90, 140, 220) if over else (60, 100, 180), button, border_radius=8)
             pygame.draw.rect(game.pantalla, (255, 255, 255), button, 2, border_radius=8)
             text = button_font.render("Volver al menú", True, (255, 255, 255)); game.pantalla.blit(text, text.get_rect(center=button.center))
-            pygame.display.flip(); clock.tick(30)
+            game.presentar(); clock.tick(30)
 
     def _draw_first_place_glow(self, cx, cy, now):
         pulse = .5 + .5 * math.sin(now / 200); radius = int(70 + pulse * 15)

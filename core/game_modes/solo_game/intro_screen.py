@@ -61,12 +61,12 @@ class IntroScreen:
                         return "start"
                     self.indice += 1
                 if evento.type == pygame.MOUSEBUTTONDOWN and evento.button == 1:
-                    if self.continue_rect and self.continue_rect.collidepoint(evento.pos):
+                    if self.continue_rect and self.continue_rect.collidepoint(game.convertir_coordenadas(evento.pos)):
                         self.indice += 1
             if self.indice >= len(self.entradas):
                 break
             self._draw()
-            pygame.display.flip()
+            game.presentar()
             game.reloj.tick(30)
         return "start"
 
@@ -86,8 +86,8 @@ class IntroScreen:
         if portrait:
             pantalla.blit(portrait, portrait.get_rect(center=portrait_box.center))
 
-        fuente_nombre = pygame.font.SysFont("Arial", 20, bold=True)
-        fuente_texto = pygame.font.SysFont("Arial", 16)
+        fuente_nombre = pygame.font.SysFont("Arial", 25, bold=True)
+        fuente_texto = pygame.font.SysFont("Arial", 20)
         texto_x = portrait_box.right + 20
         texto_ancho = panel.right - texto_x - 20
 

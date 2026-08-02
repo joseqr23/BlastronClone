@@ -53,10 +53,13 @@ def main():
     menu_restore = None
 
     while True:
-        screen = pygame.display.set_mode(
-            (SCREEN_WIDTH, SCREEN_HEIGHT),
-            pygame.RESIZABLE
-        )
+        superficie_actual = pygame.display.get_surface()
+        if superficie_actual is not None and (superficie_actual.get_flags() & pygame.FULLSCREEN):
+            screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        elif superficie_actual is not None:
+            screen = pygame.display.set_mode(superficie_actual.get_size(), pygame.RESIZABLE)
+        else:
+            screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE)
         sound_manager.iniciar_musica("assets/sfx/inicio.mp3")
         menu = Menu(
             screen,

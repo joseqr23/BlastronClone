@@ -141,7 +141,8 @@ class SoloGame(BaseGame):
                 robot.aplicar_empuje(message.get("vel_x", 0), message.get("vel_y", 0))
 
     def enviar_chat(self, mensaje):
-        self.chat.agregar_mensaje(f"{self.nombre_jugador}: {mensaje}")
+        #self.chat.agregar_mensaje(f"{self.nombre_jugador}: {mensaje}")  >> No hace falta, ya lo hace Chat.handle_event() antes de llamar a enviar_chat()
+        pass
 
     def enviar_evento_puntaje(self, atacante, puntos, victima):
         self.puntajes[atacante] = self.puntajes.get(atacante, 0) + puntos
@@ -168,7 +169,7 @@ class SoloGame(BaseGame):
     def _run_match(self):
         while True:
             if not self.robot.is_dead and self.robot.arma_equipada not in (None, "nada"):
-                self.robot.facing_right = pygame.mouse.get_pos()[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
             if not self.event_handler.handle_events():
                 return None
             if self.volver_al_menu:
@@ -178,7 +179,7 @@ class SoloGame(BaseGame):
                     self.game_over_at = self.now()
                 if self.now() - self.game_over_at < self.PODIUM_DELAY_S:
                     self.renderer.draw_frame()
-                    pygame.display.flip(); self.reloj.tick(60)
+                    self.presentar(); self.reloj.tick(60)
                     continue
                 self._finalizar_si_falta()
                 return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
@@ -194,7 +195,7 @@ class SoloGame(BaseGame):
             self._actualizar_reloj()
             self._chequear_fin_de_partida()
             self.renderer.draw_frame()
-            pygame.display.flip()
+            self.presentar()
             self.reloj.tick(60)
 
     # ---------- Turnos: jugador humano + bots + jefe ----------

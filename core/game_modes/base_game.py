@@ -20,8 +20,34 @@ class BaseGame:
         pygame.init()
         self.nombre_jugador = nombre_jugador
         self.personaje = personaje
-        self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
+
+        # self.pantalla: superficie LÓGICA de juego, tamaño FIJO
+        # (ANCHO x ALTO) — todo el código de dibujo/colisión sigue
+        # trabajando con estas coordenadas exactamente igual que
+        # siempre; ningún JSON de mapa necesita cambiar.
+        # self.ventana: la ventana REAL en pantalla — puede ser más
+        # grande (hasta pantalla completa). presentar() escala
+        # self.pantalla hacia self.ventana cada frame.
+        self.pantalla = pygame.Surface((ANCHO, ALTO)).convert()
+
+        # Reusa la ventana real que ya esté abierta (la que dejó el menú,
+        # con el tamaño que haya elegido el jugador) en vez de resetear
+        # siempre a (ANCHO, ALTO) — antes cada partida nueva arrancaba
+        # con el tamaño de fábrica sin importar la ventana del menú.
+        superficie_actual = pygame.display.get_surface()
+        if superficie_actual is not None and (superficie_actual.get_flags() & pygame.FULLSCREEN):
+            self.ventana = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            self.pantalla_completa = True
+            self._tamano_ventana_anterior = (ANCHO, ALTO)
+        else:
+            ancho_ventana, alto_ventana = superficie_actual.get_size() if superficie_actual is not None else (ANCHO, ALTO)
+            ancho_ventana, alto_ventana = max(ANCHO, ancho_ventana), max(ALTO, alto_ventana)
+            self.ventana = pygame.display.set_mode((ancho_ventana, alto_ventana), pygame.RESIZABLE)
+            self.pantalla_completa = False
+            self._tamano_ventana_anterior = (ancho_ventana, alto_ventana)
         pygame.display.set_caption("Blastron Clone")
+        self._rect_presentacion = pygame.Rect(0, 0, ANCHO, ALTO)
+
         self.reloj = pygame.time.Clock()
         self.sound_manager = sound_manager
         self.superficie_mundo = pygame.Surface((ANCHO, ALTO)).convert()
@@ -106,3 +132,48 @@ class BaseGame:
         progreso = 1 - (transcurrido / duracion)
         mag = self._shake_intensidad * progreso
         return (random.uniform(-mag, mag), random.uniform(-mag, mag))
+
+    # ------------------------------------------------------------------
+    # Ventana redimensionable + escalado (zoom) de la escena lógica
+    # ------------------------------------------------------------------
+    def redimensionar_ventana(self, ancho, alto):
+        ancho = max(ANCHO, ancho)
+        alto = max(ALTO, alto)
+        self.ventana = pygame.display.set_mode((ancho, alto), pygame.RESIZABLE)
+        self.pantalla_completa = False
+
+    def alternar_pantalla_completa(self):
+        if self.pantalla_completa:
+            self.ventana = pygame.display.set_mode(self._tamano_ventana_anterior, pygame.RESIZABLE)
+            self.pantalla_completa = False
+        else:
+            self._tamano_ventana_anterior = self.ventana.get_size()
+            self.ventana = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            self.pantalla_completa = True
+
+    def presentar(self):
+        ventana_ancho, ventana_alto = self.ventana.get_size()
+        escala = min(ventana_ancho / ANCHO, ventana_alto / ALTO)
+        nuevo_ancho, nuevo_alto = max(1, int(ANCHO * escala)), max(1, int(ALTO * escala))
+        offset_x = (ventana_ancho - nuevo_ancho) // 2
+        offset_y = (ventana_alto - nuevo_alto) // 2
+        self._rect_presentacion = pygame.Rect(offset_x, offset_y, nuevo_ancho, nuevo_alto)
+
+        if (nuevo_ancho, nuevo_alto) == (ANCHO, ALTO):
+            escalada = self.pantalla
+        else:
+            escalada = pygame.transform.smoothscale(self.pantalla, (nuevo_ancho, nuevo_alto))
+
+        self.ventana.fill((0, 0, 0))
+        self.ventana.blit(escalada, (offset_x, offset_y))
+        pygame.display.flip()
+
+    def convertir_coordenadas(self, pos):
+        x, y = pos
+        rect = self._rect_presentacion
+        if rect.width == 0 or rect.height == 0:
+            return (0, 0)
+        return ((x - rect.x) * ANCHO / rect.width, (y - rect.y) * ALTO / rect.height)
+
+    def mouse_logico(self):
+        return self.convertir_coordenadas(pygame.mouse.get_pos())

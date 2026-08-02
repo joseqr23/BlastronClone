@@ -211,7 +211,7 @@ class MultiplayerGame(BaseGame):
     def _run_match(self):
         while True:
             if not self.robot.is_dead and self.robot.arma_equipada not in (None, "nada"):
-                self.robot.facing_right = pygame.mouse.get_pos()[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
             if not self.event_handler.handle_events(): return None
             self.messages.process_pending()
             if self.volver_al_menu:
@@ -221,7 +221,7 @@ class MultiplayerGame(BaseGame):
                     self.game_over_at = self.now()
                 if self.now() - self.game_over_at < self.PODIUM_DELAY_S:
                     self.renderer.draw_frame()
-                    pygame.display.flip(); self.reloj.tick(60)
+                    self.presentar(); self.reloj.tick(60)
                     continue
                 return "menu" if self.results.show(self.modo.etiqueta_podio()) else None
             self._update_turns_and_player()
@@ -237,7 +237,7 @@ class MultiplayerGame(BaseGame):
             self.weapon_manager.update(); self.replication.sync_projectiles(); self.replication.interpolate_remotes()
             self._update_clock()
             self.renderer.draw_frame()
-            pygame.display.flip(); self.reloj.tick(60)
+            self.presentar(); self.reloj.tick(60)
 
     def _update_turns_and_player(self):
         if not getattr(self.modo, "usa_turnos", True):

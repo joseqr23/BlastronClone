@@ -14,6 +14,16 @@ class EventHandler:
                 pygame.quit()
                 return False
 
+            if evento.type == pygame.VIDEORESIZE:
+                self.game.redimensionar_ventana(evento.w, evento.h)
+                continue
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_F11:
+                self.game.alternar_pantalla_completa()
+                continue
+
+            if evento.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP):
+                evento.pos = self.game.convertir_coordenadas(evento.pos)
+
             # Multijugador puede pedir confirmación antes de abandonar.
             # FreeGame no activa esta bandera y conserva su salida inmediata.
             if getattr(self.game, "confirmando_salida", False):

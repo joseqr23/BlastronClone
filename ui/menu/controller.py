@@ -15,7 +15,10 @@ from .screens.main import MainScreen
 from .screens.host_config import HostConfigScreen
 from .screens.free_config import FreeConfigScreen
 from .screens.solo_config import SoloConfigScreen
-
+try:
+    from settings import SCREEN_WIDTH, SCREEN_HEIGHT
+except Exception:
+    SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
 
 class Menu:
     """Punto de entrada compatible con el antiguo ui/menu.py."""
@@ -116,6 +119,7 @@ class Menu:
         pygame.key.set_repeat(400, 40)
         fondo = pygame.Surface((self.ancho, self.alto))
         draw_vertical_gradient(fondo)
+        resize_pendiente = None
         while True:
             self.pantalla.blit(fondo, (0, 0))
             mouse_pos = pygame.mouse.get_pos()
@@ -124,11 +128,25 @@ class Menu:
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     raise SystemExit
+                if event.type == pygame.VIDEORESIZE:
+                    # Se difiere y se aplica una sola vez al final del
+                    # frame — igual que en las partidas, para que
+                    # maximizar no necesite dos clics.
+                    resize_pendiente = (event.w, event.h)
+                    continue
                 action = pantalla_actual.handle_event(event, mouse_pos)
                 resultado = self._resolver_accion(action)
                 if resultado is not None:
                     return resultado
                 pantalla_actual = self.screens[self.state.pantalla]
+
+            if resize_pendiente is not None:
+                self.ancho, self.alto = resize_pendiente
+                resize_pendiente = None
+                self.pantalla = pygame.display.set_mode((self.ancho, self.alto), pygame.RESIZABLE)
+                fondo = pygame.Surface((self.ancho, self.alto))
+                draw_vertical_gradient(fondo)
+
             self.nombre_input.update()
             self.ip_input.update()
             hover = self.screens[self.state.pantalla].draw(self.pantalla, mouse_pos)

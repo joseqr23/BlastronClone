@@ -55,9 +55,9 @@ class FreeGame(BaseGame):
     def run(self):
         while True:
             if not self.robot.is_dead and self.robot.arma_equipada not in [None, 'nada']:
-                mouse_pos = pygame.mouse.get_pos()
-                self.robot.facing_right = mouse_pos[0] >= self.robot.get_centro()[0]
-
+                #mouse_pos = pygame.mouse.get_pos()
+                #self.robot.facing_right = mouse_pos[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
             # --- Entrada ---
             if not self.event_handler.handle_events():
                 return  # usuario cerró ventana
@@ -104,7 +104,7 @@ class FreeGame(BaseGame):
 
             # indicador de mira
             if self.robot.arma_equipada not in [None, 'nada']:
-                mouse_pos = pygame.mouse.get_pos()
+                mouse_pos = self.mouse_logico()
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 config = config_arma(self.robot.arma_equipada)
@@ -158,5 +158,5 @@ class FreeGame(BaseGame):
             texto_mute = self.fuente_botones.render("Muteado (M)" if muteado else "Sonido (M)", True, (255, 255, 255))
             self.pantalla.blit(texto_mute, texto_mute.get_rect(center=self.rect_mute.center))
 
-            pygame.display.flip()
-            self.reloj.tick(60)
+            self.presentar(); self.reloj.tick(60)
+            

@@ -243,14 +243,14 @@ class HUDArmas:
     # ------------------------------------------------------------------
     # Dibujo
     # ------------------------------------------------------------------
-    def draw(self, pantalla, font, weapon_manager=None):
+    def draw(self, pantalla, font, weapon_manager=None, mouse_pos=None):
         panel = self.rect_panel_colapsado if self.colapsado else self.rect_panel
         fondo = pygame.Surface((panel.width, panel.height), pygame.SRCALPHA)
         fondo.fill(COL_PANEL_FONDO)
         pantalla.blit(fondo, panel.topleft)
         pygame.draw.rect(pantalla, COL_PANEL_BORDE, panel, width=2, border_radius=10)
  
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = mouse_pos if mouse_pos is not None else pygame.mouse.get_pos()
         toggle_color = COL_BOTON_HOVER if self.rect_toggle.collidepoint(mouse_pos) else COL_BOTON_IDLE
         pygame.draw.rect(pantalla, toggle_color, self.rect_toggle, border_radius=6)
         pygame.draw.rect(pantalla, COL_PANEL_BORDE, self.rect_toggle, width=2, border_radius=6)

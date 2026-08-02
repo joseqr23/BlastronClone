@@ -1,3 +1,6 @@
+1.- PENDIENTE HACER RESPONSIVE LOS BOTONES DEL MENU, DONDE SE ENCUENTRA LA FOTO, EL NOMBRE Y LOS MODOS
+UBICADO EN MAIN.PY DE UI/MENU/SCREENS/
+
 -- implementar un aura para cada fase del boss, actualmente es una simple con math.
 Ubicado en boss_controller
 -- self.robot.activar_aura(color)
@@ -18,7 +21,6 @@ O
 Por ejemplo los jefes de cada mapa de modo solo, al ganar, si no esta desbloqueado que se desbloquee y salga un mensaje "personaje desbloqueado: Nombrederobot"
 
 
--- hacer que modo "libre" tambien reciba un json opcional de "armas_rondas": ["box", "box_super"],
 
 2- AÑADIR EN EL MENU (TAL VEZ EN OTRO ARCHIVO) UN "COMPLEMENTO" PARA EL JUEGO. 
 ASI COMO JUGADOR ELIGE NOMBRE Y PERSONAJE, QUE ELIJA UN COMPLEMENTO, CADA UNO LE DA UNA HABILIDAD DISTINTA, EJEMPLO:

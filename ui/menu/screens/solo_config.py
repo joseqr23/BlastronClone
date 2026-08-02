@@ -48,7 +48,8 @@ class SoloConfigScreen:
         self._frames_desde_refresh = 0
         # Fuente propia para las estrellas de dificultad — más grande
         # que el resto del texto de la tarjeta, a propósito.
-        self.fuente_estrellas = pygame.font.SysFont("Arial", 20, bold=True)
+        self.fuente_estrellas = pygame.font.SysFont("Arial", 35, bold=True)
+        self.fuente_detail = pygame.font.SysFont("Arial", 15, bold=True)
 
     def _unlocked_ids(self):
         return [level.id for level in self.campaign.levels if self.campaign.is_unlocked(level.id)]
@@ -135,7 +136,14 @@ class SoloConfigScreen:
         surface.blit(titulo_mundo, titulo_mundo.get_rect(midtop=(surface.get_width() // 2, 120)))
 
         self.level_rects = []
-        card_w, card_h, gap = 200, 132, 18
+        gap = 18
+        # card_w ya no es fijo — se calcula del ancho real disponible,
+        # igual que las tarjetas de jugador en la sala de espera. Los
+        # topes (190/320) evitan que se vea diminuto en una ventana
+        # chica o absurdamente grande en una ultra-wide.
+        disponible_ancho = surface.get_width() - 120
+        card_w = max(190, min(320, (disponible_ancho - 2 * gap) // 3))
+        card_h = int(card_w * 0.66)
         start_x = surface.get_width() // 2 - (3 * card_w + 2 * gap) // 2
         grid_top = 152  # antes 142 — le deja aire al título "MUNDO N" de arriba
 
@@ -166,22 +174,23 @@ class SoloConfigScreen:
 
             color = COL_TEXT if unlocked else COL_TEXT_DISABLED
             id_txt = self.fonts.opcion_desc.render(f"NIVEL {level.id}", True, color)
-            surface.blit(id_txt, (rect.x + 14, rect.y + 10))
+            surface.blit(id_txt, (rect.x + 14, rect.y + int(card_h * 0.07)))
 
             # Nombre del nivel — independiente del id y del nombre de la
             # carpeta del mapa. Si el JSON no trae "nombre", se usa el
             # nombre del mapa como fallback.
             nombre = level.nombre or level.mapa.capitalize()
             nombre_txt = self.fonts.config_seccion.render(nombre, True, color)
-            surface.blit(nombre_txt, (rect.x + 14, rect.y + 29))
+            surface.blit(nombre_txt, (rect.x + 14, rect.y + int(card_h * 0.21)))
 
-            self._dibujar_estrellas_dificultad(surface, (rect.x + 14, rect.y + 60), level.dificultad, unlocked)
+            self._dibujar_estrellas_dificultad(surface, (rect.x + 14, rect.y + int(card_h * 0.44)), level.dificultad, unlocked)
 
             # level.bots es una tupla de BotConfig — se cuenta con len(),
             # nunca se interpola la tupla directo o Python muestra el
             # repr() de cada BotConfig en la tarjeta.
-            detail = self.fonts.opcion_desc.render("JEFE" if level.boss else f"{len(level.bots)} bot(s)", True, color)
-            surface.blit(detail, (rect.x + 14, rect.y + 85))
+            # detail = self.fonts.opcion_desc.render("JEFE" if level.boss else f"{len(level.bots)} bot(s)", True, color)
+            detail = self.fuente_detail.render("JEFE" if level.boss else f"{len(level.bots)} bot(s)", True, color) # Nueva fuente definida dentro del mismo solo_config.py
+            surface.blit(detail, (rect.x + 14, rect.y + int(card_h * 0.63)))
 
             if unlocked:
                 estrellas_ganadas = self.campaign.stars_for(level.id)
@@ -191,7 +200,7 @@ class SoloConfigScreen:
                 status = "Bloqueado"
                 status_color = COL_TEXT_DISABLED
             status_txt = self.fonts.opcion_desc.render(status, True, status_color)
-            surface.blit(status_txt, (rect.x + 14, rect.y + 107))
+            surface.blit(status_txt, (rect.x + 14, rect.y + int(card_h * 0.81)))
 
             self.level_rects.append((level.id, rect, unlocked))
             hover |= over
