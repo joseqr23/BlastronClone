@@ -107,9 +107,13 @@ class MainScreen:
                 return "abrir_solo"
         return None
 
+    ANCHO_CONTENIDO_MAX = 760  # evita que el panel se estire feo en pantallas muy anchas
+
     def draw(self, surface, mouse_pos):
         self.rect_conectar = self.rect_ir_libre = self.rect_ir_solo = None
-        margin, width = 60, surface.get_width() - 120
+        ancho_pantalla = surface.get_width()
+        width = max(360, min(self.ANCHO_CONTENIDO_MAX, ancho_pantalla - 80))
+        margin = max(20, (ancho_pantalla - width) // 2)
         title = self.fonts.titulo.render("BLASTRON", True, COL_TEXT)
         accent = self.fonts.titulo.render(" CLONE", True, COL_ACCENT)
         surface.blit(title, (margin, 34)); surface.blit(accent, (margin + title.get_width(), 34))
@@ -143,7 +147,7 @@ class MainScreen:
             draw_panel(surface, nombre_button_rect, COL_OPTION_HOVER if editar_hover else COL_INPUT_BG, COL_ACCENT if editar_hover else COL_INPUT_BORDER, 8, 2)
             editar = self.fonts.pill.render("Editar", True, COL_TEXT)
             surface.blit(editar, editar.get_rect(center=nombre_button_rect.center))
-        sep = player.x + 320
+        sep = player.x + int(width * 0.47)  # proporcional al ancho real del panel, no un offset fijo
         pygame.draw.line(surface, COL_CARD_BORDER, (sep, player.y + 16), (sep, player.bottom - 16), 2)
         surface.blit(self.fonts.label.render("PERSONAJE", True, COL_TEXT_DIM), (sep + 24, player.y + 18))
         portrait_box = pygame.Rect(sep + 24, player.y + 50, 76, 76)
