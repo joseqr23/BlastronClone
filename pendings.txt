@@ -1,7 +1,4 @@
-1.- PENDIENTE HACER RESPONSIVE LOS BOTONES DEL MENU, DONDE SE ENCUENTRA LA FOTO, EL NOMBRE Y LOS MODOS
-UBICADO EN MAIN.PY DE UI/MENU/SCREENS/
-
--- implementar un aura para cada fase del boss, actualmente es una simple con math.
+-- Implementar un aura para cada fase del boss, actualmente es una simple con math.
 Ubicado en boss_controller
 -- self.robot.activar_aura(color)
 
@@ -11,18 +8,37 @@ Y en robot.py
 1.- Como solo los boss tienen aura, estaba pensando cambiar la logica asi:
 Sale ese destello ya dibujado, pero solo por 2 segundos, y yo generaré los sprites de cada robot jefe, basicamente seran los mismos, pero le añadire otro efecto, asi que seria literalemente reemplazar los sprites por unos que lo muestren enojado (yo los hare)
 estaran ubicados en su misma carpeta de "assets/robots/barbabot..."
+es decir, al cambiar de fase, en lugar de "assets/robots/barbabot/run.png" se mostrara "run_rage" o algo asi, y de igual forma con otros sprites, no se que tan complejo sea, de lo contrario solo hacer la opción 2.
+Con respecto a los sprites, yo los puedo hacer sin problema, ya que ya tengo los originales, solo seria copiarlos tal cual y añadirles algo extra.
+
 O
-2.- Simplemente se le puede añadir un aura tipo de fuego tambien generado por un sprite de 3 frames que tambien hare yo, este se mostrara como un gif constante detras del robot, puede ser por 3 segundos o permanente mientras esta en furia.
+
+2.- Simplemente se le puede añadir un aura tipo de fuego tambien generado por un sprite de 3 frames que tambien hare yo, este se mostrara como un gif constante detras del robot, puede ser por 3 segundos o permanente mientras cambia de fase, básicamente seria poner detrás del Sprite que pinta el robot, un Sprite de fuego, con 3 de animación, similar a lo que ocurre con "run" que son 6 frames, añadiendo también variables para hacer mas grande o mas pequeño el Sprite, para poder calcularlo según el tamaño de cada boss. Quiero hacer esto.
+
+
+Si crees que la opción 2 es mejor entonces hagamos esa.
+
+Te paso boss_controller.py + robot.py
 
 
 
 
--- Asi como se ha implementado lo del nombre que se guarda, y lo de los niveles desbloqueables, se puede hacer tambien con los personajes o incluso las armas?
+
+Pendiente:
+
+Implementar para Boss en modo Solo.
+1.- Que en cada fase al igual de cambiar de arma, aumente su velocidad, salto y fuerza en 1, la fuerza la tiene como un multiplicador de daño en "damage_multiplier", pero este no funciona, asi lo suba a 1000 sigue haciendo el mismo daño.:
+      "boss": {
+        "robot_id": "barbabot", "nombre": "Capitan Barbabot", "ancho" : "100", "alto": "150", "velocidad": 6, "salto": 18,
+        "vida_maxima": 950, "damage_multiplier": 1.5, "fases": [0.75, 0.55, 0.35 ], "armas": ["espada_pirata", "cañon", "pistola_pirata"], "distancia_acercamiento": [0, 20, 30], "distancia_ataque": [0, 150, 150], "mensaje": "¡Soy el rey de los mares y no me detendré ante nada!"
+      }
+
+
+2.- Asi como se ha implementado lo del nombre que se guarda, y lo de los niveles desbloqueables, se puede hacer tambien con los personajes o incluso las armas?
 Por ejemplo los jefes de cada mapa de modo solo, al ganar, si no esta desbloqueado que se desbloquee y salga un mensaje "personaje desbloqueado: Nombrederobot"
 
 
-
-2- AÑADIR EN EL MENU (TAL VEZ EN OTRO ARCHIVO) UN "COMPLEMENTO" PARA EL JUEGO. 
+3- AÑADIR EN EL MENU (TAL VEZ EN OTRO ARCHIVO) UN "COMPLEMENTO" PARA EL JUEGO. 
 ASI COMO JUGADOR ELIGE NOMBRE Y PERSONAJE, QUE ELIJA UN COMPLEMENTO, CADA UNO LE DA UNA HABILIDAD DISTINTA, EJEMPLO:
 ALAS > SALTO MÁS ALTO
 ZAPATILLAS > MÁS VELOCIDAD 
@@ -30,19 +46,16 @@ ESPINAS > DAÑO A ROBOT ATACANTE SI EL PORTADOR ES ATACADO CON ARMAS CUERPO A CU
 PASTILLA REDUCTORA > HITBOX Y SPRITE MÁS PEQUEÑOS
 MUNICION > DOBLE DE MUNICIÓN EN TODAS LAS ARMAS
 
-3.- ACTUALMENTE TENGO UN TAMAÑO FIJO EN LA PANTALLA DE LA PARTIDA, Y ESTE ESTA BLOQUEADO, SE PUEDE HACER ALGO PARA AGRANDAR LA PANTALLA? QUE EL MINIMO SEA LO ESTABLECIDO Y LO MAXIMO SEA INCLUSO PANTALLA COMPLETA, SE QUE A SIMPLE LOGICA SUENA FÁCIL, PERO OCURRE QUE LAS PLATAFORMAS CREADAS PARA LOS MAPAS SIGUEN CIERTAS COORDENADAS, Y AL HACER GRANDE UN MAPA, ESTAS SE MANTIENEN COMO TAL, ES DECIR VISUALMENTE LA PANTALLA ES MÁS GRANDE, EL FONDO ES MÁS GRANDE, PERO LAS PLATAFORMAS NO, HAY UNA MANERA DE CAMBIAR ESTO? POR EJEMPLO SUMANDOLE LOS PIXELES EN LOS QUE SE HACE GRANDE A LAS COORDENADAS DE ESTRUCTURAS PARA QUE CAMBIEN DE POSICIÓN Y TAMAÑO JUNTO CON LA VENTANA. CONSIDERANDO QUE HAY ACTUALMENTE EN EL JSON DE LOS MAPAS YA INDICA LAS COORDENADAS, Y HAY UNA LLAVE LLAMADA "LATERALES" QUE ÚNICAMENTE SE DEBE MANTENER EN LA ESQUINA DEL MAPA, SIN HACERSE GRANDE NI NADA, AUNQUE SI SE APLICA LA LOGICA QUE PROPONGO CREO QUE NO AFECTARÍA EN NADA.
-
 
 
 Pendiente:
+1.- Ya tengo implementado el efecto "shake" para algunas armas, quisiera implementarlo en un mapa de manera natural, ejemplo, el mapa de un barco que se mueve constantemente.
+No es necesario que empuje a los robots ni nada, seria algo solo visual. Si es un barco el efecto deberia ser tipo de una "mecedora"
 
-Pendiente:
- 1.- Agregar "efecto shake" a ciertos mapas y armas. 
-que tan dificil es ? de momento no lo hare en mapa, mi idea es en un futuro agregar tal vez un video de fondo o gif para darle mas " realismo" o efectos tipo lluvia (solo seria un gif o video sobre puesto encima de la pantalla, tambien con efecto de rallo que tal vez genere un destello para darle mas realismo y en mapas asi o en mapas que son barcos, deberian estar en constante movimiento.)
-Pero quiero saber ahora mismo si se puede con las armas?
+2.- Implementar nueva funcion/comportamiento en proyectil.py > ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor (igual a la mira de "golpe") pero una mira totalmente libre o de rango en todo el largo del mapa, y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
 
-4.- Agregar supplies, o ayudas
-6.- Implementar nueva funcion/comportamiento en proyectil.py > ataque aereo, donde la mira tambien puede cambiar, y basicamente es un cursor (igual a la mira de "golpe") pero una mira totalmente libre o de rango en todo el largo del mapa, y la zona donde se apunte caiga algo del cielo, pueden ser bombas o etc.
+3.- Agregar supplies, o ayudas, caeran en cualquier modo, en cualquier momento de la partida, puede ser 1 caja con 100 de vida, una caja con municion de cierta arma.
+
 
 
 Bugs:

@@ -132,7 +132,7 @@
     
 
     {
-      "id": 13, "mapa": "vertice_empresarial", "nombre": "Oficinas", "modo": "best_of_three", "dificultad": 3, "duracion_min": 5, 
+      "id": 13, "mapa": "vertice_empresarial", "nombre": "Oficina", "modo": "best_of_three", "dificultad": 3, "duracion_min": 5, 
       "armas_jugador": ["box", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 1000, "salto_jugador": 15, "velocidad_jugador": 2.5,
       
       "bots": [
@@ -140,7 +140,7 @@
       ]
     },
     {
-      "id": 14, "mapa": "vertice_empresarial", "nombre": "Oficinas", "modo": "best_of_three", "dificultad": 3, "duracion_min": 5, 
+      "id": 14, "mapa": "vertice_empresarial", "nombre": "Oficina", "modo": "best_of_three", "dificultad": 3, "duracion_min": 5, 
       "armas_jugador": ["box", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 1000, "salto_jugador": 15, "velocidad_jugador": 2.5,
       
       "bots": [
@@ -158,40 +158,38 @@
 
 
     {
-      "id": 16, "mapa": "parque", "nombre": "Dojo del Dragón", "modo": "lms", "dificultad": 4, "duracion_min": 10,
-      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "id": 16, "mapa": "vertice_empresarial", "nombre": "No mojes p webon", "modo": "libre", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["box_super", "una_pulgada", "gong", "pistola_pirata", "supermisil", "misil"], "municion_jugador": {"box_super": 10, "una_pulgada": 10, "gong": 10, "pistola_pirata": 10, "supermisil": 10, "misil": 99}, "vida_jugador": 1000, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-      {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-      {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      
       ],
       "boss": {
-        "robot_id": "bot_lee", "nombre": "Bot Lee", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
-        "vida_maxima": 600, "damage_multiplier": 1.5, "fases": [0.85, 0.50], "armas": ["nunchaku", "una_pulgada"], "distancia_acercamiento": 0, "distancia_ataque": 0
+        "robot_id": "netali", "nombre": "Neftalí Riveros", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "vida_maxima": 1000, "damage_multiplier": 1.5, "fases": [0.35, 0.25], "armas": ["machete", "rifle"], "distancia_acercamiento": 0, "distancia_ataque": 100
       }
     },
     {
-      "id": 17, "mapa": "parque", "nombre": "Noche de Knockouts", "modo": "lms", "dificultad": 2, "duracion_min": 5, 
-      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "id": 17, "mapa": "vertice_empresarial", "nombre": "Jejeje", "modo": "libre", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["box_super", "una_pulgada", "gong", "pistola_pirata", "supermisil", "misil"], "municion_jugador": {"box_super": 10, "una_pulgada": 10, "gong": 10, "pistola_pirata": 10, "supermisil": 10, "misil": 99}, "vida_jugador": 1000, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "deportista_karatebot", "nombre": "Karatebot", "vida_maxima": 400, "arma": "kickboxing", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "deportista_kickboting", "nombre": "Kickboting", "vida_maxima": 400, "arma": "karate", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
-      ]
-    },
-    {
-      "id": 18, "mapa": "parque", "nombre": "El Último Rival", "modo": "lms", "dificultad": 3, "duracion_min": 10,
-      "armas_jugador": ["box", "karate", "kickboxing", "nunchaku", "una_pulgada", "box_super", "espada_pirata", "bomba", "supermisil", "misil"], "municion_jugador": {"box": 5, "karate": 5, "kickboxing": 5, "nunchaku": 5, "una_pulgada": 5, "box_super": 5, "espada_pirata": 5, "bomba": 5, "supermisil": 5, "misil": 99}, "vida_jugador": 800, "salto_jugador": 15, "velocidad_jugador": 2.5,
-      "bots": [
-        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0},
-        {"robot_id": "deportista_boteador", "nombre": "Boxeadorbot", "vida_maxima": 400, "arma": "box", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 0}
+      
       ],
       "boss": {
-        "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "80", "alto": "110", "velocidad": 6, "salto": 18,
-        "vida_maxima": 900, "damage_multiplier": 1.5, "fases": [0.80, 0.75 ], "armas": ["box", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0
+        "robot_id": "estaly", "nombre": "Estaly Torres", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "vida_maxima": 1000, "damage_multiplier": 1.5, "fases": [0.15, 0.05], "armas": ["sable_laser", "dragon_lore"], "distancia_acercamiento": 0, "distancia_ataque": 100
+      }
+    },
+    {
+      "id": 18, "mapa": "medieval", "nombre": "Haciendo los contactos", "modo": "libre", "dificultad": 4, "duracion_min": 10,
+      "armas_jugador": ["box_super", "una_pulgada", "gong", "pistola_pirata", "supermisil", "misil"], "municion_jugador": {"box_super": 10, "una_pulgada": 10, "gong": 10, "pistola_pirata": 10, "supermisil": 10, "misil": 99}, "vida_jugador": 1000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+      
+      ],
+      "boss": {
+        "robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "vida_maxima": 1000, "damage_multiplier": 1.5, "fases": [0.15, 0.05], "armas": ["sarten", "escopeta"], "distancia_acercamiento": 0, "distancia_ataque": 100
       }
     }
-
-
 
   ]
 }
