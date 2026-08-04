@@ -125,7 +125,7 @@
       ],
       "boss": {
         "robot_id": "mike_botson", "nombre": "Mike Botson", "ancho" : "100", "alto": "130", "velocidad": 7, "salto": 5,
-        "vida_maxima": 2000, "damage_multiplier": 2.5, "fases": [0.85, 0.55], "armas": ["box_super", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0, "mensaje": "¿En serio crees que puedes derrotarme? ¡Prepárate para el KO!" 
+        "vida_maxima": 2000, "damage_multiplier": 2.5, "fases": [0.75, 0.85], "armas": ["box_super", "box_super"], "distancia_acercamiento": 0, "distancia_ataque": 0, "mensaje": "¿En serio crees que puedes derrotarme? ¡Prepárate para el KO!" 
       }
     },
 
@@ -186,7 +186,7 @@
       
       ],
       "boss": {
-        "robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "ancho" : "80", "alto": "110", "velocidad": 5, "salto": 17,
+        "robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "ancho" : "80", "alto": "450", "velocidad": 5, "salto": 17,
         "vida_maxima": 1000, "damage_multiplier": 1.5, "fases": [0.15, 0.05], "armas": ["sarten", "escopeta"], "distancia_acercamiento": 0, "distancia_ataque": 100
       }
     }

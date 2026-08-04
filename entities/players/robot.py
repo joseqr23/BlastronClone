@@ -19,7 +19,7 @@ class Robot:
     ]
 
     def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True,
-                 sprite_path=None, ancho=60, alto=90, velocidad=2.5, salto=15):
+                 sprite_path=None, ancho=60, alto=90, velocidad=2.5, salto=15, ancho_aura=None, alto_aura=None):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
@@ -38,6 +38,11 @@ class Robot:
         self.mensaje_chat = None
         self.mensaje_chat_expira = 0
 
+        self.ancho_aura = ancho_aura or int(ancho * 1.4)
+        self.alto_aura = alto_aura or int(alto * 1.4)
+        self._aura_frame_index = 0
+        self._aura_frame_timer = 0
+        
         # Animaciones dinámicas según robot_name. El recorte del PNG
         # SIEMPRE usa la resolución nativa del arte (60x90, la de todos
         # los sprites existentes) — nunca self.width/self.height — para
@@ -47,21 +52,22 @@ class Robot:
         base_path = sprite_path or f"assets/robots/{self.nombre_robot}"
         idle_file = "idle.png" if os.path.exists(resource_path(base_path, "idle.png")) else "iddle.png"
 
-        def _cargar_animacion(nombre_archivo, frames):
+        def _cargar_animacion(nombre_archivo, frames, tamano=None):
             """Detecta la resolución REAL del PNG (igual que ya hace
             weapon_loader.py con las armas) y recorta cada frame a su
-            tamaño nativo — sea 60x90 o el triple — para luego escalarlo
-            al tamaño lógico final (self.width/self.height, por defecto
-            60x90). Así podés subir la calidad del arte sin que el juego
-            siga recortando a ciegas con 60x90 fijo."""
+            tamaño nativo para luego escalarlo al tamaño lógico pedido —
+            self.width/self.height por defecto, o 'tamano' si se pasa
+            explícito (usado por el aura, que puede ser más grande que el
+            propio robot)."""
             ruta = f"{base_path}/{nombre_archivo}"
             hoja = pygame.image.load(ruta).convert_alpha()
             ancho_real = hoja.get_width() // frames
             alto_real = hoja.get_height()
             frames_img = load_spritesheet(ruta, frames, ancho_real, alto_real)
-            if (ancho_real, alto_real) == (self.width, self.height):
+            ancho_final, alto_final = tamano or (self.width, self.height)
+            if (ancho_real, alto_real) == (ancho_final, alto_final):
                 return frames_img
-            return [pygame.transform.smoothscale(f, (self.width, self.height)) for f in frames_img]
+            return [pygame.transform.smoothscale(f, (ancho_final, alto_final)) for f in frames_img]
 
         self.animations = {
             "idle": _cargar_animacion(idle_file, 1),
@@ -79,6 +85,10 @@ class Robot:
             self.animations["defeated"] = _cargar_animacion("defeated.png", 6)
         except Exception:
             self.animations["defeated"] = self.animations["idle"]
+        try:
+            self.animations["aura_fuego"] = _cargar_animacion("aura_fuego.png", 3, tamano=(self.ancho_aura, self.alto_aura))
+        except Exception:
+            self.animations["aura_fuego"] = None
             
         # Inicializa la imagen para que nunca sea None
         self.image = self.animations["idle"][0] if "idle" in self.animations else pygame.Surface((self.width, self.height))
@@ -356,6 +366,18 @@ class Robot:
         if self._aura_hasta is not None and ahora >= self._aura_hasta:
             self._aura_color = None
             return
+
+        anim_aura = self.animations.get("aura_fuego")
+        if anim_aura:
+            self._aura_frame_timer += 1
+            if self._aura_frame_timer >= 6:  # velocidad del ciclo — ajusta a gusto
+                self._aura_frame_timer = 0
+                self._aura_frame_index = (self._aura_frame_index + 1) % len(anim_aura)
+            frame = anim_aura[self._aura_frame_index]
+            centro = (int(self.x + self.width / 2), int(self.y + self.height / 2))
+            pantalla.blit(frame, frame.get_rect(center=centro))
+            return  # no dibuja también el círculo matemático encima
+
 
         # Pulso suave 0 -> 1 -> 0 en bucle (no es un parpadeo brusco).
         t = ((ahora - self._aura_inicio) % self._aura_pulso_ms) / self._aura_pulso_ms

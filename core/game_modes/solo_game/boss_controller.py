@@ -41,7 +41,7 @@ class BossController(BotController):
             # flash), y se vuelve más intensa/roja mientras más fases
             # pasa el jefe.
             color = self.COLORES_FURIA[min(self.phase - 1, len(self.COLORES_FURIA) - 1)]
-            #self.robot.activar_aura(color) >> pendiente activar aura de furia en el jefe, pero no hay assets para eso todavía de momento es un efecto pobre con math
+            self.robot.activar_aura(color) #>> pendiente activar aura de furia en el jefe, pero no hay assets para eso todavía de momento es un efecto pobre con math
         return super().update(target)
 
     @staticmethod
