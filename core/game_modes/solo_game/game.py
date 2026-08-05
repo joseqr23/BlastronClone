@@ -24,7 +24,7 @@ from systems.weapon_manager import WeaponManager
 from ui.chat import Chat
 from ui.hud import HUDArmas, HUDPuntajesMultiplayer, HUDTimer, HUDTurnos
 from utils.colors import ColorManager
-from utils.weapon_loader import cargar_armas, config_arma
+from utils.weapon_loader import cargar_armas, config_arma, armas_seleccionables
 
 from .campaign import CampaignProgress
 from .results import LevelResult
@@ -50,7 +50,7 @@ class SoloGame(BaseGame):
         self.modo = crear_modo(self.modo_partida, self)
         self.vida_maxima = self.modo.vida_maxima
 
-        armas_disponibles = list(self.level.armas_jugador) or list(cargar_armas().keys())
+        armas_disponibles = list(self.level.armas_jugador) or list(armas_seleccionables().keys())
 
         vida_jugador = self.level.vida_jugador or self.vida_maxima
         self.robot = Robot(ANCHO // 2 - 30, ALTO - ALTURA_SUELO - 90, nombre_jugador, personaje,

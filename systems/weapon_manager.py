@@ -125,6 +125,10 @@ class WeaponManager:
         if not config:
             return
 
+        modo = self.game.modo
+        if hasattr(modo, "puede_lanzar") and not modo.puede_lanzar(self.game.nombre_jugador, arma):
+            return
+
         if not self.tiene_municion(arma, config):
             print(f"[DEBUG] {self.game.nombre_jugador} sin munición para '{arma}'.")
             return
@@ -174,6 +178,11 @@ class WeaponManager:
         config = config_arma(arma)
         if not config:
             print(f"[WeaponManager] Arma desconocida: '{arma}'")
+            return
+        
+        modo = game.modo
+        if hasattr(modo, "puede_lanzar") and not modo.puede_lanzar(jugador, arma):
+            print(f"[WeaponManager] Lanzamiento de '{arma}' rechazado: {jugador} no es portador válido")
             return
 
         disparos = msg.get("disparos", [])
@@ -273,6 +282,14 @@ class WeaponManager:
                 moria = self.aplicar_dano(robot, daño, atacante=p.owner)
                 puntos = daño * 2 if moria else daño
                 self._aplicar_empuje(p, robot)
+                # Avisa al modo de partida que este robot recibió un golpe
+                # — lo usa ModoBasket para soltar el balón. Se hace acá (no
+                # dentro de _aplicar_empuje) para que dispare SIEMPRE que
+                # un golpe conecta de verdad, sin importar si esa arma en
+                # particular define empuje_ancho/empuje_alto o no.
+                modo = getattr(self.game, "modo", None)
+                if modo is not None and hasattr(modo, "notificar_golpe"):
+                    modo.notificar_golpe(robot)
                 if not es_dueño:
                     self.game.enviar_evento_puntaje(p.owner, puntos, robot)
                 p.danados.add(robot)
@@ -350,3 +367,4 @@ class WeaponManager:
                 "vel_x": vel_x,
                 "vel_y": vel_y,
             })
+

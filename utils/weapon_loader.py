@@ -163,3 +163,11 @@ def cargar_armas(forzar_recarga=False):
 
 def config_arma(arma_id):
     return cargar_armas().get(arma_id)
+
+
+def armas_seleccionables():
+    """Igual que cargar_armas(), pero sin las armas marcadas
+    "oculta_del_hud": true en su config.json — para armas que un jugador
+    nunca elige a mano (p. ej. el balón de básquet, que solo se
+    consigue tocándolo en el mapa)."""
+    return {k: v for k, v in cargar_armas().items() if not v.get("oculta_del_hud")}

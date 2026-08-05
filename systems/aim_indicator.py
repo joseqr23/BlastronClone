@@ -70,7 +70,7 @@ class AimIndicator:
         )
         return origen_ajustado, vel_x, vel_y
 
-    def draw(self, pantalla, estilo="apuntar"):
+    def draw(self, pantalla, estilo="apuntar", config=None):
         if estilo == "golpe":
             self._draw_golpe(pantalla)
             return
@@ -98,6 +98,8 @@ class AimIndicator:
             punta[1] - tamaño_punta * math.sin(angulo + math.pi / 6)
         )
         pygame.draw.polygon(pantalla, color, [punta, izquierda, derecha])
+        if config is not None:
+            self._draw_trayectoria(pantalla, config)
 
     def _draw_golpe(self, pantalla, longitud=60, tamaño=15, grosor=4, color=(255, 255, 255)):
         """Mira alternativa para cuerpo a cuerpo: un recuadro tipo mira
@@ -125,6 +127,30 @@ class AimIndicator:
         # Esquina inferior derecha
         pygame.draw.line(pantalla, color, (x1, y1), (x1 - brazo, y1), grosor)
         pygame.draw.line(pantalla, color, (x1, y1), (x1, y1 - brazo), grosor)
+
+    def _draw_trayectoria(self, pantalla, config, cantidad_puntos=7, intervalo_frames=2, radio=5, color=(255, 255, 255)):
+        """Puntos que muestran el arco real por el que va a caer el
+        proyectil — misma integración que Proyectil.update() (gravedad,
+        posición, fricción de aire, en ese orden). No contempla colisión
+        con tiles/robots: es el arco de vuelo libre, se corta solo si sale
+        de la pantalla por abajo."""
+        ancho = config.get("ancho_proyectil", 40)
+        alto = config.get("alto_proyectil", 40)
+        origen, vel_x, vel_y = self.get_datos_disparo(ancho, alto, velocidad_fija=config.get("velocidad_proyectil"))
+        x, y = origen[0] + ancho / 2, origen[1] + alto / 2
+        gravedad = config.get("gravedad", 0.5)
+        friccion_aire = config.get("friccion_aire", 0.99)
+        limite_y = pantalla.get_height()
+
+        for i in range(cantidad_puntos):
+            for _ in range(intervalo_frames):
+                vel_y += gravedad
+                x += vel_x
+                y += vel_y
+                vel_x *= friccion_aire
+            if y > limite_y:
+                break
+            pygame.draw.circle(pantalla, color, (int(x), int(y)), max(2, radio - i // 2))
 
     def draw_arma_sostenida(self, pantalla, imagen, mouse_pos, posicion_x=0, posicion_y=0):
         """Dibuja weapon.png (si el arma equipada tiene uno) rotado hacia

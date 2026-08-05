@@ -5,14 +5,14 @@ import random
 from settings import ANCHO, ALTO
 from levels.map_loader import (
     load_static_map, load_static_map_laterales,
-    load_static_map_impenetrables, load_static_map_dañinas, cargar_dano_zonas_dañinas,
+    load_static_map_impenetrables, load_static_map_dañinas, cargar_dano_zonas_dañinas, load_canasta, cargar_punto_spawn_balon,
 )
 from ui.hud import HUDArmas, HUDPuntajes
 from ui.chat import Chat
 from systems.aim_indicator import AimIndicator
 from utils.paths import resource_path
 from utils.sound_manager import sound_manager
-from utils.weapon_loader import cargar_armas
+from utils.weapon_loader import cargar_armas, armas_seleccionables
 from utils.mapa_loader import config_mapa
 
 class BaseGame:
@@ -63,10 +63,11 @@ class BaseGame:
         self.proyectiles = []
         self.mouse_click_sostenido = False
         self.fuente_muerte = pygame.font.SysFont("Verdana", 48, bold=True)
-        self.hud_armas = HUDArmas(list(cargar_armas().keys()))
+        self.hud_armas = HUDArmas(list(armas_seleccionables().keys()))
         self.font = pygame.font.SysFont('Arial', 20)
         self.puntajes = {}
         self.chat = Chat(nombre_jugador=self.nombre_jugador)
+
 
     def cargar_mapa(self, mapa_id):
         """Carga (o recarga) tiles/laterales/fondo según mapa_id. Se
@@ -80,6 +81,8 @@ class BaseGame:
         self.tiles_impenetrables = load_static_map_impenetrables(mapa_id)
         self.tiles_dañinas = load_static_map_dañinas(mapa_id)
         self.dano_zonas = cargar_dano_zonas_dañinas(mapa_id)
+        self.tiles_canasta = load_canasta(mapa_id)
+        self.punto_spawn_balon = cargar_punto_spawn_balon(mapa_id)
         config_del_mapa = config_mapa(mapa_id) or {}
         ruta_fondo = config_del_mapa.get("_fondo_path", "assets/maps/fondo.png")
         # self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
@@ -105,6 +108,8 @@ class BaseGame:
         for tile in self.tiles_impenetrables:
             tile.draw(superficie)
         for tile in self.tiles_dañinas:
+            tile.draw(superficie)
+        for tile in self.tiles_canasta:
             tile.draw(superficie)
 
     def handle_events(self, event):

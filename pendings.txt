@@ -1,25 +1,13 @@
--- Implementar un aura para cada fase del boss, actualmente es una simple con math.
-Ubicado en boss_controller
--- self.robot.activar_aura(color)
-
-Y en robot.py
--- self._dibujar_aura(pantalla)
-
-1.- Como solo los boss tienen aura, estaba pensando cambiar la logica asi:
-Sale ese destello ya dibujado, pero solo por 2 segundos, y yo generaré los sprites de cada robot jefe, basicamente seran los mismos, pero le añadire otro efecto, asi que seria literalemente reemplazar los sprites por unos que lo muestren enojado (yo los hare)
-estaran ubicados en su misma carpeta de "assets/robots/barbabot..."
-es decir, al cambiar de fase, en lugar de "assets/robots/barbabot/run.png" se mostrara "run_rage" o algo asi, y de igual forma con otros sprites, no se que tan complejo sea, de lo contrario solo hacer la opción 2.
-Con respecto a los sprites, yo los puedo hacer sin problema, ya que ya tengo los originales, solo seria copiarlos tal cual y añadirles algo extra.
-
-O
-
-2.- Simplemente se le puede añadir un aura tipo de fuego tambien generado por un sprite de 3 frames que tambien hare yo, este se mostrara como un gif constante detras del robot, puede ser por 3 segundos o permanente mientras cambia de fase, básicamente seria poner detrás del Sprite que pinta el robot, un Sprite de fuego, con 3 de animación, similar a lo que ocurre con "run" que son 6 frames, añadiendo también variables para hacer mas grande o mas pequeño el Sprite, para poder calcularlo según el tamaño de cada boss. Quiero hacer esto.
-
-
-Si crees que la opción 2 es mejor entonces hagamos esa.
-
-Te paso boss_controller.py + robot.py
-
+-- Implementado modo basket, en modo solo y multijugador.
+Pendiente:
+  
+  - Añadir ia para los bots, para que ya no busquen al jugador, busquen la pelota.
+    - Si la pelota esta esta suelta (no la tiene nadie), la buscan, y cuando la tienen intentan encestarla (se puede usar misma logica que el calculo de angulo en los misiles hacia el jugador)
+    - Si la pelota la tiene un jugador rival, intentan quitarsela con el arma que sostengan.
+  
+  - Añadir el efecto de giro de balon, y sonido de rebote cada que el balon tope con algo. > assets/sfx/rebote.mp3
+  
+  - Añadir que el arma principal sea el "manazo" en modobasket, no "nada" sino "manazo".
 
 
 

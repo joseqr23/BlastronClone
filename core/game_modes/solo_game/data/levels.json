@@ -189,6 +189,14 @@
         "robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "ancho" : "80", "alto": "450", "velocidad": 5, "salto": 17,
         "vida_maxima": 1000, "damage_multiplier": 1.5, "fases": [0.15, 0.05], "armas": ["sarten", "escopeta"], "distancia_acercamiento": 0, "distancia_ataque": 100
       }
+    },
+
+     {
+      "id": 19, "mapa": "basket_calle", "nombre": "Baloncesto", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 600, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "vida_maxima": 1000, "arma": "manazo", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 500}         
+      ]
     }
 
   ]

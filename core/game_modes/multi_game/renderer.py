@@ -59,7 +59,7 @@ class MultiplayerRenderer:
         game.aim.origen = robot.get_centro(); game.aim.update(mouse)
         config = config_arma(robot.arma_equipada)
         if not config: return
-        game.aim.draw(surface, estilo=config.get("estilo_mira", "apuntar"))
+        game.aim.draw(surface, estilo=config.get("estilo_mira", "apuntar"), config=config)
         ammo = game.weapon_manager.municion_actual(robot.arma_equipada)
         if ammo is not None and ammo <= 0: return
         hidden = config.get("oculta_arma_al_disparar")

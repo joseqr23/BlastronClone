@@ -109,7 +109,7 @@ class FreeGame(BaseGame):
                 self.aim.update(mouse_pos)
                 config = config_arma(self.robot.arma_equipada)
                 estilo_mira = config.get("estilo_mira", "apuntar") if config else "apuntar"
-                self.aim.draw(superficie, estilo=estilo_mira)
+                self.aim.draw(superficie, estilo=estilo_mira, config=config)
                 municion = self.weapon_manager.municion_actual(self.robot.arma_equipada)
                 sin_municion = municion is not None and municion <= 0
                 if config and not sin_municion:

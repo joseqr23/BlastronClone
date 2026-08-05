@@ -192,6 +192,22 @@ class MessageHandler:
             if not game.host and hasattr(game.modo, "_mostrar_banner"):
                 game.modo._mostrar_banner(message.get("mensaje", ""), message.get("duracion_ms", 2000))
             return
+
+        if message_type == "basket_portador":
+            if hasattr(game.modo, "portador"):
+                game.modo.portador = message.get("jugador")
+            return
+
+        if message_type == "basket_arma_forzada":
+            if message.get("jugador") == game.nombre_jugador:
+                game.robot.arma_equipada = message.get("arma", game.robot.arma_equipada)
+            return
+
+        if message_type == "basket_punto":
+            if not game.host and hasattr(game.modo, "puntos"):
+                anotador = message.get("jugador")
+                game.modo.puntos[anotador] = game.modo.puntos.get(anotador, 0) + message.get("puntos", 0)
+            return
         
         if message_type == "turno_fin":
             self._apply_turn_end(message); return

@@ -1,0 +1,35 @@
+{
+  "_________Propiedades de arma_________": "______________",
+  "nombre": "Balón",
+  "comportamiento": "rebote",
+  "daño": 0,
+  "gravedad": 0.50,
+  "friccion_aire": 0.99,
+  "friccion_rebote": 0.85,
+  "tiempo_explosion_ms": 999999999,
+  "tiempo_post_explosion_ms": 1,
+
+  "daña_al_dueño": false,
+  "cantidad": 1,
+    
+  "_________(Opcional) velocidad_proyectil: Esta es una funcionalidad para aumentar o disminuir la velocidad en la que sale el golpe o disparo del jugador__|__intervalo_disparos_ms: es para los milisegundos que dura en disparar la segunda arma segun la cantidad_____": "__Implementados sobre todo en armas de fuego, para que no tengan 'efecto de caida' | Implementados para la secuencia en armas que disparan más de un proyectil a la vez__",
+
+
+  "_________Tamaño sprites: Arma / Explosion_________": "En Sprite",
+  "ancho_proyectil": 40,
+  "alto_proyectil": 40,
+  "hitbox_ancho_proyectil": 20,
+  "hitbox_alto_proyectil": 20,
+
+  "_________Dibujado de sprite_________": "______________", 
+  "sprite": "assets/weapons/balon_basket/sprite.png",
+  "frames": 1,
+  "frames_explosion": 1,
+
+  "ancho_arma_sostenida": 40,
+  "alto_arma_sostenida": 40,
+
+  "estilo_mira": "apuntar",
+  "tipo": "Basket",
+  "oculta_del_hud": true
+}

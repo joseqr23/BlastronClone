@@ -16,7 +16,7 @@ from systems.weapon_manager import WeaponManager
 from ui.chat import Chat
 from ui.hud import HUDArmas, HUDPuntajesMultiplayer, HUDTimer, HUDTurnos
 from utils.colors import ColorManager
-from utils.weapon_loader import cargar_armas
+from utils.weapon_loader import cargar_armas, armas_seleccionables
 
 from .lobby_state import LobbyConfig, LobbyState
 from .lobby_controller import LobbyController
@@ -47,7 +47,7 @@ class MultiplayerGame(BaseGame):
         self.weapon_manager = WeaponManager(self)
         self.puntajes[self.nombre_jugador] = 0
         self.hud_puntajes = HUDPuntajesMultiplayer(self)
-        self.hud_armas = HUDArmas(list(cargar_armas().keys()))
+        self.hud_armas = HUDArmas(self._armas_disponibles())
         self.hud_manager = HUDManager(self)
         self.chat = Chat(nombre_jugador, game=self, robot_local=self.robot)
         self.event_handler = EventHandler(self)
@@ -165,6 +165,15 @@ class MultiplayerGame(BaseGame):
         jugador = self.lobby_state.jugadores.get(self.nombre_jugador)
         return bool(jugador and jugador.listo)
 
+    def _armas_disponibles(self):
+        """Todas las armas seleccionables, salvo que el modo actual
+        restrinja la lista (ej. ModoBasket.ARMAS_PERMITIDAS)."""
+        todas = list(armas_seleccionables().keys())
+        permitidas = getattr(self.modo, "armas_permitidas", None)
+        if permitidas:
+            return [arma for arma in todas if arma in permitidas]
+        return todas
+
     def apply_lobby_config(self, config):
         """Aplica la configuración de la sala antes de iniciar la partida."""
         if config.mapa_id != self.mapa_id:
@@ -174,6 +183,7 @@ class MultiplayerGame(BaseGame):
             self.modo_partida = config.modo_partida
             self.modo = crear_modo(config.modo_partida, self)
             self.vida_maxima = self.modo.vida_maxima
+            self.hud_armas = HUDArmas(self._armas_disponibles())
             for robot in [self.robot, *self.robots_remotos.values()]:
                 robot.vida_maxima = self.vida_maxima
                 robot.health = self.vida_maxima
@@ -241,14 +251,14 @@ class MultiplayerGame(BaseGame):
 
     def _update_turns_and_player(self):
         if not getattr(self.modo, "usa_turnos", True):
-            # Modo libre: nadie espera turno, todos se mueven/disparan
-            # siempre — la cadencia de ataque la limita el cooldown de
-            # WeaponManager, no TurnManager.
+            if hasattr(self.modo, "aplicar_efecto_local"):
+                self.modo.aplicar_efecto_local(self.robot)
             keys = pygame.key.get_pressed()
             self.robot.update(keys)
             if keys[pygame.K_DELETE]:
                 self.robot.take_damage(50)
             return
+
 
         if self.host and not self.turnos_iniciados:
             players = list(self.lobby_state.jugadores.keys())

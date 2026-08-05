@@ -17,7 +17,7 @@
   "empuje_ancho": 0,
   "empuje_alto": 0,
   
-  "_________(Opcional) solo para armas tipo escopeta, pistola, rifle_________": "___Intervalo es para los milisegundos que dura en disparar la segunda arma segun la cantidad___",
+  "_________(Opcional) velocidad_proyectil: Esta es una funcionalidad para aumentar o disminuir la velocidad en la que sale el golpe o disparo del jugador__|__intervalo_disparos_ms: es para los milisegundos que dura en disparar la segunda arma segun la cantidad_____": "__Implementados sobre todo en armas de fuego, para que no tengan 'efecto de caida' | Implementados para la secuencia en armas que disparan más de un proyectil a la vez__",
   "intervalo_disparos_ms": 120,
   "_________(Opcional)_________" : "Para velocidad de reproduccion de frames de los sprites",
   "velocidad_animacion_ms": 1,

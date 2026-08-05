@@ -5,7 +5,7 @@ import pygame
 class LobbyConfigWidgets:
     """Controles del Host. El carrusel muestra cualquier cantidad de mapas."""
     DURACIONES = (3, 5, 10)
-    MODOS = (("best_of_three", "Mejor de 3"), ("libre", "Libre"), ("lms", "Last man standing"), ("muertes", "Muertes"), ("puntos", "Puntos"))
+    MODOS = (("best_of_three", "Mejor de 3"), ("libre", "Libre"), ("lms", "Last man standing"), ("muertes", "Muertes"), ("puntos", "Puntos"),  ("basket", "Basket"))
 
     def __init__(self, assets):
         self.assets = assets

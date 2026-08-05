@@ -47,11 +47,12 @@ class SoundManager:
         self._cache[ruta] = sonido
         return sonido
 
-    def _reproducir(self, ruta):
+    def _reproducir(self, ruta, volumen=1.0):
         if not self.habilitado:
             return
         sonido = self._cargar(ruta)
         if sonido:
+            sonido.set_volume(volumen)
             sonido.play()
 
     # --- Efectos con variantes aleatorias ---
@@ -61,7 +62,7 @@ class SoundManager:
             "assets/sfx/salto/salto2.mp3",
             "assets/sfx/salto/salto3.mp3",
         ])
-        self._reproducir(ruta)
+        self._reproducir(ruta, 0.3)
 
     def dano(self):
         ruta = random.choice([
@@ -69,7 +70,7 @@ class SoundManager:
             "assets/sfx/dano/dano2.mp3",
             "assets/sfx/dano/dano3.mp3",
         ])
-        self._reproducir(ruta)
+        self._reproducir(ruta, 0.1)
 
     def muerte(self):
         ruta = random.choice([
@@ -77,21 +78,26 @@ class SoundManager:
             "assets/sfx/death/death2.mp3",
             "assets/sfx/death/death3.mp3",
         ])
-        self._reproducir(ruta)
+        self._reproducir(ruta, 0.4)
 
     # --- Efectos por arma (una carpeta por arma, dos sonidos cada una) ---
     def disparo(self, arma):
         """arma: 'granada', 'misil', o el nombre de cualquier arma futura —
         busca assets/sfx/weapons/<arma>/disparo.mp3."""
-        self._reproducir(f"assets/sfx/weapons/{arma}/disparo.mp3")
+        self._reproducir(f"assets/sfx/weapons/{arma}/disparo.mp3", 0.4)
 
     def explosion(self, arma="granada"):
         """arma: 'granada', 'misil', o el nombre de cualquier arma futura —
         busca assets/sfx/weapons/<arma>/explosion.mp3."""
-        self._reproducir(f"assets/sfx/weapons/{arma}/explosion.mp3")
+        self._reproducir(f"assets/sfx/weapons/{arma}/explosion.mp3", 0.4)
+
+    # Efectos para modo basket
+    def puntos_anotados(self):
+        """Será instanciado cada que alguien anota puntos."""
+        self._reproducir(f"assets/sfx/puntos_anotados.mp3")
 
     # --- Música de fondo ---
-    def iniciar_musica(self, ruta="assets/sfx/musica.mp3", volumen=0.4):
+    def iniciar_musica(self, ruta="assets/sfx/musica.mp3", volumen=0.1):
         if not self.habilitado:
             return
         try:

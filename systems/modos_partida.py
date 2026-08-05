@@ -28,6 +28,8 @@ Interfaz común de cada modo:
 import random
 import pygame
 from utils.weapon_loader import cargar_armas
+from entities.weapons.proyectil import Proyectil
+from utils.sound_manager import sound_manager
 
 class ModoPuntos:
     id = "puntos"
@@ -244,7 +246,7 @@ class ModoMejorDeTres:
         if armas_nivel:
             return list(armas_nivel)
         try:
-            armas = list(cargar_armas().keys())
+            armas = list(((cargar_armas().keys())))
         except Exception:
             armas = []
         return armas or list(self.ARMAS_RONDAS_FALLBACK)
@@ -376,12 +378,316 @@ class ModoMejorDeTres:
     def etiqueta_actual(self):
         return f"Victorias — Ronda {self.ronda} ({self.arma_ronda or '?'})"
 
+
+class ModoBasket:
+    """Una sola canasta (game.tiles_canasta); el balón (arma
+    "balon_basket") nace en game.punto_spawn_balon y no hace daño —
+    tocarlo lo convierte en el arma equipada de quien lo toca. Solo corre
+    en el lado autoritativo (host / SoloGame) — en un cliente remoto,
+    portador/arma/puntos de OTROS jugadores llegan por red (ver
+    basket_portador / basket_arma_forzada / basket_punto en
+    message_handler.py), nunca se calculan localmente."""
+    id = "basket"
+    nombre = "Basket"
+    vida_maxima = 50000
+    permite_reaparecer = True
+    usa_turnos = False
+    municion_ilimitada = True
+    cooldown_ataque_ms = 700  # cadencia del "palmazo" de los bots
+
+    ARMA_BALON = "balon_basket"
+    ARMAS_PERMITIDAS = ("manazo",) # solo se puede usar el balón, no otras armas
+    FACTOR_VELOCIDAD_PORTADOR = 1.0 # Al tener el balon, el portador se mueve más rápido
+    FACTOR_SALTO_PORTADOR = 5.0 # Al tener el balon, el portador salta más alto
+    FACTOR_VELOCIDAD_BASE = 3   # extra de velocidad para TODOS los robots del modo, no solo el portador
+    FACTOR_SALTO_BASE = 1       # extra de salto para TODOS los robots del modo, no solo el portador
+    DRENAJE_VIDA_POR_SEGUNDO = 3
+    DISTANCIA_TRIPLE = 260
+    MARGEN_RECOGIDA_MS = 300
+    DURACION_BANNER_MS = 2000
+    BLOQUEO_RECOGIDA_MS = 500  # tras soltar el balón, ese jugador no puede volver a agarrarlo de inmediato
+    UMBRAL_BALON_ATASCADO_MS = 6000  # si nadie lo agarra/encesta en este tiempo, se reinicia
+
+    def __init__(self, game):
+        self.game = game
+        self.puntos = {}
+        self.portador = None
+        self.arma_antes_balon = {}
+        self._ultimo_drenaje = None
+        self._proyectiles_vistos = set()
+        self._balon_en_juego = False
+        self.banner_texto = None
+        self.banner_hasta_ms = 0
+        self._bloqueo_recogida = {}
+        self.armas_permitidas = self._resolver_armas_permitidas()
+        
+
+    def registrar_muerte(self, victima, atacante):
+        pass  # revive solo; _revisar_muerte_portador() suelta el balón si el portador muere
+
+    def partida_terminada(self):
+        return False
+
+    def etiqueta_podio(self):
+        return "Puntos"
+
+    def podio(self):
+        jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
+        return _podio_por_valor_numerico({j: self.puntos.get(j, 0) for j in jugadores})
+
+    def valores_actuales(self):
+        jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
+        return {j: self.puntos.get(j, 0) for j in jugadores}
+
+    def etiqueta_actual(self):
+        return "Puntos"
+
+    @property
+    def arma_bloqueada(self):
+        return self.portador == self.game.nombre_jugador
+
+    def puede_lanzar(self, jugador, arma):
+        """Guardia anti-duplicado: solo el portador reconocido por el HOST
+        puede generar un proyectil de balon_basket. Corta la carrera entre
+        'agarrar' y 'lanzar' cuando ambos caen en el mismo frame (ver
+        weapon_manager.crear_proyectil_host)."""
+        if arma != self.ARMA_BALON:
+            return True
+        return jugador == self.portador
+
+    def _mostrar_banner(self, texto, duracion_ms):
+        self.banner_texto = texto
+        self.banner_hasta_ms = pygame.time.get_ticks() + duracion_ms
+
+    def _robots(self):
+        return [self.game.robot, *self.game.robots_remotos.values()]
+
+    def _robot_por_nombre(self, nombre):
+        if nombre == self.game.nombre_jugador:
+            return self.game.robot
+        return self.game.robots_remotos.get(nombre)
+
+    def _es_bot(self, robot):
+        npc_manager = getattr(self.game, "npc_manager", None)
+        return bool(npc_manager and robot in npc_manager.controllers)
+
+    def _asignar_arma(self, nombre, arma):
+        """Cambia el arma equipada de `nombre`. Si el dueño real de ese
+        robot es OTRA máquina, avisa por red — si no, el próximo "update"
+        que mande esa máquina pisaría el cambio de vuelta a lo que tenía
+        antes (cada jugador es la fuente de verdad de su propio
+        arma_equipada, salvo por este aviso puntual)."""
+        robot = self._robot_por_nombre(nombre)
+        if robot is not None:
+            robot.arma_equipada = arma
+        if nombre != self.game.nombre_jugador:
+            self.game.enviar({"tipo": "basket_arma_forzada", "jugador": nombre, "arma": arma})
+
+    def _fijar_portador(self, nombre):
+        self.portador = nombre
+        self.game.enviar({"tipo": "basket_portador", "jugador": nombre})
+
+    def _spawnear_balon(self):
+        punto = getattr(self.game, "punto_spawn_balon", None)
+        if punto is None:
+            return
+        pid = self.game._next_proy_id()
+        p = Proyectil(self.ARMA_BALON, punto[0], punto[1], 0, 0, owner=None)
+        p.proj_id = pid
+        self.game.proyectiles.append(p)
+        self._balon_en_juego = True
+
+    def _soltar_balon(self, nombre):
+        arma_previa = self.arma_antes_balon.pop(nombre, "nada")
+        self._asignar_arma(nombre, arma_previa)
+        if self.portador == nombre:
+            self._fijar_portador(None)
+        # Bloqueo propio, independiente de aturdido_hasta del robot (que
+        # ni siquiera se activa si el arma que golpeó no define empuje):
+        # este jugador no puede volver a agarrar el balón por un rato,
+        # sin importar POR QUÉ lo soltó (golpe, encestada, muerte).
+        self._bloqueo_recogida[nombre] = pygame.time.get_ticks() + self.BLOQUEO_RECOGIDA_MS
+        robot = self._robot_por_nombre(nombre)
+        if robot is not None:
+            centro = robot.get_centro()
+            pid = self.game._next_proy_id()
+            p = Proyectil(self.ARMA_BALON, centro[0], centro[1], 0, 0, owner=None)
+            p.proj_id = pid
+            self.game.proyectiles.append(p)
+            self._balon_en_juego = True
+
+    def _resolver_armas_permitidas(self):
+        if self.ARMAS_PERMITIDAS:
+            return list(self.ARMAS_PERMITIDAS)
+        try:
+            return list(cargar_armas().keys())
+        except Exception:
+            return []
+
+    def _centro_canasta(self):
+        tiles = getattr(self.game, "tiles_canasta", None)
+        if not tiles:
+            return None
+        xs = [t.rect.centerx for t in tiles]
+        ys = [t.rect.centery for t in tiles]
+        return (sum(xs) / len(xs), sum(ys) / len(ys))
+
+    def _distancia_a_canasta(self, x):
+        centro = self._centro_canasta()
+        return abs(x - centro[0]) if centro else 0
+
+    def actualizar(self):
+        if not self._balon_en_juego and self.portador is None:
+            self._spawnear_balon()
+        self._detectar_lanzamientos()
+        self._detectar_recogidas()
+        self._detectar_encestes()
+        self._revisar_muerte_portador()
+        self._aplicar_efecto_portador()
+        self._revisar_balon_atascado()
+
+    def _detectar_lanzamientos(self):
+        if self.portador is None:
+            return
+        for p in self.game.proyectiles:
+            if p.tipo != self.ARMA_BALON or id(p) in self._proyectiles_vistos:
+                continue
+            self._proyectiles_vistos.add(id(p))
+            if p.owner == self.portador:
+                p.x_lanzamiento = p.x
+                nombre = self.portador
+                self._fijar_portador(None)
+                self._asignar_arma(nombre, self.arma_antes_balon.pop(nombre, "nada"))
+
+    def _detectar_recogidas(self):
+        if self.portador is not None:
+            return
+        ahora = pygame.time.get_ticks()
+        for p in self.game.proyectiles:
+            if p.tipo != self.ARMA_BALON:
+                continue
+            hitbox = p.get_hitbox()
+            for robot in self._robots():
+                if robot.is_dead or self._es_bot(robot):
+                    continue
+                nombre = robot.nombre_jugador
+                if p.owner == nombre and ahora < p.tiempo_creacion + self.MARGEN_RECOGIDA_MS:
+                    continue
+                if ahora < self._bloqueo_recogida.get(nombre, 0):
+                    continue
+                if hitbox.colliderect(robot.get_rect()):
+                    self.arma_antes_balon[nombre] = robot.arma_equipada
+                    self._asignar_arma(nombre, self.ARMA_BALON)
+                    self._fijar_portador(nombre)
+                    try:
+                        self.game.proyectiles.remove(p)
+                    except ValueError:
+                        pass
+                    self._proyectiles_vistos.discard(id(p))
+                    return
+
+    def _detectar_encestes(self):
+        tiles = getattr(self.game, "tiles_canasta", None)
+        if not tiles:
+            return
+        for p in self.game.proyectiles[:]:
+            if p.tipo != self.ARMA_BALON:
+                continue
+            hitbox = p.get_hitbox()
+            if not any(t.rect.colliderect(hitbox) for t in tiles):
+                continue
+            anotador = p.owner or self.portador
+            if anotador:
+                x_origen = getattr(p, "x_lanzamiento", p.x)
+                puntos = 3 if self._distancia_a_canasta(x_origen) >= self.DISTANCIA_TRIPLE else 2
+                self.puntos[anotador] = self.puntos.get(anotador, 0) + puntos
+                sound_manager.puntos_anotados()
+                texto = f"¡{puntos} PUNTOS ANOTADOS POR {anotador}!"
+                self._mostrar_banner(texto, self.DURACION_BANNER_MS)
+                self.game.enviar({"tipo": "ronda_mensaje", "mensaje": texto, "duracion_ms": self.DURACION_BANNER_MS})
+                self.game.enviar({"tipo": "basket_punto", "jugador": anotador, "puntos": puntos})
+                self.game.chat.agregar_mensaje(texto)
+            try:
+                self.game.proyectiles.remove(p)
+            except ValueError:
+                pass
+            self._proyectiles_vistos.discard(id(p))
+            self._balon_en_juego = False
+            if self.portador:
+                nombre = self.portador
+                self._fijar_portador(None)
+                self._asignar_arma(nombre, self.arma_antes_balon.pop(nombre, "nada"))
+
+    def _revisar_muerte_portador(self):
+        if not self.portador:
+            return
+        robot = self._robot_por_nombre(self.portador)
+        if robot is not None and robot.is_dead:
+            self._soltar_balon(self.portador)
+
+    def notificar_golpe(self, robot):
+        """Llamado por WeaponManager cada vez que un golpe con empuje
+        conecta contra un robot (ver el hook en
+        WeaponManager._aplicar_empuje)."""
+        if robot.nombre_jugador == self.portador:
+            self._soltar_balon(robot.nombre_jugador)
+
+
+    def _velocidades_para(self, robot):
+        es_portador = robot.nombre_jugador == self.portador
+        base_speed = robot.velocidad_base + self.FACTOR_VELOCIDAD_BASE
+        base_jump = robot.salto_base + self.FACTOR_SALTO_BASE
+        speed = base_speed + self.FACTOR_VELOCIDAD_PORTADOR if es_portador else base_speed
+        jump = base_jump + self.FACTOR_SALTO_PORTADOR if es_portador else base_jump
+        return speed, jump
+
+    def aplicar_efecto_local(self, robot):
+        """A diferencia de actualizar() (host-autoritativo: spawns, puntos,
+        detección de encestes), esto debe correr en CADA máquina sobre SU
+        PROPIO robot — cada cliente mueve el suyo con su propio teclado, y
+        self.portador ya llega sincronizado a todos vía 'basket_portador'."""
+        robot.speed, robot.jump_power = self._velocidades_para(robot)
+
+    def _aplicar_efecto_portador(self):
+        ahora = pygame.time.get_ticks()
+        if self._ultimo_drenaje is None:
+            self._ultimo_drenaje = ahora
+        for robot in self._robots():
+            robot.speed, robot.jump_power = self._velocidades_para(robot)
+        if ahora - self._ultimo_drenaje < 1000:
+            return
+        self._ultimo_drenaje = ahora
+        if self.portador:
+            robot = self._robot_por_nombre(self.portador)
+            if robot is not None and not robot.is_dead:
+                pass  # drenaje de vida desactivado, como ya tenías
+
+    def _revisar_balon_atascado(self):
+        """Watchdog: no intenta diagnosticar la física exacta del atasco
+        (esquina del aro, tile raro, etc.) — simplemente garantiza que el
+        balón nunca quede fuera de circulación por mucho tiempo."""
+        if self.portador is not None:
+            return
+        ahora = pygame.time.get_ticks()
+        for p in self.game.proyectiles:
+            if p.tipo != self.ARMA_BALON:
+                continue
+            if ahora - p.tiempo_creacion >= self.UMBRAL_BALON_ATASCADO_MS:
+                try:
+                    self.game.proyectiles.remove(p)
+                except ValueError:
+                    pass
+                self._proyectiles_vistos.discard(id(p))
+                self._balon_en_juego = False
+            return  # solo debería existir un balón — no hace falta seguir
+
 MODOS = {
     "puntos": ModoPuntos,
     "muertes": ModoMuertes,
     "lms": ModoUltimoEnPie,
     "libre": ModoLibre,
     "best_of_three": ModoMejorDeTres,
+    "basket": ModoBasket,
 }
 
 
