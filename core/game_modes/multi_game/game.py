@@ -176,10 +176,20 @@ class MultiplayerGame(BaseGame):
 
     def apply_lobby_config(self, config):
         """Aplica la configuración de la sala antes de iniciar la partida."""
-        if config.mapa_id != self.mapa_id:
+        mapa_cambio = config.mapa_id != self.mapa_id
+        if mapa_cambio:
             self.cargar_mapa(config.mapa_id)
 
-        if config.modo_partida != self.modo_partida:
+        modo_cambio = config.modo_partida != self.modo_partida
+        if modo_cambio or mapa_cambio:
+            # OJO: se recrea self.modo tanto si cambia el modo_partida
+            # COMO si cambia el mapa — algunos modos (ModoBasket) derivan
+            # su comportamiento del mapa cargado (1 canasta vs 2 =
+            # individual vs por equipos), no solo del id de modo. Antes
+            # solo se comparaba modo_partida, así que cambiar de mapa
+            # sin cambiar de modo dejaba una instancia de ModoBasket
+            # "vieja", construida con el tiles_canasta anterior — de ahí
+            # el desincronizado entre host y clientes.
             self.modo_partida = config.modo_partida
             self.modo = crear_modo(config.modo_partida, self)
             self.vida_maxima = self.modo.vida_maxima

@@ -56,9 +56,7 @@ class ModoPuntos:
 
     def valores_actuales(self):
         jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
-        if self._modo_equipos:
-            return {j: self.puntos_equipo.get(self.equipos.get(j), 0) for j in jugadores}
-        return {j: self.puntos.get(j, 0) for j in jugadores}
+        return {j: self.game.puntajes.get(j, 0) for j in jugadores}
     
     def etiqueta_actual(self):
         return "Puntaje"
@@ -406,7 +404,7 @@ class ModoBasket:
     FACTOR_VELOCIDAD_BASE = 3   # extra de velocidad para TODOS los robots del modo, no solo el portador
     FACTOR_SALTO_BASE = 1       # extra de salto para TODOS los robots del modo, no solo el portador
     DRENAJE_VIDA_POR_SEGUNDO = 3
-    DISTANCIA_TRIPLE = 300
+    DISTANCIA_TRIPLE = 400
     DISTANCIA_TIRO_BOTS = 220  # los bots retroceden hasta esta distancia del aro antes de intentar encestar
     MARGEN_RECOGIDA_MS = 300
     DURACION_BANNER_MS = 2000
@@ -443,10 +441,20 @@ class ModoBasket:
 
     def podio(self):
         jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
-        return _podio_por_valor_numerico({j: self.puntos.get(j, 0) for j in jugadores})
+        valores = self._valores_por_jugador(jugadores)
+        return _podio_por_valor_numerico(valores)
 
     def valores_actuales(self):
         jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
+        return self._valores_por_jugador(jugadores)
+
+    def _valores_por_jugador(self, jugadores):
+        """En modo por equipos, cada jugador muestra el puntaje de SU
+        equipo (todos los compañeros quedan agrupados con el mismo valor,
+        así el podio los junta automáticamente vía _podio_por_valor_numerico).
+        Sin equipos, cada uno muestra su puntaje individual, como siempre."""
+        if self._modo_equipos:
+            return {j: self.puntos_equipo.get(self.equipos.get(j), 0) for j in jugadores}
         return {j: self.puntos.get(j, 0) for j in jugadores}
 
     def etiqueta_actual(self):

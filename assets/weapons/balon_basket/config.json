@@ -32,7 +32,7 @@
   "estilo_mira": "apuntar",
   "tipo": "Basket",
   
-  "oculta_del_hud": true,
+  "oculta_del_hud": false,
   "gira_en_vuelo": true,
   "factor_giro": 5,
   "rebota_con_robots": false,
