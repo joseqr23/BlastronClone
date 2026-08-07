@@ -221,7 +221,7 @@ class MultiplayerGame(BaseGame):
     def _run_match(self):
         while True:
             if not self.robot.is_dead and self.robot.arma_equipada not in (None, "nada"):
-                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_mundo()[0] >= self.robot.get_centro()[0]
             if not self.event_handler.handle_events(): return None
             self.messages.process_pending()
             if self.volver_al_menu:

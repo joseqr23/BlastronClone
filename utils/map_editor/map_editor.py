@@ -4,7 +4,7 @@ import os
 import importlib.util
 
 # Configuración de pantalla
-ANCHO, ALTO = 1000, 494
+ANCHO, ALTO = 1550, 494
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO, ALTO))
 pygame.display.set_caption("Editor de Plataformas con Fondo")

@@ -122,7 +122,17 @@ class Proyectil:
         # necesite congelar por completo la física una vez asentado/fijo).
         # Ver update().
         self._detenida = False
+        # Giro visual continuo mientras vuela — solo cosmético, no
+        # afecta ninguna física. Opcional vía config.json.
+        self.gira_en_vuelo = self.config.get("gira_en_vuelo", False)
+        self._angulo_giro = 0.0
 
+        # Sonido de rebote (opcional, "sonido_rebote": true en el
+        # config.json del arma) — con cooldown propio para no disparar
+        # una ráfaga de sonidos mientras el balón pica seguido.
+        self.sonido_rebote = self.config.get("sonido_rebote", False)
+        self._ultimo_rebote_ms = 0
+        
         # Timer LOCAL para animar los frames de explosión (ver draw()).
         # No usa tiempo_eliminar porque en el cliente los proyectiles son
         # "proxies" sincronizados por red — su estado/explotado llega
@@ -229,6 +239,18 @@ class Proyectil:
         self.tiempo_eliminar = ahora + self.tiempo_post_explosion
         sound_manager.explosion(self.tipo)
 
+    def _reproducir_rebote(self):
+        if not self.sonido_rebote:
+            return
+        ahora = pygame.time.get_ticks()
+        if ahora - self._ultimo_rebote_ms < 120:  # evita ráfagas en micro-rebotes
+            return
+        self._ultimo_rebote_ms = ahora
+        # _ruta_rebote_mapa la inyecta base_game.cargar_mapa() en el
+        # config cacheado del arma — si el mapa actual no define
+        # rebote.mp3, cae al genérico de sound_manager.
+        sound_manager.rebote(self.config.get("_ruta_rebote_mapa"))
+
     def update(self, tiles, robots):
         """robots: lista de robots contra los que puede colisionar. Se
         revisa colisión en CADA sub-paso del movimiento, no solo al final
@@ -276,6 +298,10 @@ class Proyectil:
                 elif self.vel_x < 0:
                     self._facing_right = False
 
+            if self.gira_en_vuelo:
+                velocidad_actual = math.hypot(self.vel_x, self.vel_y)
+                self._angulo_giro = (self._angulo_giro + velocidad_actual * self.config.get("factor_giro", 4)) % 360
+
         if self.explotado and ahora >= self.tiempo_eliminar:
             self.estado = "done"
             self.muerta = True
@@ -322,7 +348,12 @@ class Proyectil:
                 pantalla.blit(imagen, rect.topleft)
             else:
                 imagen = frame if self._facing_right else pygame.transform.flip(frame, True, False)
-                pantalla.blit(imagen, (int(self.x + offset_x), int(self.y + offset_y)))
+                if self.gira_en_vuelo:
+                    imagen = pygame.transform.rotate(imagen, self._angulo_giro)
+                    rect = imagen.get_rect(center=(self.x + self.width / 2 + offset_x, self.y + self.height / 2 + offset_y))
+                    pantalla.blit(imagen, rect.topleft)
+                else:
+                    pantalla.blit(imagen, (int(self.x + offset_x), int(self.y + offset_y)))
         elif self.estado == "explode":
             total_frames = len(self.frames)
             count = min(self.frames_explosion_count, total_frames)
@@ -370,10 +401,18 @@ class Proyectil:
 # ----------------------------------------------------------------------
 def _comportamiento_rebote(p, tiles, robots):
     """Rebota contra tiles y robots según su velocidad. Nunca detona por
-    contacto, solo por tiempo (igual que la granada original)."""
+    contacto, solo por tiempo (igual que la granada original).
+
+    "rebota_con_robots": false (config.json) desactiva el rebote físico
+    contra robots — pensado para el balón de basket: sin esto, el propio
+    rebote lo empuja fuera del hitbox de recogida antes de que
+    ModoBasket pueda detectar que alguien lo agarró, así que solo lo
+    atrapaba si tocaba justo el centro. Sin bote contra robots, cualquier
+    parte del sprite que lo toque cuenta para agarrarlo."""
     _rebote_con_tiles(p, tiles)
-    for robot in robots:
-        _rebote_con_robot(p, robot)
+    if p.config.get("rebota_con_robots", True):
+        for robot in robots:
+            _rebote_con_robot(p, robot)
 
 
 def _comportamiento_impacto(p, tiles, robots):
@@ -454,6 +493,8 @@ def _rebote_con_tiles(p, tiles):
             continue
         velocidad_actual = max(abs(p.vel_x), abs(p.vel_y))
         factor_rebote = p.friccion_rebote * 0.3 if velocidad_actual < umbral_suave else p.friccion_rebote
+        if velocidad_actual > umbral_suave:
+            p._reproducir_rebote()
 
         lado, _ = _lado_de_menor_solape(rect, tile.rect)
         if lado == "arriba":

@@ -203,10 +203,27 @@ class MessageHandler:
                 game.robot.arma_equipada = message.get("arma", game.robot.arma_equipada)
             return
 
+        if message_type == "basket_equipo_jugador":
+            modo = game.modo
+            if hasattr(modo, "equipos"):
+                nombre, equipo = message.get("jugador"), message.get("equipo")
+                modo.equipos[nombre] = equipo
+                robot = modo._robot_por_nombre(nombre)
+                if robot is not None:
+                    robot.color_nombre = modo.COLOR_EQUIPO_A if equipo == "A" else modo.COLOR_EQUIPO_B
+            return
+
         if message_type == "basket_punto":
             if not game.host and hasattr(game.modo, "puntos"):
-                anotador = message.get("jugador")
-                game.modo.puntos[anotador] = game.modo.puntos.get(anotador, 0) + message.get("puntos", 0)
+                modo = game.modo
+                anotador, puntos = message.get("jugador"), message.get("puntos", 0)
+                if getattr(modo, "_modo_equipos", False):
+                    equipo_anotador = modo.equipos.get(anotador)
+                    beneficiado = modo._equipo_rival(equipo_anotador) if message.get("autogol") else equipo_anotador
+                    if beneficiado:
+                        modo.puntos_equipo[beneficiado] = modo.puntos_equipo.get(beneficiado, 0) + puntos
+                else:
+                    modo.puntos[anotador] = modo.puntos.get(anotador, 0) + puntos
             return
         
         if message_type == "turno_fin":

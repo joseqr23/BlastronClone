@@ -57,7 +57,7 @@ class FreeGame(BaseGame):
             if not self.robot.is_dead and self.robot.arma_equipada not in [None, 'nada']:
                 #mouse_pos = pygame.mouse.get_pos()
                 #self.robot.facing_right = mouse_pos[0] >= self.robot.get_centro()[0]
-                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_mundo()[0] >= self.robot.get_centro()[0]
             # --- Entrada ---
             if not self.event_handler.handle_events():
                 return  # usuario cerró ventana
@@ -104,7 +104,7 @@ class FreeGame(BaseGame):
 
             # indicador de mira
             if self.robot.arma_equipada not in [None, 'nada']:
-                mouse_pos = self.mouse_logico()
+                mouse_pos = self.mouse_mundo()
                 self.aim.origen = self.robot.get_centro()
                 self.aim.update(mouse_pos)
                 config = config_arma(self.robot.arma_equipada)
@@ -129,8 +129,10 @@ class FreeGame(BaseGame):
                             posicion_y=config.get("posicion_alto_arma_sostenida", 0),
                         )
 
-            offset = self._offset_shake()
-            self.pantalla.blit(superficie, offset)
+            self._camara_x = self.calcular_camara_x(self.robot.get_centro()[0])
+            offset_x, offset_y = self._offset_shake()
+            recorte = pygame.Rect(int(self._camara_x), 0, ANCHO, ALTO)
+            self.pantalla.blit(superficie, (offset_x, offset_y), area=recorte)
 
             # HUDs (sin shake)
             self.hud_manager.draw(self.pantalla)

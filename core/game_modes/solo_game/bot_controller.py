@@ -11,6 +11,22 @@ import random
 import pygame
 from utils.weapon_loader import config_arma
 
+class _ObjetivoPuntual:
+    """Wrapper liviano para que BotController persiga/apunte a un PUNTO
+    del mapa (la pelota suelta, o el aro) con la misma lógica de
+    movimiento y puntería que ya usa para perseguir a un jugador — sin
+    duplicar nada de esa lógica en otro lado."""
+    __slots__ = ("x", "y", "is_dead")
+
+    def __init__(self, x, y):
+        self.x, self.y, self.is_dead = x, y, False
+
+    def get_centro(self):
+        return (self.x, self.y)
+
+    def get_rect(self):
+        return pygame.Rect(int(self.x) - 5, int(self.y) - 5, 10, 10)
+
 
 class BotController:
     DURACION_RETIRADA_MS = 3000
@@ -19,6 +35,8 @@ class BotController:
     ATASCO_UMBRAL_PX = 4
     CONTACTO_CUERPO_A_CUERPO = 0    # 0 = literalmente pegados / superpuestos
     TOLERANCIA_ATAQUE_CUERPO_A_CUERPO = 24  # margen para atacar una vez que llegó ahí
+    TIEMPO_VUELO_MIN_BASKET = 20
+    FACTOR_ARCO_BASKET = 3.6  # más alto = arco más lobeado, más margen para pasar la pared del aro
 
     def __init__(self, robot, difficulty: int, rng: random.Random | None = None,
                  distancia_acercamiento=None, distancia_ataque=None, persigue_sin_tregua=False):
@@ -34,6 +52,20 @@ class BotController:
         self.distancia_acercamiento = distancia_acercamiento
         self.distancia_ataque = distancia_ataque
         self.persigue_sin_tregua = persigue_sin_tregua  # modo libre: nunca se retira tras golpear
+        # Override opcional del intervalo entre golpes/disparos — None =
+        # usar la fórmula por dificultad de siempre. Lo fija ModoBasket
+        # para que el manazo de los bots respete cooldown_ataque_ms.
+        self.cooldown_disparo_ms = None
+        # Distancia MÍNIMA para poder disparar (ver should_fire) — None =
+        # sin piso, comportamiento de siempre. Lo usa ModoBasket para que
+        # el bot no encestre parado literalmente debajo del aro.
+        self.distancia_minima_disparo = None
+        # Punto real al que apuntar/lanzar en Basket — separado del
+        # "target" que se le pasa a update() para MOVERSE (que puede ser
+        # un punto de parada distinto al aro, ver game._objetivo_basket).
+        # None = usar el target de movimiento también para apuntar
+        # (comportamiento de siempre).
+        self.punto_mira_basket = None
 
     # ------------------------------------------------------------------
     def _distancia_ideal(self):
@@ -131,6 +163,9 @@ class BotController:
         config = self._config_arma_actual()
         es_cuerpo_a_cuerpo = self._es_cuerpo_a_cuerpo(config)
 
+        if self.distancia_minima_disparo is not None and distance < self.distancia_minima_disparo:
+            return False
+
         if self.distancia_ataque is not None:
             limite = self.distancia_ataque
         elif es_cuerpo_a_cuerpo:
@@ -148,7 +183,8 @@ class BotController:
             self.next_shot_at = now + 350
             return False
 
-        self.next_shot_at = now + max(450, 1500 - self.difficulty * 180)
+        self.next_shot_at = now + (self.cooldown_disparo_ms if self.cooldown_disparo_ms is not None
+                                   else max(450, 1500 - self.difficulty * 180))
         if es_cuerpo_a_cuerpo and not self.persigue_sin_tregua:
             self.retirada_hasta_ms = now + self.DURACION_RETIRADA_MS
         return True
@@ -166,17 +202,58 @@ class BotController:
         return config.get("comportamiento") in ("cuerpo_a_cuerpo", "cuerpo_a_cuerpo_direccional")
 
     def _aim(self, origin, target, distance):
-        """Explosivas: se apunta con una elevación de arco (para que la
-        trayectoria curva no falle el impacto). Cualquier otro tipo —
-        Armas de fuego, Especiales, Cuerpo a cuerpo, o sin "tipo"
-        definido — apunta directo al centro real del objetivo."""
+        """Explosivas: elevación simple (aproximación, alcanza para que
+        no falle). Basket: física exacta (ver _calcular_arco_basket) —
+        apunta a self.punto_mira_basket si está fijado (el aro real),
+        no necesariamente al mismo punto al que el bot está caminando
+        (que puede ser un punto de parada a un costado del aro — ver
+        game._objetivo_basket). Cualquier otro tipo apunta directo al
+        centro real del objetivo."""
         config = self._config_arma_actual()
         tipo = config.get("tipo") if config else None
         dx, dy = target[0] - origin[0], target[1] - origin[1]
         if tipo == "Explosivas":
             elevacion = min(90, distance * 0.18)
             return (dx, dy - elevacion)
+        if tipo == "Basket":
+            objetivo_real = self.punto_mira_basket or target
+            return self._calcular_arco_basket(origin, objetivo_real)
         return (dx, dy)
+
+    def _calcular_arco_basket(self, origin, target):
+        """Devuelve (vel_x, vel_y) EXACTOS para que el balón llegue justo
+        al punto objetivo, resolviendo la recurrencia DISCRETA real de
+        Proyectil.update() — no la aproximación continua 0.5*g*t².
+
+        Vertical: vel_y += gravedad y LUEGO se desplaza, una vez por
+        frame -> tras n frames el desplazamiento total es
+        n*vel_y0 + g*n*(n+1)/2 (no g*n²/2). Se despeja vel_y0 de eso.
+
+        Horizontal: vel_x se multiplica por friccion_aire cada frame
+        DESPUÉS de desplazar — la distancia total NO es vel_x0*n, es una
+        serie geométrica. Sin compensar esto, el balón se quedaba corto
+        en distancia horizontal (el síntoma de "poca fuerza") — con
+        friccion_aire=0.995 la pérdida acumulada en 20-40 frames es
+        significativa, no despreciable."""
+        config = self._config_arma_actual()
+        gravedad = config.get("gravedad", 0.35) if config else 0.35
+        friccion_aire = config.get("friccion_aire", 1.0) if config else 1.0
+        velocidad_base = config.get("velocidad_proyectil", 14) if config else 14
+        dx = target[0] - origin[0]
+        dy = target[1] - origin[1]
+        distancia_horizontal = max(1, abs(dx))
+        n = max(self.TIEMPO_VUELO_MIN_BASKET,
+                int((distancia_horizontal / max(1, velocidad_base)) * self.FACTOR_ARCO_BASKET))
+
+        vel_y = (dy - gravedad * n * (n + 1) / 2) / n
+
+        if abs(friccion_aire - 1.0) < 1e-6:
+            vel_x = dx / n
+        else:
+            factor_serie = (1 - friccion_aire ** n) / (1 - friccion_aire)
+            vel_x = dx / factor_serie if factor_serie else dx / n
+
+        return (vel_x, vel_y)
 
     def _alcance_cuerpo_a_cuerpo(self, config):
         """Qué tan lejos (borde a borde) debe estar el bot para que su

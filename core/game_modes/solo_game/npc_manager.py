@@ -54,6 +54,7 @@ class NpcManager:
                           velocidad=config.velocidad, salto=config.salto)
             robot.es_jugador = False
             robot.arma_equipada = config.arma
+            robot.equipo_basket = config.equipo  # None = auto-asignado por ModoBasket
 
             self.controllers[robot] = BotController(
                 robot, self.dificultad, self.rng,
@@ -79,6 +80,7 @@ class NpcManager:
         robot.es_jugador = False
         robot.damage_multiplier = config.damage_multiplier
         robot.arma_equipada = config.armas[0] if config.armas else "misil"
+        robot.equipo_basket = config.equipo
 
         self.controllers[robot] = BossController(robot, config, self.rng)
         self.controllers[robot].persigue_sin_tregua = not self.game.modo.usa_turnos

@@ -6,13 +6,14 @@ from settings import ANCHO, ALTO
 from levels.map_loader import (
     load_static_map, load_static_map_laterales,
     load_static_map_impenetrables, load_static_map_dañinas, cargar_dano_zonas_dañinas, load_canasta, cargar_punto_spawn_balon,
+    cargar_spawns_equipo_basket,
 )
 from ui.hud import HUDArmas, HUDPuntajes
 from ui.chat import Chat
 from systems.aim_indicator import AimIndicator
 from utils.paths import resource_path
 from utils.sound_manager import sound_manager
-from utils.weapon_loader import cargar_armas, armas_seleccionables
+from utils.weapon_loader import cargar_armas, armas_seleccionables, config_arma
 from utils.mapa_loader import config_mapa
 
 class BaseGame:
@@ -50,7 +51,7 @@ class BaseGame:
 
         self.reloj = pygame.time.Clock()
         self.sound_manager = sound_manager
-        self.superficie_mundo = pygame.Surface((ANCHO, ALTO)).convert()
+        self.ancho_mundo = ANCHO
         # Mapa — ver cargar_mapa() más abajo (también arranca la música
         # de ese mapa). En multijugador, el cliente arranca con el mapa
         # por defecto y lo reemplaza en cuanto el host le confirma cuál
@@ -83,16 +84,26 @@ class BaseGame:
         self.dano_zonas = cargar_dano_zonas_dañinas(mapa_id)
         self.tiles_canasta = load_canasta(mapa_id)
         self.punto_spawn_balon = cargar_punto_spawn_balon(mapa_id)
+        self.spawns_equipo_basket = cargar_spawns_equipo_basket(mapa_id)
         config_del_mapa = config_mapa(mapa_id) or {}
+        self.ancho_mundo = max(ANCHO, int(config_del_mapa.get("ancho_mundo", ANCHO)))
+        self.superficie_mundo = pygame.Surface((self.ancho_mundo, ALTO)).convert()
         ruta_fondo = config_del_mapa.get("_fondo_path", "assets/maps/fondo.png")
         # self.fondo = pygame.image.load(resource_path(ruta_fondo)).convert()
         self.fondo = pygame.image.load(ruta_fondo).convert()
-        self.fondo = pygame.transform.smoothscale(self.fondo, (ANCHO, ALTO))
+        self.fondo = pygame.transform.smoothscale(self.fondo, (self.ancho_mundo, ALTO))
 
         # Música del mapa: si la carpeta trae su propia musica.mp3, se
         # usa esa; si no, cae a la genérica de siempre.
         ruta_musica = config_del_mapa.get("_musica_path", "assets/sfx/musica.mp3")
         self.sound_manager.iniciar_musica(ruta_musica)
+
+        # Sonido de rebote propio del mapa (opcional): se inyecta en el
+        # config CACHEADO del balón — así Proyectil puede usarlo sin que
+        # weapon_loader necesite saber nada de mapas.
+        config_balon = config_arma("balon_basket")
+        if config_balon is not None:
+            config_balon["_ruta_rebote_mapa"] = config_del_mapa.get("_rebote_path")
 
 
     def run(self):
@@ -109,8 +120,9 @@ class BaseGame:
             tile.draw(superficie)
         for tile in self.tiles_dañinas:
             tile.draw(superficie)
-        for tile in self.tiles_canasta:
-            tile.draw(superficie)
+        for tiles in self.tiles_canasta.values():
+            for tile in tiles:
+                tile.draw(superficie)
 
     def handle_events(self, event):
         self.chat.handle_event(event)
@@ -182,3 +194,16 @@ class BaseGame:
 
     def mouse_logico(self):
         return self.convertir_coordenadas(pygame.mouse.get_pos())
+
+    def calcular_camara_x(self, objetivo_x):
+        if self.ancho_mundo <= ANCHO:
+            return 0
+        return max(0, min(self.ancho_mundo - ANCHO, objetivo_x - ANCHO / 2))
+
+    def mouse_mundo(self):
+        """Igual que mouse_logico(), sumando el offset de cámara actual —
+        usar SIEMPRE para calcular hacia dónde apunta un disparo/mira en
+        un mapa con cámara (ancho_mundo > ANCHO). En mapas sin cámara es
+        idéntico a mouse_logico()."""
+        x, y = self.mouse_logico()
+        return (x + getattr(self, "_camara_x", 0), y)

@@ -192,12 +192,62 @@
     },
 
      {
-      "id": 19, "mapa": "basket_calle", "nombre": "Baloncesto", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
-      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 600, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "id": 19, "mapa": "basket_calle", "nombre": "Baloncesto I", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
       "bots": [
-        {"robot_id": "rosadito", "nombre": "Alfonso Augusto Carrasco Riofrio", "vida_maxima": 1000, "arma": "manazo", "velocidad": 3, "salto": 16, "distancia_acercamiento": 0, "distancia_ataque": 500}         
+        {"robot_id": "rosadito", "nombre": "Alfonso", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100}         
       ]
+    },
+
+    {
+      "id": 20, "mapa": "basket_calle", "nombre": "Baloncesto II", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "rosadito", "nombre": "Alfonso", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100}         
+      ]
+    },
+
+     {
+      "id": 21, "mapa": "basket_estadio_equipos", "nombre": "Baloncesto III", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "rosadito", "nombre": "Alfonso", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100},             
+        {"robot_id": "netali", "nombre": "Riveros", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100}            
+      ],
+      "boss": {
+        "robot_id": "lebot_james", "nombre": "Lebot James", "ancho" : "100", "alto": "130", "velocidad": 1.5, "salto": 16,
+        "vida_maxima": 50000, "damage_multiplier": 1.5, "fases": [0.75, 0.85], "armas": ["manazo", "manazo"], "distancia_acercamiento": 0, "distancia_ataque": 100, "mensaje": "¡Prepárate para el partido de tu vida!" 
+      }
+    },
+
+    {
+      "id": 22, "mapa": "basket_calle", "nombre": "Baloncesto I", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "rosadito", "nombre": "Alfonso", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100}         
+      ]
+    },
+
+    {
+      "id": 23, "mapa": "basket_calle", "nombre": "Baloncesto II", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        {"robot_id": "rosadito", "nombre": "Alfonso", "vida_maxima": 50000, "arma": "manazo", "velocidad": 0.5, "salto": 10, "distancia_acercamiento": 0, "distancia_ataque": 100}         
+      ]
+    },
+
+     {
+      "id": 24, "mapa": "basket_estadio", "nombre": "Baloncesto III", "modo": "basket", "dificultad": 1, "duracion_min": 5, 
+      "armas_jugador": ["manazo"], "municion_jugador": {"manazo": 99, "misil": 99}, "vida_jugador": 50000, "salto_jugador": 15, "velocidad_jugador": 2.5,
+      "bots": [
+        
+      ],
+      "boss": {
+        "robot_id": "lebot_james", "nombre": "Michael Botdan", "ancho" : "100", "alto": "130", "velocidad": 2.0, "salto": 17,
+        "vida_maxima": 50000, "damage_multiplier": 1.5, "fases": [0.75, 0.85], "armas": ["manazo", "manazo"], "distancia_acercamiento": 0, "distancia_ataque": 100, "mensaje": "No podrás anotar ni un solo punto contra mí, ¡prepárate para la derrota!"
+      }
     }
+
 
   ]
 }

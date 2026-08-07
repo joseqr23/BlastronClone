@@ -19,7 +19,12 @@ class MultiplayerRenderer:
         game.weapon_manager.draw(world)
         self._draw_local_weapon(world)
         self._draw_remote_weapons(world)
-        game.pantalla.blit(world, game._offset_shake())
+        game._camara_x = game.calcular_camara_x(game.robot.get_centro()[0])
+        offset_x, offset_y = game._offset_shake()
+        recorte = pygame.Rect(int(game._camara_x), 0, ANCHO, ALTO)
+        game.pantalla.blit(world, (offset_x, offset_y), area=recorte)
+        if game.ancho_mundo > ANCHO:
+            self._draw_indicador_balon(game._camara_x)
         game.hud_manager.draw(game.pantalla)
         game.chat.draw(game.pantalla)
         game.timer_hud.draw(game.pantalla)
@@ -37,7 +42,7 @@ class MultiplayerRenderer:
 
     def _draw_round_banner(self, texto):
         pantalla = self.game.pantalla
-        fuente = pygame.font.SysFont("Arial", 54, bold=True)
+        fuente = pygame.font.SysFont("Arial", 25, bold=True) # Fuente de mensajes en partida Ronda | Puntos anotados | Jugador gano ronda | Etc
         sombra = fuente.render(texto, True, (0, 0, 0))
         render = fuente.render(texto, True, (255, 215, 0))
         centro = (ANCHO // 2, ALTO // 2 - 60)
@@ -55,7 +60,7 @@ class MultiplayerRenderer:
     def _draw_local_weapon(self, surface):
         game, robot = self.game, self.game.robot
         if robot.arma_equipada in (None, "nada"): return
-        mouse = game.mouse_logico()
+        mouse = game.mouse_mundo()
         game.aim.origen = robot.get_centro(); game.aim.update(mouse)
         config = config_arma(robot.arma_equipada)
         if not config: return
@@ -124,3 +129,16 @@ class MultiplayerRenderer:
             pygame.draw.rect(game.pantalla, (240, 240, 245), rect, 1, border_radius=8)
             text = game.fuente_botones.render(label, True, (255, 255, 255))
             game.pantalla.blit(text, text.get_rect(center=rect.center))
+
+    def _draw_indicador_balon(self, camara_x):
+        game = self.game
+        balon = next((p for p in game.proyectiles if p.tipo == "balon_basket"), None)
+        if not balon:
+            return
+        bx = balon.get_hitbox().centerx
+        if camara_x <= bx <= camara_x + ANCHO:
+            return
+        hacia_derecha = bx > camara_x + ANCHO
+        x, y = (ANCHO - 28 if hacia_derecha else 28), 60
+        dx = 10 if hacia_derecha else -10
+        pygame.draw.polygon(game.pantalla, (255, 196, 60), [(x + dx, y), (x - dx, y - 10), (x - dx, y + 10)])

@@ -1,13 +1,17 @@
--- Implementado modo basket, en modo solo y multijugador.
+-- Implementado modo basket en una canasta y en dos por equipos, en modo solo y multijugador.
 Pendiente:
-  
-  - Añadir ia para los bots, para que ya no busquen al jugador, busquen la pelota.
-    - Si la pelota esta esta suelta (no la tiene nadie), la buscan, y cuando la tienen intentan encestarla (se puede usar misma logica que el calculo de angulo en los misiles hacia el jugador)
-    - Si la pelota la tiene un jugador rival, intentan quitarsela con el arma que sostengan.
-  
-  - Añadir el efecto de giro de balon, y sonido de rebote cada que el balon tope con algo. > assets/sfx/rebote.mp3
-  
-  - Añadir que el arma principal sea el "manazo" en modobasket, no "nada" sino "manazo".
+  - Implementar de ser posible un mapa más largo > actualmente todos los mapas tienen cierta altura, lo que limita al campo de basket.
+    - Con respecto al largo de fondo no hay problema, ya que es solo una imagen que yo puedo definir con mucho largo, lo que faltaria, seria unicamente añadir un efecto de camara, que siga y mueva la pantalla siempre siguiendo al balon o que siempre siga al jugador, pero que muestre un indicador de donde se encuentra el balon si este sale de la pantalla visual del jugador.
+      - Basicamente como un juego de plataformas tipo "mario" que la camara lo sigue, no seria algo tan largo, y simplemente se aplicaria el efecto en ese mapa (y en cualquiera requerido). No es neceasario tocar alguna logica, ya que los bots por ejemplo ya se acercan a las coordenadas de las canastas.
+  - Añadir 2 puntos de reaparacion en los mapas de basket, cambiarlos por el que esta por defecto actualmente, esto sera para que en el modo equipos, cada uno aparezca en su propio campo y no de manera aleatoria.
+  - Cambiar el color de los nombres de los bots al igual que ya se hizo con los huds de puntaje, que sea el mismo que tiene su equipo > AZUL | ROJO.
+  - Los puntos no estan sumando > Actualmente se muestra en el hud la lista de jugadores, con los nombres pintados por equipo, esto es correcto pero ninguno suma puntos.
+    - Adicionalmente, para el modo basket por equipos podria implementarse un hud con algo que diga (Team "nombre jugador" < toma siempre el primer valor de cualquier jugador del equipo > o simplemente Team Blue - Team Red > más simple. Incluso tambien cambiar ligeramente el diseño de hud de puntos tipo uno de basket TEAM BLUE | TEAM RED Y EN LA PARTE BAJA DE CADA 1 SU PUNTAJE
+  - Implementar el modo por equipos tambien en multijugador, actualmente al iniciar una partida solo un jugador tiene equipo, el otro aparece sin equipo.
+  - (Opcional) de no ser tan dificil quitar el fuego amigo entre equipos.
+
+- Al modo multijugador se le puede añadir una opcion para agregar bots como host? Que jueguen en partidas y sigan el comportamiento que ya tienen en modo solo segun el modo definido.
+
 
 
 
@@ -20,8 +24,6 @@ Implementar para Boss en modo Solo.
         "robot_id": "barbabot", "nombre": "Capitan Barbabot", "ancho" : "100", "alto": "150", "velocidad": 6, "salto": 18,
         "vida_maxima": 950, "damage_multiplier": 1.5, "fases": [0.75, 0.55, 0.35 ], "armas": ["espada_pirata", "cañon", "pistola_pirata"], "distancia_acercamiento": [0, 20, 30], "distancia_ataque": [0, 150, 150], "mensaje": "¡Soy el rey de los mares y no me detendré ante nada!"
       }
-
-
 2.- Asi como se ha implementado lo del nombre que se guarda, y lo de los niveles desbloqueables, se puede hacer tambien con los personajes o incluso las armas?
 Por ejemplo los jefes de cada mapa de modo solo, al ganar, si no esta desbloqueado que se desbloquee y salga un mensaje "personaje desbloqueado: Nombrederobot"
 

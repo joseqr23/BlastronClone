@@ -22,6 +22,7 @@ class BotConfig:
     distancia_acercamiento: float | None = None  # None = automático según el arma
     distancia_ataque: float | None = None        # None = automático según el arma
     mensaje: str | None = None  # frase de presentación, opcional
+    equipo: str | None = None  # "A"/"B" — solo relevante en modo basket con 2+ canastas
 
 @dataclass(frozen=True)
 class BossConfig:
@@ -38,6 +39,7 @@ class BossConfig:
     distancia_acercamiento: float | None = None
     distancia_ataque: float | None = None
     mensaje: str | None = None
+    equipo: str | None = None
 @dataclass(frozen=True)
 class LevelConfig:
     id: int
@@ -54,6 +56,7 @@ class LevelConfig:
     vida_jugador: int | None = None  # None = usa modo.vida_maxima (comportamiento de siempre)
     velocidad_jugador: float | None = None  # None = usa el default de Robot (2.5)
     salto_jugador: float | None = None       # None = usa el default de Robot (15)
+    equipo_jugador: str | None = None  # solo relevante en modo basket con 2+ canastas
 
     @classmethod
     def from_dict(cls, data: dict) -> "LevelConfig":
@@ -76,6 +79,8 @@ class LevelConfig:
             distancia_acercamiento=boss_data.get("distancia_acercamiento"),
             distancia_ataque=boss_data.get("distancia_ataque"),
             mensaje=boss_data.get("mensaje"),
+            equipo=boss_data.get("equipo"),
+
         ) if isinstance(boss_data, dict) else None
 
         return cls(
@@ -91,6 +96,7 @@ class LevelConfig:
             vida_jugador=data.get("vida_jugador"),
             velocidad_jugador=data.get("velocidad") if "velocidad" in data else data.get("velocidad_jugador"),
             salto_jugador=data.get("salto") if "salto" in data else data.get("salto_jugador"),
+            equipo_jugador=data.get("equipo_jugador"),
         )
 
     @staticmethod
@@ -120,6 +126,7 @@ class LevelConfig:
                 distancia_acercamiento=b.get("distancia_acercamiento"),
                 distancia_ataque=b.get("distancia_ataque"),
                 mensaje=b.get("mensaje"),
+                equipo=b.get("equipo"),
             )
             for b in bots_data
         ]

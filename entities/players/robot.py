@@ -19,7 +19,7 @@ class Robot:
     ]
 
     def __init__(self, x, y, nombre_jugador, nombre_robot, es_remoto=False, vida_maxima=200, puede_reaparecer=True,
-                 sprite_path=None, ancho=60, alto=90, velocidad=2.5, salto=15, ancho_aura=None, alto_aura=None):
+                 sprite_path=None, ancho=80, alto=110, velocidad=3.0, salto=15, ancho_aura=None, alto_aura=None):
         self.spawn_x = x
         self.spawn_y = y
         self.nombre_jugador = nombre_jugador
@@ -98,6 +98,7 @@ class Robot:
         # self.death_sound = pygame.mixer.Sound("assets/sfx/death.mp3")
         # self.death_sound.set_volume(0.5)
         self.arma_equipada = None  # 'granada', 'misil', o None
+        self.punto_reaparicion = None  # (x,y) fijo opcional — ver ModoBasket._asignar_equipo
         self.es_jugador = True
 
         # Aura pulsante opcional (ver activar_aura/desactivar_aura) — la
@@ -134,10 +135,13 @@ class Robot:
         # |---------|-------------------------|----------|
         #           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
         #               zona de aparición
-        min_x = 130 # 100
-        max_x = 810 # 800
-        self.x = random.randint(min_x, max_x)
-        self.y = 0  # empieza desde arriba y caerá
+        if self.punto_reaparicion:
+            self.x, self.y = self.punto_reaparicion
+        else:
+            min_x = 130 # 100
+            max_x = 810 # 800
+            self.x = random.randint(min_x, max_x)
+            self.y = 0  # empieza desde arriba y caerá
         # Asegura que la imagen esté inicializada
         if hasattr(self, "animations") and "idle" in self.animations:
             self.image = self.animations["idle"][0]
@@ -399,3 +403,21 @@ class Robot:
     def mostrar_mensaje(self, texto, duracion_ms=4000):
         self.mensaje_chat = texto
         self.mensaje_chat_expira = pygame.time.get_ticks() + duracion_ms
+
+    def redimensionar(self, ancho, alto):
+        """Reescala los sprites ya cargados a un nuevo tamaño lógico (ej. al
+        cambiar de modo de partida dentro del lobby, después de que el
+        Robot ya se construyó con el tamaño por defecto). No vuelve a leer
+        el disco — reescala lo que ya está en memoria, así que un cambio
+        de tamaño repetido pierde algo de nitidez, pero para un cambio
+        puntual de modo es imperceptible."""
+        if (ancho, alto) == (self.width, self.height):
+            return
+        for clave, frames in self.animations.items():
+            if clave == "aura_fuego" or not frames:
+                continue  # el aura usa su propio tamaño (ancho_aura/alto_aura), no el del robot
+            self.animations[clave] = [pygame.transform.smoothscale(f, (ancho, alto)) for f in frames]
+        self.width, self.height = ancho, alto
+        anim_actual = self.animations.get(self.current_animation)
+        if anim_actual:
+            self.image = anim_actual[min(self.frame_index, len(anim_actual) - 1)]

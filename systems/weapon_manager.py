@@ -279,6 +279,9 @@ class WeaponManager:
             # exclusión de dueño, ya-dañados). Aquí solo se aplica.
             for robot in p.robots_afectados(candidatos):
                 es_dueño = getattr(p, "owner", None) == robot.nombre_jugador
+                modo = getattr(self.game, "modo", None)
+                if modo is not None and hasattr(modo, "mismo_equipo") and modo.mismo_equipo(p.owner, robot.nombre_jugador):
+                    continue
                 moria = self.aplicar_dano(robot, daño, atacante=p.owner)
                 puntos = daño * 2 if moria else daño
                 self._aplicar_empuje(p, robot)

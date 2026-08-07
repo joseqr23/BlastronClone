@@ -424,6 +424,14 @@ class HUDPuntajesMultiplayer:
             else:
                 robot = self.game.robots_remotos.get(jugador)
             color = getattr(robot, "color_nombre", (255, 255, 255)) if robot else (255, 255, 255)
+            # Modos por equipos (ver ModoBasket) pueden forzar un color
+            # fijo (rojo/azul) en vez del color individual del robot —
+            # así se ve de un vistazo quién juega para cada lado.
+            color_para_jugador = getattr(self.game.modo, "color_para_jugador", None)
+            if color_para_jugador:
+                forzado = color_para_jugador(jugador)
+                if forzado:
+                    color = forzado
             entradas.append((jugador, valor, color))
         entradas.sort(key=lambda e: e[1], reverse=True)
         return entradas
@@ -439,6 +447,9 @@ class HUDPuntajesMultiplayer:
         superficie.blit(render, pos)
 
     def draw(self, pantalla):
+        if getattr(self.game.modo, "_modo_equipos", False):
+            self._draw_equipos(pantalla)
+            return
         entradas = self._entradas()
         if not entradas:
             return
@@ -478,6 +489,22 @@ class HUDPuntajesMultiplayer:
 
             y += alto_fila
 
+        pantalla.blit(superficie, self.pos)
+    def _draw_equipos(self, pantalla):
+        modo = self.game.modo
+        ancho_panel, alto_panel = 220, 78
+        superficie = pygame.Surface((ancho_panel, alto_panel), pygame.SRCALPHA)
+        pygame.draw.rect(superficie, (20, 20, 20, 160), superficie.get_rect(), border_radius=12)
+        pygame.draw.rect(superficie, (255, 215, 0, 200), superficie.get_rect(), width=2, border_radius=12)
+        fuente_puntos = pygame.font.SysFont("Arial", 26, bold=True)
+        mitad = ancho_panel // 2
+        for i, (equipo, color, nombre) in enumerate((("A", modo.COLOR_EQUIPO_A, "TEAM ROJO"),
+                                                       ("B", modo.COLOR_EQUIPO_B, "TEAM AZUL"))):
+            x = 10 + i * mitad
+            self._texto_con_borde(superficie, nombre, (x, 10), color, self.font)
+            puntos = modo.puntos_equipo.get(equipo, 0)
+            self._texto_con_borde(superficie, str(puntos), (x + 4, 36), (255, 255, 255), fuente_puntos)
+        pygame.draw.line(superficie, (255, 255, 255, 60), (mitad, 8), (mitad, alto_panel - 8), 1)
         pantalla.blit(superficie, self.pos)
 
 class HUDTimer:

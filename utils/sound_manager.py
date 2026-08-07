@@ -62,7 +62,7 @@ class SoundManager:
             "assets/sfx/salto/salto2.mp3",
             "assets/sfx/salto/salto3.mp3",
         ])
-        self._reproducir(ruta, 0.3)
+        self._reproducir(ruta, 0.1)
 
     def dano(self):
         ruta = random.choice([
@@ -78,23 +78,34 @@ class SoundManager:
             "assets/sfx/death/death2.mp3",
             "assets/sfx/death/death3.mp3",
         ])
-        self._reproducir(ruta, 0.4)
+        self._reproducir(ruta, 0.2)
 
     # --- Efectos por arma (una carpeta por arma, dos sonidos cada una) ---
     def disparo(self, arma):
         """arma: 'granada', 'misil', o el nombre de cualquier arma futura —
         busca assets/sfx/weapons/<arma>/disparo.mp3."""
-        self._reproducir(f"assets/sfx/weapons/{arma}/disparo.mp3", 0.4)
+        self._reproducir(f"assets/sfx/weapons/{arma}/disparo.mp3", 0.1)
 
     def explosion(self, arma="granada"):
         """arma: 'granada', 'misil', o el nombre de cualquier arma futura —
         busca assets/sfx/weapons/<arma>/explosion.mp3."""
-        self._reproducir(f"assets/sfx/weapons/{arma}/explosion.mp3", 0.4)
+        self._reproducir(f"assets/sfx/weapons/{arma}/explosion.mp3", 0.1)
 
     # Efectos para modo basket
     def puntos_anotados(self):
         """Será instanciado cada que alguien anota puntos."""
-        self._reproducir(f"assets/sfx/puntos_anotados.mp3")
+        self._reproducir(f"assets/sfx/basket/puntos_anotados.mp3", 0.1)
+
+    def rebote(self, ruta=None):
+        """Sonido de rebote contra algo. 'ruta' permite pasar un
+        archivo específico (ej. el rebote.mp3 propio de un mapa, ver
+        Proyectil._reproducir_rebote); si no se pasa, usa un genérico."""
+        ruta = random.choice([
+            "assets/sfx/basket/rebote_basket_1.mp3",
+            "assets/sfx/basket/rebote_basket_2.mp3",
+            "assets/sfx/basket/rebote_basket_3.mp3",
+        ])
+        self._reproducir(ruta, 0.5)
 
     # --- Música de fondo ---
     def iniciar_musica(self, ruta="assets/sfx/musica.mp3", volumen=0.1):

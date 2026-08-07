@@ -1,0 +1,32 @@
+{
+  "nombre": "Basket Estadio",
+  "plataformas": [
+
+  ],
+  "laterales": [
+    
+  ],
+  "plataformas_y_laterales_impenetrables": [ 
+    [-234, 453, 1299, 65],
+    [987, -208, 28, 691],
+    [-37, -213, 40, 690],
+    [-75, -630, 78, 660],
+    [986, -599, 56, 638],
+
+
+    [769, 265, 57, 10],
+    [764, 228, 6, 47],
+    [835, 134, 9, 133],
+    [825, 224, 10, 49]
+  ],
+  "plataformas_y_laterales_dañinas": [
+
+  ],
+    "plataformas_y_laterales_dañinas_daño": 0
+  ,
+  "canasta": [
+    [769, 250, 56, 11]
+  ],
+  
+  "balon_spawn": [210, 317, 74, 41]
+}

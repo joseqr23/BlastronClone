@@ -19,6 +19,7 @@ from systems.collision import (check_collisions, check_collisions_laterales_esqu
 from systems.event_handler import EventHandler
 from systems.hud_manager import HUDManager
 from systems.modos_partida import crear_modo
+from .bot_controller import _ObjetivoPuntual
 from systems.turn_manager import TurnManager
 from systems.weapon_manager import WeaponManager
 from ui.chat import Chat
@@ -59,6 +60,7 @@ class SoloGame(BaseGame):
                            salto=self.level.salto_jugador or 15)
         self.robot.es_jugador = True
         self.robot.arma_equipada = armas_disponibles[0]
+        self.robot.equipo_basket = self.level.equipo_jugador
 
         # ---- Bots y jefe: ocupan el mismo rol que un jugador remoto ----
         self.robots_remotos = {}
@@ -169,7 +171,7 @@ class SoloGame(BaseGame):
     def _run_match(self):
         while True:
             if not self.robot.is_dead and self.robot.arma_equipada not in (None, "nada"):
-                self.robot.facing_right = self.mouse_logico()[0] >= self.robot.get_centro()[0]
+                self.robot.facing_right = self.mouse_mundo()[0] >= self.robot.get_centro()[0]
             if not self.event_handler.handle_events():
                 return None
             if self.volver_al_menu:
@@ -248,6 +250,7 @@ class SoloGame(BaseGame):
         if keys[pygame.K_DELETE]:
             self.robot.take_damage(50)
 
+        es_basket = getattr(self.modo, "id", None) == "basket"
         for nombre, robot in self.robots_remotos.items():
             if robot.is_dead:
                 robot.update([])
@@ -256,12 +259,52 @@ class SoloGame(BaseGame):
             if not controlador:
                 robot.update([])
                 continue
-            aim = controlador.update(self.robot)
+            objetivo = self._objetivo_basket(nombre, robot, controlador) if es_basket else self.robot
+            aim = controlador.update(objetivo)
             robot.update(None)
             if aim:
                 robot.aim_dx, robot.aim_dy = aim
-                if controlador.should_fire(self.robot):
+                if controlador.should_fire(objetivo):
                     self._disparar_bot(nombre, robot, aim)
+
+    def _objetivo_basket(self, nombre, robot, controlador):
+        """A quién/qué debe perseguir un bot en Modo Basket. Con 2+
+        canastas (modo por equipos), el bot SOLO apunta/lanza a la
+        canasta RIVAL — nunca a la propia, así que nunca hace autogol
+        por su cuenta (eso solo puede pasarle a un jugador humano)."""
+        controlador.cooldown_disparo_ms = self.modo.cooldown_ataque_ms
+        modo = self.modo
+        controlador.distancia_minima_disparo = None
+
+        if modo.portador and modo.portador != nombre:
+            rival = modo._robot_por_nombre(modo.portador)
+            if rival is not None and not rival.is_dead:
+                controlador.distancia_acercamiento = 0
+                controlador.punto_mira_basket = None
+                return rival
+
+        if robot.arma_equipada == modo.ARMA_BALON:
+            equipo_rival = modo._canasta_rival_de(nombre)
+            centro = modo._centro_canasta(equipo_rival)
+            if centro:
+                propio = modo._centro_canasta(modo.equipos.get(nombre)) if modo._modo_equipos else None
+                # Se planta del lado de ACÁ del aro rival (entre su
+                # propio aro y el del rival), no siempre a la izquierda
+                # — funciona sin importar en qué lado del mapa esté cada
+                # canasta.
+                signo = -1 if (propio is None or propio[0] < centro[0]) else 1
+                punto_tiro = (centro[0] + signo * modo.DISTANCIA_TIRO_BOTS, centro[1])
+                controlador.distancia_acercamiento = 0
+                controlador.punto_mira_basket = centro
+                return _ObjetivoPuntual(*punto_tiro)
+
+        controlador.distancia_acercamiento = 0
+        controlador.punto_mira_basket = None
+        balon = next((p for p in self.proyectiles if p.tipo == modo.ARMA_BALON), None)
+        if balon:
+            cx, cy = balon.get_hitbox().center
+            return _ObjetivoPuntual(cx, cy)
+        return self.robot
 
     def _disparar_bot(self, nombre, robot, direccion):
         """Camino de disparo para bots/jefe: no pasa por WeaponManager.disparar()
@@ -300,6 +343,12 @@ class SoloGame(BaseGame):
         rifle con "cantidad": 10 también dispara 10 proyectiles en
         abanico cuando lo usa un bot, no solo cuando lo usa el jugador."""
         dx, dy = direccion
+        if config.get("tipo") == "Basket":
+            # El aim de basket ya devuelve vel_x/vel_y EXACTOS (ver
+            # BotController._calcular_arco_basket) — re-escalarlo acá
+            # como al resto de armas rompería el cálculo del arco.
+            base = {"x": origen[0] - ancho / 2, "y": origen[1] - alto / 2}
+            return [{**base, "dir_x": dx, "dir_y": dy}]
         largo = math.hypot(dx, dy)
         if not largo:
             return []

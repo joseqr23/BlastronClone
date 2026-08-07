@@ -52,10 +52,13 @@ class ModoPuntos:
         return "Puntaje"
 
     def podio(self):
-        return _podio_por_valor_numerico(self.game.puntajes)
+        return _podio_por_valor_numerico(self.valores_actuales())
 
     def valores_actuales(self):
-        return dict(self.game.puntajes)
+        jugadores = [self.game.nombre_jugador] + list(self.game.robots_remotos.keys())
+        if self._modo_equipos:
+            return {j: self.puntos_equipo.get(self.equipos.get(j), 0) for j in jugadores}
+        return {j: self.puntos.get(j, 0) for j in jugadores}
     
     def etiqueta_actual(self):
         return "Puntaje"
@@ -393,20 +396,24 @@ class ModoBasket:
     permite_reaparecer = True
     usa_turnos = False
     municion_ilimitada = True
-    cooldown_ataque_ms = 700  # cadencia del "palmazo" de los bots
+    cooldown_ataque_ms = 500  # cadencia del "palmazo" de los bots
 
     ARMA_BALON = "balon_basket"
+    ARMA_POR_DEFECTO = "manazo"
     ARMAS_PERMITIDAS = ("manazo",) # solo se puede usar el balón, no otras armas
-    FACTOR_VELOCIDAD_PORTADOR = 1.0 # Al tener el balon, el portador se mueve más rápido
+    FACTOR_VELOCIDAD_PORTADOR = 0.5 # Al tener el balon, el portador se mueve más rápido
     FACTOR_SALTO_PORTADOR = 5.0 # Al tener el balon, el portador salta más alto
     FACTOR_VELOCIDAD_BASE = 3   # extra de velocidad para TODOS los robots del modo, no solo el portador
     FACTOR_SALTO_BASE = 1       # extra de salto para TODOS los robots del modo, no solo el portador
     DRENAJE_VIDA_POR_SEGUNDO = 3
-    DISTANCIA_TRIPLE = 260
+    DISTANCIA_TRIPLE = 300
+    DISTANCIA_TIRO_BOTS = 220  # los bots retroceden hasta esta distancia del aro antes de intentar encestar
     MARGEN_RECOGIDA_MS = 300
     DURACION_BANNER_MS = 2000
     BLOQUEO_RECOGIDA_MS = 500  # tras soltar el balón, ese jugador no puede volver a agarrarlo de inmediato
     UMBRAL_BALON_ATASCADO_MS = 6000  # si nadie lo agarra/encesta en este tiempo, se reinicia
+    COLOR_EQUIPO_A = (220, 60, 60)    # rojo
+    COLOR_EQUIPO_B = (70, 130, 230)   # azul
 
     def __init__(self, game):
         self.game = game
@@ -419,8 +426,11 @@ class ModoBasket:
         self.banner_texto = None
         self.banner_hasta_ms = 0
         self._bloqueo_recogida = {}
+        self._jugadores_inicializados = set()
         self.armas_permitidas = self._resolver_armas_permitidas()
-        
+        self.equipos = {}
+        self.puntos_equipo = {"A": 0, "B": 0}
+        self._modo_equipos = len(getattr(game, "tiles_canasta", {}) or {}) >= 2
 
     def registrar_muerte(self, victima, atacante):
         pass  # revive solo; _revisar_muerte_portador() suelta el balón si el portador muere
@@ -491,11 +501,20 @@ class ModoBasket:
         punto = getattr(self.game, "punto_spawn_balon", None)
         if punto is None:
             return
+        self._reemplazar_balon(punto[0], punto[1])
+
+    def _reemplazar_balon(self, x, y, owner=None):
+        """Único punto de creación del balón en todo el modo — destruye
+        cualquier balón preexistente ANTES de crear uno nuevo. Con esto
+        es imposible que dos código-paths (ej. un golpe y un encestaje
+        casi simultáneos) terminen creando dos balones a la vez."""
+        self.game.proyectiles = [p for p in self.game.proyectiles if p.tipo != self.ARMA_BALON]
         pid = self.game._next_proy_id()
-        p = Proyectil(self.ARMA_BALON, punto[0], punto[1], 0, 0, owner=None)
+        p = Proyectil(self.ARMA_BALON, x, y, 0, 0, owner=owner)
         p.proj_id = pid
         self.game.proyectiles.append(p)
         self._balon_en_juego = True
+        return p
 
     def _soltar_balon(self, nombre):
         arma_previa = self.arma_antes_balon.pop(nombre, "nada")
@@ -510,11 +529,7 @@ class ModoBasket:
         robot = self._robot_por_nombre(nombre)
         if robot is not None:
             centro = robot.get_centro()
-            pid = self.game._next_proy_id()
-            p = Proyectil(self.ARMA_BALON, centro[0], centro[1], 0, 0, owner=None)
-            p.proj_id = pid
-            self.game.proyectiles.append(p)
-            self._balon_en_juego = True
+            self._reemplazar_balon(*centro) 
 
     def _resolver_armas_permitidas(self):
         if self.ARMAS_PERMITIDAS:
@@ -524,19 +539,95 @@ class ModoBasket:
         except Exception:
             return []
 
-    def _centro_canasta(self):
-        tiles = getattr(self.game, "tiles_canasta", None)
+    @staticmethod
+    def _equipo_rival(equipo):
+        return "B" if equipo == "A" else "A"
+
+    def color_para_jugador(self, nombre):
+        """Color de equipo para el HUD — None si el mapa no está en modo
+        por equipos, en cuyo caso el HUD sigue usando el color
+        individual de cada robot como siempre."""
+        if not self._modo_equipos:
+            return None
+        equipo = self.equipos.get(nombre)
+        if equipo == "A":
+            return self.COLOR_EQUIPO_A
+        if equipo == "B":
+            return self.COLOR_EQUIPO_B
+        return None
+
+    def _canasta_rival_de(self, nombre):
+        """A qué canasta debe apuntar `nombre` para anotar a favor — None
+        si el mapa no está en modo por equipos (una sola canasta, todos
+        contra todos)."""
+        if not self._modo_equipos:
+            return None
+        equipo = self.equipos.get(nombre)
+        return self._equipo_rival(equipo) if equipo else None
+
+    def _inicializar_jugadores_nuevos(self):
+        """Se llama cada frame — barato (es un chequeo de membresía en un
+        set) y garantiza que CUALQUIER jugador nuevo (bot, o un jugador
+        remoto cuyo robot recién apareció) quede armado y con equipo
+        asignado apenas exista, sin depender de que ya estén todos
+        presentes en el primer frame (que en multijugador casi nunca es
+        el caso — los clientes tardan un par de frames en mandar su
+        primer "update")."""
+        for robot in self._robots():
+            nombre = robot.nombre_jugador
+            if nombre in self._jugadores_inicializados:
+                continue
+            self._jugadores_inicializados.add(nombre)
+            self._asignar_arma(nombre, self.ARMA_POR_DEFECTO)
+            if self._modo_equipos:
+                self._asignar_equipo(nombre, robot)
+
+    def _asignar_equipo(self, nombre, robot):
+        fijo = getattr(robot, "equipo_basket", None)
+        if not fijo:
+            # Alterna A/B balanceando por cantidad ya asignada — así se
+            # reparte parejo aunque los jugadores se conecten en
+            # momentos distintos, no por índice de orden fijo.
+            cuenta_a = sum(1 for e in self.equipos.values() if e == "A")
+            cuenta_b = sum(1 for e in self.equipos.values() if e == "B")
+            fijo = "A" if cuenta_a <= cuenta_b else "B"
+        self.equipos[nombre] = fijo
+        robot.color_nombre = self.COLOR_EQUIPO_A if fijo == "A" else self.COLOR_EQUIPO_B
+        punto = self._punto_spawn_equipo(fijo)
+        if punto:
+            robot.punto_reaparicion = punto
+            robot.x, robot.y = punto
+        self.game.enviar({"tipo": "basket_equipo_jugador", "jugador": nombre, "equipo": fijo})
+
+    def _punto_spawn_equipo(self, equipo):
+        spawns = getattr(self.game, "spawns_equipo_basket", None) or {}
+        return spawns.get(equipo)
+
+    def mismo_equipo(self, jugador_a, jugador_b):
+        """Usado por WeaponManager para quitar el fuego amigo (ver
+        _update_proyectiles). False si el modo no es por equipos, si
+        alguno es None, o si son la misma persona."""
+        if not self._modo_equipos or not jugador_a or not jugador_b or jugador_a == jugador_b:
+            return False
+        equipo_a = self.equipos.get(jugador_a)
+        return equipo_a is not None and equipo_a == self.equipos.get(jugador_b)
+
+    def _centro_canasta(self, equipo=None):
+        canastas = getattr(self.game, "tiles_canasta", None) or {}
+        tiles = canastas.get(equipo) or next(iter(canastas.values()), None)
         if not tiles:
             return None
         xs = [t.rect.centerx for t in tiles]
         ys = [t.rect.centery for t in tiles]
         return (sum(xs) / len(xs), sum(ys) / len(ys))
 
-    def _distancia_a_canasta(self, x):
-        centro = self._centro_canasta()
+    def _distancia_a_canasta(self, equipo, x):
+        centro = self._centro_canasta(equipo)
         return abs(x - centro[0]) if centro else 0
 
     def actualizar(self):
+        self._purgar_balones_duplicados()
+        self._inicializar_jugadores_nuevos()
         if not self._balon_en_juego and self.portador is None:
             self._spawnear_balon()
         self._detectar_lanzamientos()
@@ -545,6 +636,17 @@ class ModoBasket:
         self._revisar_muerte_portador()
         self._aplicar_efecto_portador()
         self._revisar_balon_atascado()
+
+    def _purgar_balones_duplicados(self):
+        """Red de seguridad: nunca debería hacer falta gracias a
+        _reemplazar_balon(), pero si por cualquier vía llegaran a
+        coexistir dos balones, se destruyen todos menos el más viejo."""
+        balones = [p for p in self.game.proyectiles if p.tipo == self.ARMA_BALON]
+        for extra in balones[1:]:
+            try:
+                self.game.proyectiles.remove(extra)
+            except ValueError:
+                pass
 
     def _detectar_lanzamientos(self):
         if self.portador is None:
@@ -568,7 +670,7 @@ class ModoBasket:
                 continue
             hitbox = p.get_hitbox()
             for robot in self._robots():
-                if robot.is_dead or self._es_bot(robot):
+                if robot.is_dead:
                     continue
                 nombre = robot.nombre_jugador
                 if p.owner == nombre and ahora < p.tiempo_creacion + self.MARGEN_RECOGIDA_MS:
@@ -587,25 +689,40 @@ class ModoBasket:
                     return
 
     def _detectar_encestes(self):
-        tiles = getattr(self.game, "tiles_canasta", None)
-        if not tiles:
+        canastas = getattr(self.game, "tiles_canasta", None)
+        if not canastas:
             return
         for p in self.game.proyectiles[:]:
             if p.tipo != self.ARMA_BALON:
                 continue
             hitbox = p.get_hitbox()
-            if not any(t.rect.colliderect(hitbox) for t in tiles):
+            equipo_dueño, encestado = None, False
+            for equipo, tiles in canastas.items():
+                if any(t.rect.colliderect(hitbox) for t in tiles):
+                    equipo_dueño, encestado = equipo, True
+                    break
+            if not encestado:
                 continue
+
             anotador = p.owner or self.portador
             if anotador:
                 x_origen = getattr(p, "x_lanzamiento", p.x)
-                puntos = 3 if self._distancia_a_canasta(x_origen) >= self.DISTANCIA_TRIPLE else 2
-                self.puntos[anotador] = self.puntos.get(anotador, 0) + puntos
+                puntos = 3 if self._distancia_a_canasta(equipo_dueño, x_origen) >= self.DISTANCIA_TRIPLE else 2
+                autogol = False
+                if self._modo_equipos and equipo_dueño is not None:
+                    equipo_anotador = self.equipos.get(anotador)
+                    autogol = equipo_anotador == equipo_dueño
+                    beneficiado = self._equipo_rival(equipo_anotador) if autogol else equipo_anotador
+                    self.puntos_equipo[beneficiado] = self.puntos_equipo.get(beneficiado, 0) + puntos
+                    texto = (f"¡{anotador} encesta en su propio aro! {puntos} puntos para el equipo rival"
+                            if autogol else f"¡{anotador} anota {puntos} puntos para su equipo!")
+                else:
+                    self.puntos[anotador] = self.puntos.get(anotador, 0) + puntos
+                    texto = f"¡{puntos} PUNTOS ANOTADOS POR {anotador}!"
                 sound_manager.puntos_anotados()
-                texto = f"¡{puntos} PUNTOS ANOTADOS POR {anotador}!"
                 self._mostrar_banner(texto, self.DURACION_BANNER_MS)
                 self.game.enviar({"tipo": "ronda_mensaje", "mensaje": texto, "duracion_ms": self.DURACION_BANNER_MS})
-                self.game.enviar({"tipo": "basket_punto", "jugador": anotador, "puntos": puntos})
+                self.game.enviar({"tipo": "basket_punto", "jugador": anotador, "puntos": puntos, "autogol": autogol})
                 self.game.chat.agregar_mensaje(texto)
             try:
                 self.game.proyectiles.remove(p)
